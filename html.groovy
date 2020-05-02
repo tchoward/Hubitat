@@ -1,12 +1,14 @@
-/*HTML Device for use with Hubigraphs*/
-
 metadata{
 	definition( name: "HTML Device", namespace: "tchoward", author: "Thomas Howard") {
+        capability "Actuator"
+        
 		// Indicate what capabilities the device should be capable of
 		attribute "html", "string"
         
         command "setHTML", ["String"]
     }
+    
+    
 	preferences{
 	}
 }
