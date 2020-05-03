@@ -23,7 +23,7 @@ import groovy.json.JsonOutput
 def ignoredEvents() { return [ 'lastReceive' , 'reachable' , 
                          'buttonReleased' , 'buttonPressed', 'lastCheckinDate', 'lastCheckin', 'buttonHeld' ] }
 
-def version() { return "v0.1" }
+def version() { return "v1.0" }
 
 definition(
     name: "Hubigraph Time Line",
@@ -172,37 +172,39 @@ def mainPage() {
                 href name: "graphSetupPage", title: "Configure Graph", description: "", page: "graphSetupPage"
                 paragraph getLine();
                 paragraph "<i><u><b>LOCAL GRAPH URL</b></u></i>\n${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
+         
                 
-                def paragraph_ = /<table width="100%" ID="Table2" style="margin: 0px;">/
-                paragraph_ +=  "${getTableRow3("<i><u><b>DEVICE INFORMATION</b></u></i>", "","")}"
-                paragraph_ +=  "${getTableRow3("<i><u>SWITCH</u></i>","<i><u>CONTACT</u></i>","<i><u>MOTION</u></i>")}" 
-                switches ? num_switches = switches.size() : 0;
-                motions ? num_motions = motions.size() : 0;
-                contacts ? num_contacts = contacts.size() : 0;
-                max_ = Math.max(num_switches, Math.max(num_motions, num_contacts));
+                    def paragraph_ = /<table width="100%" ID="Table2" style="margin: 0px;">/
+                    paragraph_ +=  "${getTableRow3("<i><u><b>DEVICE INFORMATION</b></u></i>", "","")}"
+                    paragraph_ +=  "${getTableRow3("<i><u>SWITCH</u></i>","<i><u>CONTACT</u></i>","<i><u>MOTION</u></i>")}" 
+                    num_switches = switches ?  switches.size() : 0;
+                    num_motions = motions ?  motions.size() : 0;
+                    num_contacts = contacts ?  contacts.size() : 0;
+                    max_ = Math.max(num_switches, Math.max(num_motions, num_contacts));
                 
-                for (i=0; i<max_; i++){
-                    paragraph_ += "${getTableRow3("${switches[i]?switches[i]:""}", "${motions[i]?motions[i]:""}", "${contacts[i]?contacts[i]:""}")}"
-                }
-                     
-                paragraph_ += "</table>"
+                    log.debug ("Max = $max_, $num_switches, $num_motions, $num_contacts");
+                    for (i=0; i<max_; i++){
+                        switchText = i<num_switches?switches[i]:"";
+                        motionText = i<num_motions?motions[i]:"";
+                        contactText = i<num_contacts?contacts[i]:"";
+                        paragraph_ += /${getTableRow3("$switchText", "$motionText", "$contactText")}/
+                    }    
+                    paragraph_ += "</table>"
+                    paragraph paragraph_
+                 
+                if (graph_timespan){
                     
-                paragraph paragraph_
                 
-                
-                def timeString = "";
-                switch (graph_timespan){
-                        case "1": timeString = "1 hour"; break;
-                        case "2": timeString = "12 hours"; break;
-                        case "3": timeString = "1 day"; break;
-                        case "4": timeString = "3 days"; break;
-                        case "5": timeString = "1 week"; break;
-                }
-                
-                paragraph_ =  "<table>"
-                    
-                    
-                paragraph_ += "${getTableRow("<b><u>GRAPH SELECTIONS</b></u>", "<b><u>VALUE</b></u>", "<b><u>SIZE</b></u>", "<b><u>COLOR</b></u>")}"
+                    def timeString = "";
+                    switch (graph_timespan){
+                            case "1": timeString = "1 hour"; break;
+                            case "2": timeString = "12 hours"; break;
+                            case "3": timeString = "1 day"; break;
+                            case "4": timeString = "3 days"; break;
+                            case "5": timeString = "1 week"; break;
+                    }
+                    paragraph_ =  "<table>"
+                    paragraph_ += "${getTableRow("<b><u>GRAPH SELECTIONS</b></u>", "<b><u>VALUE</b></u>", "<b><u>SIZE</b></u>", "<b><u>COLOR</b></u>")}"
                     paragraph_ += /${getTableRow("Timespan", timeString,"","")}/
                     paragraph_ += /${getTableRow("Update Rate", getTimeString(graph_update_rate), "", "")}/ 
                     if (graph_static_size==true){
@@ -211,18 +213,12 @@ def mainPage() {
                         paragraph_ += /${getTableRow("Graph Size", "DYNAMIC", "","")}/
                     }
                     paragraph_ += /${getTableRow("Axis", "", graph_axis_font, graph_axis_color)}/
-
                     paragraph_ += /${getTableRow("Background", "", "", graph_background_color)}/
-                   
-                    
-                                     
                     paragraph_ += "</table>"
-                    
                     paragraph paragraph_
-                    
-                }
-                
-            }
+                } //graph_timespan
+            }//else
+        }
         
         section(){
             if (state.endpoint){
