@@ -17,13 +17,14 @@
 // Hubigraph Line Graph Changelog
 // V 0.1 Intial release
 // V 0.2 Fixed startup code which needed all three device types, now one will work
+// V 0.22 Update to support tiles
  
 import groovy.json.JsonOutput
 
 def ignoredEvents() { return [ 'lastReceive' , 'reachable' , 
                          'buttonReleased' , 'buttonPressed', 'lastCheckinDate', 'lastCheckin', 'buttonHeld' ] }
 
-def version() { return "v1.0" }
+def version() { return "v0.22" }
 
 definition(
     name: "Hubigraph Time Line",
