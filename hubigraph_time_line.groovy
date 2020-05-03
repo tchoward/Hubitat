@@ -15,7 +15,8 @@
  */
 
 // Hubigraph Line Graph Changelog
-// V 1.0 Initial release
+// V 0.1 Intial release
+// V 0.2 Fixed startup code which needed all three device types, now one will work
 // Credit to 
  
 import groovy.json.JsonOutput
