@@ -507,7 +507,7 @@ def getChartOptions(){
         "height": graph_static_size ? graph_v_size: "100%",
         "timeline": [
             "rowLabelStyle": ["fontSize": graph_axis_font, "color": getColorCode(graph_axis_color)],
-            "barLabelStyle": ["fontSize": graph_axis_font, "color": getColorCode(graph_axis_color)]
+            "barLabelStyle": ["fontSize": graph_axis_font]
         ],
         "backgroundColor": getColorCode(graph_background_color),
     ]
@@ -531,8 +531,10 @@ void removeLastChar(str) {
 }
 
 def getTimeLine3() {
+    def fullSizeStyle = "width: 100%; height: 100%; overflow: hidden";
+    
     def html = """
-    <html>
+    <html style="${fullSizeStyle}">
         <head>
             <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.0/moment.min.js" integrity="sha256-imB/oMaNA0YvIkDkF5mINRWpuFPEGVCEkHy6rm2lAzA=" crossorigin="anonymous"></script>
@@ -655,8 +657,8 @@ def getTimeLine3() {
                 }
             </script>
       </head>
-      <body>
-          <div id="timeline" style="height: 600px;"></div>
+      <body style="${fullSizeStyle}">
+          <div id="timeline" style="${fullSizeStyle}"></div>
       </body>
     </html>
     """
