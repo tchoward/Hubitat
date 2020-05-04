@@ -18,6 +18,7 @@
 // V 0.1 Intial release
 // V 0.2 Fixed startup code which needed all three device types, now one will work
 // V 0.22 Update to support tiles
+// V 0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
  
 import groovy.json.JsonOutput
 
@@ -56,15 +57,22 @@ mappings {
             ]
         }
     }
+    
     path("/getData/") {
         action: [
             GET: "getData"
         ]
     }
         
-    path("/getConfig/") {
+    path("/getOptions/") {
         action: [
-            GET: "getConfig"
+            GET: "getOptions"
+        ]
+    }
+    
+    path("/getSubscriptions/") {
+        action: [
+            GET: "getSubscriptions"
         ]
     }
 }
@@ -86,15 +94,12 @@ def graphSetupPage(){
                     ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]];  
     
     def colorEnum = ["Maroon", "Red", "Orange", "Yellow", "Olive", "Green", "Purple", "Fuchsia", "Lime", "Teal", "Aqua", "Blue", "Navy", "Black", "Gray", "Silver", "White", "Transparent"];
-    def timeEnum = [["0":"Never"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], 
-                    ["3600000":"1 Hour"]]
-            
     
     dynamicPage(name: "graphSetupPage") {
         section(){
             paragraph getTitle("General Options");
-            input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: false, options: timeEnum, defaultValue: "300000" ) 
-            input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: false, options: [["1":"1 hour"], ["2":"12 hours"], ["3":"1 day"], ["4":"3 days"], ["5":"1 Week"], ["6": "1 Minute"]], defaultValue: "3")     
+            input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: false, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
+            input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: false, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")     
             input( type: "enum", name: "graph_background_color", title: "Background Color", defaultValue: "White", options: colorEnum);
             
             //Size
@@ -146,7 +151,8 @@ def enableAPIPage() {
 def getTimeString(string_){
     //log.debug("Looking for $string_")
     switch (string_.toInteger()){
-        case 0: return "Never"; 
+        case -1: return "Never";
+        case 0: return "Real Time"; 
         case 1000:return "1 Second"; 
         case 5000:return "5 Seconds"; 
         case 60000:return "1 Minute"; 
@@ -154,6 +160,22 @@ def getTimeString(string_){
         case 600000:return "10 Minutes"; 
         case 1800000:return "Half Hour";
         case 3600000:return "1 Hour";
+    }
+    log.debug("NOT FOUND");
+}
+
+def getTimsSpanString(string_){
+    switch (string_.toInteger()){
+        case -1: return "Never";
+        case 0: return "Real Time"; 
+        case 1000:return "1 Second"; 
+        case 5000:return "5 Seconds"; 
+        case 60000:return "1 Minute"; 
+        case 3600000:return "1 Hour";
+        case 43200000: return "12 Hours";
+        case 86400000: return "1 Day";
+        case 259200000: return "3 Days";
+        case 604800000: return "1 Week";
     }
     log.debug("NOT FOUND");
 }
@@ -196,14 +218,7 @@ def mainPage() {
                 if (graph_timespan){
                     
                 
-                    def timeString = "";
-                    switch (graph_timespan){
-                            case "1": timeString = "1 hour"; break;
-                            case "2": timeString = "12 hours"; break;
-                            case "3": timeString = "1 day"; break;
-                            case "4": timeString = "3 days"; break;
-                            case "5": timeString = "1 week"; break;
-                    }
+                    def timeString = getTimsSpanString(graph_timespan);
                     graph_update_rate = graph_update_rate ? graph_update_rate : 0
                     paragraph_ =  "<table>"
                     paragraph_ += "${getTableRow("<b><u>GRAPH SELECTIONS</b></u>", "<b><u>VALUE</b></u>", "<b><u>SIZE</b></u>", "<b><u>COLOR</b></u>")}"
@@ -257,8 +272,9 @@ def getTitle(myText=""){
 
 def installed() {
     log.debug "Installed with settings: ${settings}"
-    initialize()
+    updated();
 }
+
 def uninstalled() {
     if (state.endpoint) {
         try {
@@ -270,30 +286,10 @@ def uninstalled() {
         }
     }
 }
-def updated() {
-    unsubscribe();
-    app.updateLabel(app_name);
-    state.dataName = attribute;
-    if (switches) subscribe(switches, "switch",  eventHandler)
-    if (contacts) subscribe(contacts, "contact", eventHandler)
-    if (motions) subscribe(motions,  "motion",  eventHandler)  
-    buildData();  
-    
-}
 
-def getGraphDuration(){
-    def mins;
-    
-    switch (graph_timespan){
-               case "1": mins = 1 * 60; break;
-               case "2": mins = 12 * 60; break;
-               case "3": mins = 24 * 60; break;
-               case "4": mins = 72 * 60; break;
-               case "5": mins = 168 * 60; break;
-               case "6": mins = 1; break;
-    }
-    
-    return mins;
+def updated() {
+    app.updateLabel(app_name);
+    state.dataName = attribute;  
 }
 
 def getStartEventString(type) {
@@ -312,101 +308,21 @@ def getEndEventString(type) {
     }
 }
 
-def getCapType(evt) {
-    switch (evt){
-         case "on": return "switch";
-         case "off": return "switch";
-         case "active": return "motion";
-         case "inactive": return "motion";
-         case "open": return "contact";
-         case "closed": return "contact";
-    }
+def buildData(){
+    def data = []; 
+    if (switches) data += buildDataCapability(switches, "switch");
+    if (motions) data += buildDataCapability(motions, "motion");
+    if (contacts) data += buildDataCapability(contacts, "contact");
+    return data;
 }
 
-def clean() {
-    def now = new Date();
-    def min = new Date();
-    
-    def mins = getGraphDuration();
-    
-    use (groovy.time.TimeCategory) {
-           min -= mins.minutes;
-    }
-    
-    //clean our data
-    state.eventList.eachWithIndex { it, index ->
-        def newEvents = it.events_.findResults {
-            //destroy events that actually go out of bounds
-            if(it.end && Date.parse("yyyy-MM-dd HH:mm:ss.SSS", it.end) < min) return null;
-            //trim events that start to go out of bounds
-            else if(it.start && Date.parse("yyyy-MM-dd HH:mm:ss.SSS", it.start) < min) { return [start: min.format("yyyy-MM-dd HH:mm:ss.SSS"), end: it.end];}
-            else return it;
-        }
-        
-        state.eventList[index].events_ = newEvents;
-    }
-    
-    
-}
-
-def eventHandler(evt){
-    def device = evt.getDevice();
-    def event = evt.getValue();
-    def date = evt.date.format("yyyy-MM-dd HH:mm:ss.SSS");
-    
-    //log.debug("Got $device :: $event ");
-    deviceEvents = state.eventList.find{ it.name_ == device.displayName }
-    //log.debug("Pending Event is $deviceEvents.pending_event_");
-    
-    def type = getCapType(event);
-    
-    def start_event = getStartEventString(type);
-    def end_event = getEndEventString(type);
-    //reconstruct the corrosponding orphaned node if there is one
-    def orphan_index = deviceEvents.events_.findIndexOf { !it.end }
-    //if we have an orphan
-    if(orphan_index != -1 && event.equals(end_event)) {
-        deviceEvents.events_[orphan_index].end = date;
-    }
-    //else add an orphan
-    else {
-        if(event.equals(start_event)) deviceEvents.events_ << [ "start": date ];
-        else deviceEvents.events_ << [ "end": date ];
-    }
-    
-        //Waiting Ending Event
-        /*if (deviceEvents.pending_event_){
-            deviceEvents.events_.add([start: deviceEvents.pending_event_, end: getDateStringEvent(evt.date)]);
-            deviceEvents.pending_event_ = null;
-            dataCleanup();
-        } else {
-             deviceEvents.pending_event_ = getDateStringEvent(evt.date);
-        }
-    state.sensor_data << [name: evt.name, date: getDateStringEvent(evt.date), value: evt.value];
-    //dataCleanup();*/
-    clean();
-}
-
-def initialize() {
-   updated();
-}
-
-private buildData(){
-    state.eventList = []; 
-    if (switches) buildDataCapability(switches, "switch");
-    if (motions) buildDataCapability(motions, "motion");
-    if (contacts) buildDataCapability(contacts, "contact");
-}
-
-private buildDataCapability(device_type, capability_) {
+def buildDataCapability(device_type, capability_) {
     def resp = []
     def now = new Date();
     def then = new Date();
     
-    def mins = getGraphDuration();
-    
     use (groovy.time.TimeCategory) {
-           then -= mins.minutes;
+           then -= Integer.parseInt(graph_timespan).milliseconds;
     }
     
     def start_event = getStartEventString(capability_);
@@ -416,8 +332,9 @@ private buildDataCapability(device_type, capability_) {
     
     if(device_type) {
       device_type.each {it->  
-          temp = it?.eventsBetween(then, now, [max: 500000])?.findAll{it.value == start_event || it.value == end_event}?.collect{[date: it.date.toString(), value: it.value]}         //resp.flatten(idx).sort{Date.parse("yyyy-MM-dd HH:mm:ss.SSS", it.date)};
-          temp = temp.sort{Date.parse("yyyy-MM-dd HH:mm:ss.SSS", it.date)};
+          temp = it?.eventsBetween(then, now, [max: 500000])?.findAll{it.value == start_event || it.value == end_event}?.collect{[date: it.date, value: it.value]}
+          temp = temp.sort{ it.date };
+          temp = temp.collect{ [date: it.date.getTime(), value: it.value] }
           
           //Final Parsing
           //firstTime = true;
@@ -439,100 +356,43 @@ private buildDataCapability(device_type, capability_) {
               }
           }
           //if it's already on, add an event
-          
           else if(it.currentState(capability_).value.equals(start_event)) {
-              finalList << [start: then.format("yyyy-MM-dd HH:mm:ss.SSS")];
+              finalList << [start: then.getDate()];
           }
           
-          state.eventList += [name_:it.displayName, events_:finalList];
+          resp << [id_:it.deviceId, events_:finalList];
       }
       
    }
    
    
-   resp
-}
-
-def dataCleanup(){
-    def today = new Date();
-    def then = getThen();
-    def deviceEvents = state.eventList;
-    def cont = true;
-    
-    deviceEvents.each{device->
-        cont = true;
-        i = device.events_.size()-1;
-        while (cont){
-            log.debug("start:: ${device.events_[i].start.toString()} end:: ${device.events_[i].end.toString()}");
-            start = Date.parse("yyyy-MM-dd HH:mm:ss.SSS", device.events_[i].start.toString());
-            end = Date.parse("yyyy-MM-dd HH:mm:ss.SSS", device.events_.end[i].toString());
-            if (end.before(then)){
-                device.events_.pop();
-                i--;
-            } else if (start.before(then)){
-                device.events_[0].start = getDateStringEvent(then);
-                cont = false;
-            } else {
-                cont = false
-            }
-            
-        }
-    }
-}
-
-//Get the HTML for refreshing the screen
-def getRefreshHTML(){
-    
-    def html = /<meta http-equiv="refresh" content=/
-    
-    switch (graph_update_rate){
-        case "1": html = ""; break;
-        case "2": html += /"60">/; break;
-        case "3": html += /"300">/; break;
-        case "4": html += /"600">/; break;
-        case "5": html += /"3600">/; break;
-     }
-        
-     html
-}
-
-def getDataLabel(){
-    def html = /{label: "$state.dataName", type: 'number'}],/
-    
-    html
+   return resp
 }
 
 def getChartOptions(){
     def options = [
-        "width": graph_static_size ? graph_h_size : "100%",
-        "height": graph_static_size ? graph_v_size: "100%",
-        "timeline": [
-            "rowLabelStyle": ["fontSize": graph_axis_font, "color": getColorCode(graph_axis_color)],
-            "barLabelStyle": ["fontSize": graph_axis_font]
-        ],
-        "backgroundColor": getColorCode(graph_background_color),
+        "graphTimespan": Integer.parseInt(graph_timespan),
+        "graphUpdateRate": Integer.parseInt(graph_update_rate),
+        "graphOptions": [
+            "width": graph_static_size ? graph_h_size : "100%",
+            "height": graph_static_size ? graph_v_size: "100%",
+            "timeline": [
+                "rowLabelStyle": ["fontSize": graph_axis_font, "color": getColorCode(graph_axis_color)],
+                "barLabelStyle": ["fontSize": graph_axis_font]
+            ],
+            "backgroundColor": getColorCode(graph_background_color)
+        ]
     ]
     
     return options;
 }
         
-def preformatData(){
-     state.eventList.each{
-        
-        it.events_.eachWithIndex{event, idx->
-            
-            if (idx%2 == 0) { html+= /['$it.name_', ${getDateString($event.date)},/ }
-            else            { html+= /${getDateString($event.date)}]/ }
-            
-        }
-     }
-}
 void removeLastChar(str) {
     str.subSequence(0, str.length() - 1)
 }
 
-def getTimeLine3() {
-    def fullSizeStyle = "width: 100%; height: 100%; overflow: hidden";
+def getTimeLine() {
+    def fullSizeStyle = "margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden";
     
     def html = """
     <html style="${fullSizeStyle}">
@@ -541,122 +401,190 @@ def getTimeLine3() {
             <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.0/moment.min.js" integrity="sha256-imB/oMaNA0YvIkDkF5mINRWpuFPEGVCEkHy6rm2lAzA=" crossorigin="anonymous"></script>
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
             <script type="text/javascript">
-                google.charts.load('current', {'packages':['timeline']});
-                google.charts.setOnLoadCallback(onLoad);
-                
-                let duration = ${getGraphDuration()};
-
-                let options = [];
-                let graphData = {};
-
-                function getOptions() {
-                    return jQuery.get("${state.localEndpointURL}getConfig/?access_token=${state.endpointSecret}", (data) => {
-                        console.log("Got Options");
-                        console.log(options);                        
-                        options = data;
-                    });
-                }
-
-                function getGraphData() {
-                    return jQuery.get("${state.localEndpointURL}getData/?access_token=${state.endpointSecret}", (data) => {
-                        console.log("Got Graph Data");
-                        console.log(Object.assign({}, data));
-                        graphData = data;
-                        
-                    });
-                }
-
-                async function update() {
-                    try {
-                        await getGraphData();
-                    } finally {
-                        let now = new Date();
-                        let min = new Date();
-                        min.setMinutes(min.getMinutes() - duration);
-
-                        //boot old data
-                        Object.entries(graphData).forEach(([name, arr]) => {
-                            let newArr = arr.map(it => {
-                                let itStartDate = it.start ? moment(it.start).toDate() : undefined;
-                                let itEndDate = it.end ? moment(it.end).toDate() : undefined;
-                                let ret = { ...it }
-
-                                if(itEndDate && itEndDate < min) {
-                                    ret = {};
-                                }
-                                else if(itStartDate && itStartDate < min) ret.start = min.getTime();
-                                
-
-                                return ret;
-                            });
-
-                            //delete non-existant nodes
-                            newArr = newArr.filter(it => it.start || it.end);
-
-                            //add endpoints for orphans
-                            newArr = newArr.map((it) => {
-                                if(!it.start) {
-                                    return {...it, start: min.getTime() }
-                                }
-                                else if(!it.end) return {...it, end: now.getTime()}
-                                return it;
-                            });
-
-                            //add endpoint buffers
-                            if(newArr.length == 0) {
-                                newArr.push({ start: min.getTime(), end: min.getTime() });
-                                newArr.push({ start: now.getTime(), end: now.getTime() });
-                            } else {
-                                if(newArr[0].start != min.getTime()) newArr.push({ start: min.getTime(), end: min.getTime() });
-                                if(newArr[newArr.length - 1].end != now.getTime()) newArr.push({ start: now.getTime(), end: now.getTime() });
-                            }
-
-
-                            graphData[name] = newArr;
-                        });
-
-                        console.log(graphData);
-
-                        drawChart();
+google.charts.load('current', {'packages':['timeline']});
+google.charts.setOnLoadCallback(onLoad);
             
-                        let updateRate = parseInt(${graph_update_rate});
-                        //reschedule update
-                        if(updateRate) {
-                            setTimeout(() => {
-                                update();
-                            }, updateRate);
-                        }
-                    }
-                }
+let options = [];
+let subscriptions = {};
+let graphData = {};
 
-                async function onLoad() {
-                    //first load
-                    await getOptions();
+let websocket;
 
-                    update();
+function getOptions() {
+    return jQuery.get("${state.localEndpointURL}getOptions/?access_token=${state.endpointSecret}", (data) => {
+        console.log("Got Options");
+        console.log(data);                        
+        options = data;
+    });
+}
 
-                    //attach resize listener
-                    window.addEventListener("resize", () => {
-                        drawChart();
-                    });
-                }
-                
-                function drawChart() {
-                    let dataTable = new google.visualization.DataTable();
-                    dataTable.addColumn({ type: 'string', id: 'Device' });
-                    dataTable.addColumn({ type: 'date', id: 'Start' });
-                    dataTable.addColumn({ type: 'date', id: 'End' });
+function getSubscriptions() {
+    return jQuery.get("${state.localEndpointURL}getSubscriptions/?access_token=${state.endpointSecret}", (data) => {
+        console.log("Got Subscriptions");
+        console.log(data);
+        subscriptions = data;
+        
+    });
+}
 
-                    Object.entries(graphData).forEach(([name, arr]) => {
-                        dataTable.addRows(arr.map((parsed) => [name, moment(parsed.start).toDate(), moment(parsed.end).toDate()]));
-                    });
+function getGraphData() {
+    return jQuery.get("${state.localEndpointURL}getData/?access_token=${state.endpointSecret}", (data) => {
+        console.log("Got Graph Data");
+        console.log(data);
+        graphData = data;
+        
+    });
+}
 
-                    
+function parseEvent(event) {
+    const now = new Date().getTime();
 
-                    let chart = new google.visualization.Timeline(document.getElementById("timeline"));
-                    chart.draw(dataTable, options);
-                }
-            </script>
+    function getIsStart() {
+        if(event.name == "switch") return event.value == "on";
+        else if (event.name == "motion") return event.value == "active";
+        else if (event.name == "contact") return event.value == "open";
+    }
+
+    let deviceId = event.deviceId;
+
+    //only accept relevent events
+    let deviceIndex = -1;
+    Object.entries(subscriptions).forEach(([key, val]) => {
+        //if we are subscribed to this certain type
+        if(val) {
+            let index = val.findIndex((it) => it.idAsLong === deviceId);
+            if(index != -1) deviceIndex = index;
+        }
+    });
+
+    if(deviceIndex != -1) {
+        let isStart = getIsStart();
+        let pastEvents = graphData[deviceId];
+        if(pastEvents.length > 0) {
+            if(!isStart && !pastEvents[pastEvents.length - 1].end) pastEvents[pastEvents.length - 1].end = now;
+            //if we have an end event last
+            else if(isStart && pastEvents[pastEvents.length - 1].end) {
+                pastEvents.push({ start: now });
+            }
+        } else {
+            pastEvents.push({ start: now });
+        }
+
+        //update if we are realtime
+        if(options.graphUpdateRate === 0) update();
+    }
+}
+
+async function update() {
+    let now = new Date().getTime();
+    let min = now;
+    min -= options.graphTimespan;
+
+    //boot old data
+    Object.entries(graphData).forEach(([name, arr]) => {
+        //shift left points and mark for deletion if applicable
+        let newArr = arr.map(it => {
+            let ret = { ...it }
+
+            if(it.end && it.end < min) {
+                ret = {};
+            }
+            else if(it.start && it.start < min) ret.start = min;
+            
+
+            return ret;
+        });
+
+        //delete non-existant nodes
+        newArr = newArr.filter(it => it.start || it.end);
+
+        graphData[name] = newArr;
+    });
+
+    drawChart(now, min);
+}
+
+async function onLoad() {
+    //first load
+    await getOptions();
+    await getSubscriptions();
+    await getGraphData();
+
+    update();
+
+    //start our update cycle
+    if(options.graphUpdateRate !== -1) {
+        //start websocket
+        websocket = new WebSocket("ws://" + location.hostname + "/eventsocket");
+        websocket.onopen = () => {
+            console.log("WebSocket Opened!");
+        }
+        websocket.onmessage = (event) => {
+            parseEvent(JSON.parse(event.data));
+        }
+
+        if(options.graphUpdateRate !== 0) {
+            setInterval(() => {
+                update();
+            }, options.graphUpdateRate);
+        }
+    }
+
+    //attach resize listener
+    window.addEventListener("resize", () => {
+        let now = new Date().getTime();
+        let min = now;
+        min -= options.graphTimespan;
+
+        drawChart(now, min);
+    });
+}
+
+function drawChart(now, min) {
+    let dataTable = new google.visualization.DataTable();
+    dataTable.addColumn({ type: 'string', id: 'Device' });
+    dataTable.addColumn({ type: 'date', id: 'Start' });
+    dataTable.addColumn({ type: 'date', id: 'End' });
+
+    Object.entries(graphData).forEach(([deviceId, arr]) => {
+        let newArr = [...arr];
+
+        //add endpoints for orphans
+        newArr = newArr.map((it) => {
+            if(!it.start) {
+                return {...it, start: min }
+            }
+            else if(!it.end) return {...it, end: now}
+            return it;
+        });
+
+        //add endpoint buffers
+        if(newArr.length == 0) {
+            newArr.push({ start: min, end: min });
+            newArr.push({ start: now, end: now });
+        } else {
+            if(newArr[0].start != min) newArr.push({ start: min, end: min });
+            if(newArr[newArr.length - 1].end != now) newArr.push({ start: now, end: now });
+        }
+
+        let name;
+        Object.entries(subscriptions).forEach(([key, val]) => {
+            //if we are subscribed to this certain type
+            if(val) {
+                let found = val.find(it => it.id === deviceId);
+                if(found) name = found.displayName;
+            }
+        });
+
+        dataTable.addRows(newArr.map((parsed) => [name, moment(parsed.start).toDate(), moment(parsed.end).toDate()]));
+    });
+
+    
+
+    let chart = new google.visualization.Timeline(document.getElementById("timeline"));
+    chart.draw(dataTable, options.graphOptions);
+}
+        </script>
       </head>
       <body style="${fullSizeStyle}">
           <div id="timeline" style="${fullSizeStyle}"></div>
@@ -733,27 +661,34 @@ def getColorCode(code){
 
 //oauth endpoints
 def getGraph() {
-    render(contentType: "text/html", data: getTimeLine3());      
+    return render(contentType: "text/html", data: getTimeLine());      
 }
 
 def getData() {
-    def timeline = state.sensor_data;
+    def timeline = buildData();
     
     def formatEvents = [:];
     
-    state.eventList.each{device->
-        def deviceName = device.name_.replaceAll("[^a-zA-Z0-9 ]", "");
-        formatEvents[deviceName] = [];
+    timeline.each{device->
+        formatEvents[device.id_] = [];
         device.events_.each{event->
-            formatEvents[deviceName] << ["start": event.start, "end": event.end];
+            formatEvents[device.id_] << ["start": event.start, "end": event.end];
         }
     }
         
     return render(contentType: "text/json", data: JsonOutput.toJson(formatEvents));
-    
-   
 }
 
-def getConfig() {
-    render(contentType: "text/json", data: JsonOutput.toJson(getChartOptions()));
+def getOptions() {
+    return render(contentType: "text/json", data: JsonOutput.toJson(getChartOptions()));
+}
+
+def getSubscriptions() {
+    def subscriptions = [
+        switches: switches,
+        motions: motions,
+        contacts: contacts
+    ]
+    
+    return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
 }
