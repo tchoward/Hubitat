@@ -1,4 +1,4 @@
-import groovy.json.JsonOutput
+import groovy.json.*
 
 /**
  *  Hubigraph Line Graph Child App
@@ -20,6 +20,7 @@ import groovy.json.JsonOutput
 // v0.1 Initial release
 // v0.2 My son added webpage efficiencies, reduced load on hubitat by 75%.
 // V 0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
+// V 0.5 Multiple Lines on a Graph
 // Credit to Alden Howard for optimizing the code.
  
 def ignoredEvents() { return [ 'lastReceive' , 'reachable' , 
@@ -81,40 +82,36 @@ def deviceSelectionPage() {
     def supported_attrs;
         
     dynamicPage(name: "deviceSelectionPage") {
-    section() { 
+        section() { 
 	    
-        input "sensor", "capability.sensor", title: "Sensors", multiple: false, required: false, submitOnChange: true
+            input "sensors", "capability.sensor", title: "Sensors", multiple: true, required: true, submitOnChange: true
         
-        if (sensor){
-            sensor_events = sensor.events([max:250]).name;
-            supported_attrs = sensor_events.unique(false);
-           
-            if (supported_attrs){
-                //attrs = []
-                //supported_attrs.each{atribute->
-                //    attrs << /${supported_attrs[i]}/;
-                //}   
-            }else{
-               supported_attrs  = ["NO SUPPORTED EVENTS"];   
+            if (sensors){
+                sensors.each {
+                    sensor_events = it.events([max:250]).name;
+                    supported_attrs = sensor_events.unique(false);
+                    
+                    paragraph(it.displayName);
+                    input( type: "enum", name: "attributes_${it.id}", title: "Attributes to graph", required: true, multiple: true, options: supported_attrs, defaultValue: "1", submitOnChange: true )
+                }
             }
-        input( type: "enum", name: "attribute", title: "Attribute to graph?", required: false, multiple: false, options: supported_attrs, defaultValue: "1", submitOnChange: true )
         }
     }
-    }
 }
-
 
 def graphSetupPage(){
     def fontEnum = [["1":"1"], ["2":"2"], ["3":"3"], ["4":"4"], ["5":"5"], ["6":"6"], ["7":"7"], ["8":"8"], ["9":"9"], ["10":"10"], 
                     ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]];  
     
-    def colorEnum = ["Maroon", "Red", "Orange", "Yellow", "Olive", "Green", "Purple", "Fuchsia", "Lime", "Teal", "Aqua", "Blue", "Navy", "Black", "Gray", "Silver", "White", "Transparent"];
+    def colorEnum = [["#800000":"Maroon"], ["#FF0000":"Red"], ["#FF0000":"Orange"], ["#FFFF00":"Yellow"], ["#808000":"Olive"], ["#008000":"Green"],
+                    ["#800080":"Purple"], ["#FF00FF":"Fuchsia"], ["#00FF00":"Lime"], ["#008080":"Teal"], ["#00FFFF":"Aqua"], ["#0000FF":"Blue"], ["#000080":"Navy"],
+                    ["#000000":"Black"], ["#C0C0C0":"Gray"], ["#C0C0C0":"Silver"], ["#FFFFFF":"White"], ["rgba(255, 255, 255, 0)":"Transparent"]];
     
     dynamicPage(name: "graphSetupPage") {
         section(){
             paragraph getTitle("General Options");
-            input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: false, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
-            input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: false, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
+            input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: true, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
+            input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: true, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
             input( type: "enum", name: "graph_background_color", title: "Background Color", defaultValue: "White", options: colorEnum);
             input( type: "bool", name: "graph_smoothing", title: "Smooth Graph Points", defaultValue: true);
             input( type: "enum", name: "graph_type", title: "Graph Type", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph"] )
@@ -155,9 +152,13 @@ def graphSetupPage(){
             }
             
             //Line
-            paragraph getTitle("Line");
-            input( type: "enum", name: "graph_line_color", title: "Line Color", defaultValue: "Blue", options: colorEnum); 
-            input( type: "enum", name: "graph_line_thickness", title: "Line Thickness", defaultValue: "2", options: fontEnum); 
+            sensors.each { sensor ->
+                settings["attributes_${sensor.id}"].each { attribute ->
+                    paragraph getTitle("Line for ${sensor.displayName}: ${attribute}");
+                    input( type: "enum", name: "graph_line_color_${sensor.id}_${attribute}", title: "Line Color", defaultValue: "Blue", options: colorEnum); 
+                    input( type: "enum", name: "graph_line_thickness_${sensor.id}_${attribute}", title: "Line Thickness", defaultValue: "2", options: fontEnum); 
+                }
+            }
         }
     }
 }
@@ -166,15 +167,10 @@ def disableAPIPage() {
     dynamicPage(name: "disableAPIPage") {
         section() {
             if (state.endpoint) {
-                try {
-                   revokeAccessToken();
-                }
-                catch (e) {
-                    log.debug "Unable to revoke access token: $e"
-                }
+                revokeAccessToken();
                 state.endpoint = null
             }
-            paragraph "It has been done. Your token has been REVOKED. Tap Done to continue."
+            paragraph "Token revoked. Click done to continue."
         }
     }
 }
@@ -183,7 +179,7 @@ def enableAPIPage() {
     dynamicPage(name: "enableAPIPage", title: "") {
         section() {
             if(!state.endpoint) initializeAppEndpoint();
-            paragraph "It has been done. Your token has been CREATED. Tap Done to continue."
+            paragraph "Token created. Click done to continue."
         }
     }
 }
@@ -220,6 +216,31 @@ def getTimsSpanString(string_){
     log.debug("NOT FOUND");
 }
 
+def getColorString(string_){
+    switch (string_){
+        case "#800000": return "Maroon";
+        case "#FF0000": return "Red";
+        case "#FF0000": return "Orange";
+        case "#FFFF00": return "Yellow";
+        case "#808000": return "Olive";
+        case "#008000": return "Green";
+        case "#800080": return "Purple";
+        case "#FF00FF": return "Fuchsia";
+        case "#00FF00": return "Lime";
+        case "#008080": return "Teal";
+        case "#00FFFF": return "Aqua";
+        case "#0000FF": return "Blue";
+        case "#000080": return "Navy";
+        case "#000000": return "Black";
+        case "#C0C0C0": return "Gray";
+        case "#C0C0C0": return "Silver";
+        case "#FFFFFF": return "White";
+        case "rgba(255, 255, 255, 0)": return "Transparent";   
+        
+    }
+    
+}
+
 def mainPage() {
     dynamicPage(name: "mainPage") {        
         section(){
@@ -231,38 +252,51 @@ def mainPage() {
                 href name: "graphSetupPage", title: "Configure Graph", description: "", page: "graphSetupPage"
                 paragraph getLine();
                 paragraph "<i><u><b>LOCAL GRAPH URL</b></u></i>\n${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
-                if (sensor){
-                    paragraph "<i><u><b>DEVICE INFORMATION</b></u></i>\n<b>Device</b>: \t\t$sensor\n<b>Attribute</b>: \t${attribute}"     
+                if (sensors){
+                    def paragraph_ = /${getLine()}/
+                    paragraph_ +=  "<table>"
+                    paragraph_ +=   "${getTableRow2("<b><u>DEVICE</b></u>", "<b><u>ATTRIBUTES</b></u>", "<b><u>LINE COLOR</b></u>", "<b><u>LINE WIDTH</b></u>")}"
+                    sensors.each { sensor ->
+                        settings["attributes_${sensor.id}"].each { attribute_ ->
+                            text_color = settings["graph_line_color_${sensor.id}_${attribute_}"];
+                            line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute_}"];
+                            paragraph_ += /${getTableRow2("$sensor", "$attribute_", "${getColorString(text_color)}", "$line_thickness")}/
+                           
+                        }
+                      
+                    }
+                    paragraph_ += "</table>"
+                    paragraph_ += /${getLine()}/
+                    paragraph paragraph_   
                 }
+                
                 
                 if (graph_update_rate){
                     def timeString = getTimsSpanString(graph_timespan);
                     def rateString = getTimeString(graph_update_rate);
                     
-                    def paragraph_ =  "<table>"
+                    paragraph_ =  "<table>"
                     
                     
                     paragraph_ += "${getTableRow("<b><u>GRAPH SELECTIONS</b></u>", "<b><u>VALUE</b></u>", "<b><u>SIZE</b></u>", "<b><u>COLOR</b></u>")}"
                     if (graph_show_title==true) {
-                        paragraph_ += /${getTableRow("Title", graph_title, graph_title_font, graph_title_color)}/
+                        paragraph_ += /${getTableRow("Title", graph_title, graph_title_font, getColorString(graph_title_color))}/
                     } else {
                         paragraph_ += /${getTableRow("Title", "NOT SHOWN", "", "")}/
                     }
                     
-                    paragraph_ += /${getTableRow("Horizontal Header", "", graph_haxis_font, graph_hh_color)}/
-                    paragraph_ += /${getTableRow("Vertical Header", "", graph_vaxis_font, graph_vh_color)}/
-                    paragraph_ += /${getTableRow("Horizontal Axis", "", "", graph_ha_color)}/
-                    paragraph_ += /${getTableRow("Vertical Axis", "", "", graph_va_color)}/
+                    paragraph_ += /${getTableRow("Horizontal Header", "", graph_haxis_font, getColorString(graph_hh_color))}/
+                    paragraph_ += /${getTableRow("Vertical Header", "", graph_vaxis_font, getColorString(graph_vh_color))}/
+                    paragraph_ += /${getTableRow("Horizontal Axis", "", "", getColorString(graph_ha_color))}/
+                    paragraph_ += /${getTableRow("Vertical Axis", "", "", getColorString(graph_va_color))}/
                     
                     if (graph_show_legend==true){
-                        paragraph_ += /${getTableRow("Legend", "", graph_legend_font, graph_legend_color)}/
+                        paragraph_ += /${getTableRow("Legend", "", graph_legend_font, getColorString(graph_legend_color))}/
                     } else {
                         paragraph_ += /${getTableRow("Legend", "NOT SHOWN", "", "")}/
                     }
-                    
-                    
-                    paragraph_ += /${getTableRow("Line", "", graph_line_thickness, graph_line_color)}/  
-                    paragraph_ += /${getTableRow("Background", "", "", graph_background_color)}/
+    
+                    paragraph_ += /${getTableRow("Background", "", "", getColorString(graph_background_color))}/
                     if (graph_static_size==true){
                         paragraph_ += /${getTableRow("Graph Size", "$graph_h_size X $graph_v_size", "","")}/
                     } else {
@@ -304,6 +338,11 @@ def getTableRow(col1, col2, col3, col4){
      html
 }
 
+def getTableRow2(col1, col2, col3, col4){
+     def html = "<tr><td width='30%'>$col1</td><td width='30%'>$col2</td><td width='30%'>$col3</td><td width='30%'>$col4</td></tr>"  
+     html
+}
+
 def getTitle(myText=""){
     def html = "<div class='row-full' style='background-color:#1A77C9;color:white;font-weight: bold'>"
     html += "${myText}</div>"
@@ -336,7 +375,7 @@ def initialize() {
 }
 
 private buildData() {
-    def resp = []
+    def resp = [:]
     def today = new Date();
     def then = new Date();
     
@@ -346,19 +385,25 @@ private buildData() {
     
     log.debug("Initializing:: Device = $sensor  Attribute = $attribute from $then to $today");
     
-    if(sensor) {
-      sensor.each {
-         log.debug("Checking:: $it.displayName $it $attribute");
-         resp << it?.eventsBetween(then, today, [max: 50000])?.findAll{"$it.name" == attribute}?.collect{[name: it.name, date: it.date, value: it.value]}
-      }
+    if(sensors) {
+        sensors.each { sensor ->
+            resp[sensor.id] = [:];
+            settings["attributes_${sensor.id}"].each { attribute ->
+                def respEvents = [];    
+                
+                log.debug("Checking:: $sensor.displayName: $attribute");
+                respEvents << sensor.eventsBetween(then, today, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date, value: it.value ]}
+                respEvents = respEvents.sort{ it.date };
+                respEvents = respEvents.flatten();
+                respEvents = respEvents.reverse();
+                
+                //convert the date to ms
+                respEvents = respEvents.collect{ [date: it.date.getTime(), value: it.value] }
+                
+                resp[sensor.id][attribute] = respEvents;
+            }
+        }
     }
-    
-   //Sort Data
-    resp = resp.sort{ it.date };
-    resp = resp.flatten();
-    resp = resp.reverse();
-    //convert the date to ms
-    resp = resp.collect{ [name: it.name, date: it.date.getTime(), value: it.value] }
     
     return resp;
 }
@@ -371,17 +416,32 @@ def getChartOptions(){
             "width": graph_static_size ? graph_h_size : "100%",
             "height": graph_static_size ? graph_v_size: "100%",
             "chartArea": [ "width": graph_static_size ? graph_h_size : "80%", "height": graph_static_size ? graph_v_size: "80%"],
-            "lineWidth": graph_line_thickness,
-            "colors": [getColorCode(graph_line_color)],
-            "hAxis": ["textStyle": ["fontSize": graph_haxis_font, "color": getColorCode(graph_hh_color)], "gridLines": ["color": getColorCode(graph_ha_color)]],
-            "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, "color": getColorCode(graph_vh_color)], "gridLines": ["color": getColorCode(graph_va_color)]],
-            "legend": !graph_show_legend ? ["position": "none"] : ["position": "bottom",  "textStyle": ["fontSize": graph_legend_font, "color": getColorCode(graph_title_color)]],
-            "backgroundColor": getColorCode(graph_background_color),
+            "hAxis": ["textStyle": ["fontSize": graph_haxis_font, "color": graph_hh_color], "gridLines": ["color": graph_ha_color]],
+            "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, "color": graph_vh_color], "gridLines": ["color": graph_va_color]],
+            "legend": !graph_show_legend ? ["position": "none"] : ["position": "bottom",  "textStyle": ["fontSize": graph_legend_font, "color": graph_title_color]],
+            "backgroundColor": graph_background_color,
             "curveType": !graph_smoothing ? "" : "function",
             "title": !graph_show_title ? "" : graph_title,
-            "titleTextStyle": !graph_show_title ? "" : ["fontSize": graph_title_font, "color": getColorCode(graph_title_color)]
+            "titleTextStyle": !graph_show_title ? "" : ["fontSize": graph_title_font, "color": graph_title_color],
+            "interpolateNulls": true, //for null vals on our chart
+            "series": []
         ]
-    ]
+    ];
+    
+    //add colors and thicknesses
+    sensors.each { sensor ->
+        settings["attributes_${sensor.id}"].each { attribute ->
+            def text_color = settings["graph_line_color_${sensor.id}_${attribute}"];
+            def line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute}"];
+            
+            def annotations = [
+                "color": text_color,
+                "lineWidth": line_thickness
+            ];
+            
+            options.graphOptions.series << annotations;  
+        }
+    }
     
     return options;
 }
@@ -409,11 +469,12 @@ def getLineGraph() {
       <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
       <script type="text/javascript">
 google.charts.load('current', {'packages':['corechart']});
-google.charts.setOnLoadCallback(onLoad);
 
 let options = [];
 let subscriptions = {};
-let graphData = [];
+let graphData = {};
+
+let websocket;
 
 function getOptions() {
     return jQuery.get("${state.localEndpointURL}getOptions/?access_token=${state.endpointSecret}", (data) => {
@@ -436,30 +497,20 @@ function getGraphData() {
     return jQuery.get("${state.localEndpointURL}getData/?access_token=${state.endpointSecret}", (data) => {
         console.log("Got Graph Data");
         console.log(data);
-        graphData = graphData.concat(data);
+        graphData = data;
     });
 }
 
 function parseEvent(event) {
     const now = new Date().getTime();
-
     let deviceId = event.deviceId;
 
     //only accept relevent events
-    let deviceIndex = -1;
-    //subscriptions.forEach((val) => {
-        //if we are subscribed to this certain type
-        //if(val) {
-            let index = subscriptions.sensor.idAsLong === deviceId && event.name === subscriptions.attributes[0] ? 0 : -1;
-            if(index != -1) deviceIndex = index;
-        //}
-   // });
-
-    if(deviceIndex != -1) {
+    if(subscriptions.ids.includes(deviceId) && subscriptions.attributes[deviceId].includes(event.name)) {
         let value = event.value;
-        let attribute = subscriptions.attributes[0];
+        let attribute = event.name;
 
-        graphData.push({ name: attribute, date: now, value: event.value })
+        graphData[deviceId][attribute].push({ date: now, value })
 
         //update if we are realtime
         if(options.graphUpdateRate === 0) update();
@@ -471,8 +522,11 @@ function update() {
     let min = new Date().getTime();
     min -= options.graphTimespan;
 
-    graphData = graphData.filter((it) => {
-        return it.date > min;
+    Object.entries(graphData).forEach(([deviceId, attributes]) => {
+        Object.entries(attributes).forEach(([attribute, events]) => {
+            //filter old events
+            graphData[deviceId][attribute] = events.filter(it => it.date > min);
+        });
     });
 
     drawChart();   
@@ -510,13 +564,66 @@ async function onLoad() {
     });
 }
 
+function onBeforeUnload() {
+    if(websocket) websocket.close();
+}
+
 function drawChart() {
-    let chartFormatData = [[{label: 'Date', type: 'date'}, {label: "${attribute}", type: 'number'}], ...graphData.map((it) => [moment(it.date).toDate(), it.value])];
-    let dataTable = google.visualization.arrayToDataTable(chartFormatData);
+    let now = new Date().getTime();
+    let min = now - options.graphTimespan;
+
+    let dataTable = new google.visualization.DataTable();
+    dataTable.addColumn({ label: 'Date', type: 'datetime' });
+
+    let colNums = {};
+
+    let i = 0;
+    subscriptions.ids.forEach((deviceId) => {
+        colNums[deviceId] = {};
+        subscriptions.attributes[deviceId].forEach((attr) => {
+            dataTable.addColumn({ label: subscriptions.sensors[deviceId].displayName + ": " + attr, type: 'number' });
+            colNums[deviceId][attr] = i++;
+        });
+    });
+
+    const totalCols = i;
+
+    let parsedGraphData = [];
+    //map the graph data
+    Object.entries(graphData).forEach(([deviceIndex, attributes]) => {
+        Object.entries(attributes).forEach(([attribute, events]) => {
+            events.forEach((event) => {
+                //try to find an already existing date
+                //let index = parsedGraphData.findIndex((val) => val[0] === event.date);
+                //if(index !== -1) parsedGraphData[index][colNums[deviceIndex][attribute] + 1] = event.value;
+                //else {
+                    //else make a new entry
+                    let newEntry = Array.apply(null, new Array(totalCols + 1));
+                    newEntry[0] = event.date;
+                    newEntry[colNums[deviceIndex][attribute] + 1] = event.value;
+                    parsedGraphData.push(newEntry);
+                //}
+            });
+            
+        });
+    });
+
+    parsedGraphData = parsedGraphData.map((it) => [ moment(it[0]).toDate(), ...it.slice(1).map((it) => parseFloat(it)) ]);
+
+    parsedGraphData.forEach(it => {
+        dataTable.addRow(it);
+    });
     let chart = new ${drawType}(document.getElementById("timeline"));
 
-    chart.draw(dataTable, options.graphOptions);
+    let graphOptions = Object.assign({}, options.graphOptions);
+
+    graphOptions.hAxis = Object.assign(graphOptions.hAxis, { viewWindow: { min: moment(min).toDate(), max: moment(now).toDate() } });
+
+    chart.draw(dataTable, graphOptions);
 }
+
+google.charts.setOnLoadCallback(onLoad);
+window.onBeforeUnload = onBeforeUnload;
         </script>
       </head>
       <body style="${fullSizeStyle}">
@@ -560,29 +667,6 @@ def initializeAppEndpoint() {
     return state.endpoint
 }
 
-def getColorCode(code){
-    switch (code){
-        case "Maroon":  ret = "#800000"; break;
-        case "Red":	    ret = "#FF0000"; break;
-        case "Orange":	ret = "#FFA500"; break;	
-        case "Yellow":	ret = "#FFFF00"; break;	
-        case "Olive":	ret = "#808000"; break;	
-        case "Green":	ret = "#008000"; break;	
-        case "Purple":	ret = "#800080"; break;	
-        case "Fuchsia":	ret = "#FF00FF"; break;	
-        case "Lime":	ret = "#00FF00"; break;	
-        case "Teal":	ret = "#008080"; break;	
-        case "Aqua":	ret = "#00FFFF"; break;	
-        case "Blue":	ret = "#0000FF"; break;	
-        case "Navy":	ret = "#000080"; break;	
-        case "Black":	ret = "#000000"; break;	
-        case "Gray":	ret = "#808080"; break;	
-        case "Silver":	ret = "#C0C0C0"; break;	
-        case "White":	ret = "#FFFFFF"; break;
-        case "Transparent": ret = "transparent"; break;
-    }
-}
-
 //oauth endpoints
 def getGraph() {
     render(contentType: "text/html", data: getLineGraph());      
@@ -607,9 +691,22 @@ def getOptions() {
 }
 
 def getSubscriptions() {
+    def ids = [];
+    def sensorsM = [:];
+    def attributes = [:];
+    sensors.each {
+        ids << it.idAsLong;
+        
+        //only take what we need
+        sensorsM[it.id] = [ id: it.id, idAsLong: it.idAsLong, displayName: it.displayName ];
+        
+        attributes[it.id] = settings["attributes_${it.id}"];
+    }
+    
     def obj = [
-        sensor: sensor,
-        attributes: [ attribute ]
+        ids: ids,
+        sensors: sensorsM,
+        attributes: attributes
     ]
     
     def subscriptions = obj;
