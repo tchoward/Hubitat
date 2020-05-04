@@ -19,6 +19,7 @@ import groovy.json.JsonOutput
 // Hubigraph Line Graph Changelog
 // v0.1 Initial release
 // v0.2 My son added webpage efficiencies, reduced load on hubitat by 75%.
+// V 0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
 // Credit to Alden Howard for optimizing the code.
  
 def ignoredEvents() { return [ 'lastReceive' , 'reachable' , 
@@ -56,15 +57,21 @@ preferences {
             ]
         }
     
-        path("/getData/:lastDateStamp/") {
+        path("/getData/") {
             action: [
                 GET: "getData"
             ]
         }
         
-        path("/getConfig/") {
+        path("/getOptions/") {
             action: [
-                GET: "getConfig"
+                GET: "getOptions"
+            ]
+        }
+        
+        path("/getSubscriptions/") {
+            action: [
+                GET: "getSubscriptions"
             ]
         }
     }
@@ -106,8 +113,8 @@ def graphSetupPage(){
     dynamicPage(name: "graphSetupPage") {
         section(){
             paragraph getTitle("General Options");
-            input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: false, options: [["0":"Never"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
-            input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: false, options: [["1":"1 hour"], ["2":"12 hours"], ["3":"1 day"], ["4":"3 days"], ["5":"1 Week"], ["6": "1 Minute"]], defaultValue: "3")        
+            input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: false, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
+            input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: false, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
             input( type: "enum", name: "graph_background_color", title: "Background Color", defaultValue: "White", options: colorEnum);
             input( type: "bool", name: "graph_smoothing", title: "Smooth Graph Points", defaultValue: true);
             input( type: "enum", name: "graph_type", title: "Graph Type", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph"] )
@@ -181,6 +188,37 @@ def enableAPIPage() {
     }
 }
 
+def getTimeString(string_){
+    //log.debug("Looking for $string_")
+    switch (string_.toInteger()){
+        case -1: return "Never";
+        case 0: return "Real Time"; 
+        case 1000:return "1 Second"; 
+        case 5000:return "5 Seconds"; 
+        case 60000:return "1 Minute"; 
+        case 300000:return "5 Minutes"; 
+        case 600000:return "10 Minutes"; 
+        case 1800000:return "Half Hour";
+        case 3600000:return "1 Hour";
+    }
+    log.debug("NOT FOUND");
+}
+
+def getTimsSpanString(string_){
+    switch (string_.toInteger()){
+        case -1: return "Never";
+        case 0: return "Real Time"; 
+        case 1000:return "1 Second"; 
+        case 5000:return "5 Seconds"; 
+        case 60000:return "1 Minute"; 
+        case 3600000:return "1 Hour";
+        case 43200000: return "12 Hours";
+        case 86400000: return "1 Day";
+        case 259200000: return "3 Days";
+        case 604800000: return "1 Week";
+    }
+    log.debug("NOT FOUND");
+}
 
 def mainPage() {
     dynamicPage(name: "mainPage") {        
@@ -198,22 +236,9 @@ def mainPage() {
                 }
                 
                 if (graph_update_rate){
-                    def timeString = "";
-                    switch (graph_timespan){
-                        case "1": timeString = "1 hour"; break;
-                        case "2": timeString = "12 hours"; break;
-                        case "3": timeString = "1 day"; break;
-                        case "4": timeString = "3 days"; break;
-                        case "5": timeString = "1 week"; break;
-                    }
-                    switch (graph_update_rate){
-                        case "1": rateString = "Never"; break;
-                        case "2": rateString = "1 minute"; break;
-                        case "3": rateString = "5 minutes"; break;
-                        case "4": rateString = "10 minutes"; break;
-                        case "5": rateString = "30 minutes"; break;
-                        case "6": rateString = "1 day"; break;
-                    }
+                    def timeString = getTimsSpanString(graph_timespan);
+                    def rateString = getTimeString(graph_update_rate);
+                    
                     def paragraph_ =  "<table>"
                     
                     
@@ -245,6 +270,7 @@ def mainPage() {
                     }
                     paragraph_ += /${getTableRow("Smoothing", graph_smoothing, "", "")}/
                     paragraph_ += /${getTableRow("Timespan", timeString,"","")}/
+                    paragraph_ += /${getTableRow("Graph Update Rate", rateString,"","")}/
                     paragraph_ += /${getTableRow("Graph Type", graph_type,"","")}/
                     
                     
@@ -302,18 +328,7 @@ def uninstalled() {
 }
 
 def updated() {
-    unsubscribe();
-    app.updateLabel(app_name);    
-    subscribe(sensor, attribute, eventHandler);
-    state.sensor_data = buildData();    
-}
-
-def eventHandler(evt){
-    state.sensor_data.add([name: evt.name, date: getDateStringEvent(evt.date), value: evt.value]);
-    
-    //Remove Invalid Data
-    dataCleanup();
-
+    app.updateLabel(app_name);
 }
 
 def initialize() {
@@ -325,10 +340,8 @@ private buildData() {
     def today = new Date();
     def then = new Date();
     
-    def mins = getGraphDuration();
-    
     use (groovy.time.TimeCategory) {
-           then -= mins.minutes;
+           then -= Integer.parseInt(graph_timespan).milliseconds;
     }
     
     log.debug("Initializing:: Device = $sensor  Attribute = $attribute from $then to $today");
@@ -336,75 +349,38 @@ private buildData() {
     if(sensor) {
       sensor.each {
          log.debug("Checking:: $it.displayName $it $attribute");
-         resp << it?.eventsBetween(then, today, [max: 50000])?.findAll{"$it.name" == attribute}?.collect{[name: it.name, date: it.date.toString(), value: it.value]}
+         resp << it?.eventsBetween(then, today, [max: 50000])?.findAll{"$it.name" == attribute}?.collect{[name: it.name, date: it.date, value: it.value]}
       }
     }
     
    //Sort Data
-    resp.sort{Date.parse("yyyy-MM-dd HH:mm:ss.SSS", it.date)};
+    resp = resp.sort{ it.date };
     resp = resp.flatten();
     resp = resp.reverse();
+    //convert the date to ms
+    resp = resp.collect{ [name: it.name, date: it.date.getTime(), value: it.value] }
     
-    
-    resp
-}
-
-def getGraphDuration() {
-    def mins;
-    
-    switch (graph_timespan){
-               case "1": mins = 1 * 60; break;
-               case "2": mins = 12 * 60; break;
-               case "3": mins = 24 * 60; break;
-               case "4": mins = 72 * 60; break;
-               case "5": mins = 168 * 60; break;
-               case "6": mins = 1; break;
-    }
-    
-    return mins;
-}
-
-def dataCleanup(){
-    def today = new Date();
-    def then = new Date();
-    
-    def mins = getGraphDuration();
-    
-    use (groovy.time.TimeCategory) {
-           then -= mins.minutes;
-    }
-    
-    cont = true;
-    while (cont==true){
-        date = Date.parse("yyyy-MM-dd HH:mm:ss.SSS", state.sensor_data[0].date.toString());
-        if (date.before(then)) {
-            state.sensor_data = state.sensor_data.drop(1);
-        } else {
-            cont = false;
-        }
-    }
-}
-
-def getDataLabel(){
-    def html = /{label: "$attribute", type: 'number'}],/
-    
-    html
+    return resp;
 }
 
 def getChartOptions(){
     def options = [
-        "width": graph_static_size ? graph_h_size : "100%",
-        "height": graph_static_size ? graph_v_size: "100%",
-        "chartArea": [ "width": graph_static_size ? graph_h_size : "80%", "height": graph_static_size ? graph_v_size: "80%"],
-        "lineWidth": graph_line_thickness,
-        "colors": [getColorCode(graph_line_color)],
-        "hAxis": ["textStyle": ["fontSize": graph_haxis_font, "color": getColorCode(graph_hh_color)], "gridLines": ["color": getColorCode(graph_ha_color)]],
-        "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, "color": getColorCode(graph_vh_color)], "gridLines": ["color": getColorCode(graph_va_color)]],
-        "legend": !graph_show_legend ? ["position": "none"] : ["position": "bottom",  "textStyle": ["fontSize": graph_legend_font, "color": getColorCode(graph_title_color)]],
-        "backgroundColor": getColorCode(graph_background_color),
-        "curveType": !graph_smoothing ? "" : "function",
-        "title": !graph_show_title ? "" : graph_title,
-        "titleTextStyle": !graph_show_title ? "" : ["fontSize": graph_title_font, "color": getColorCode(graph_title_color)]
+        "graphTimespan": Integer.parseInt(graph_timespan),
+        "graphUpdateRate": Integer.parseInt(graph_update_rate),
+        "graphOptions": [
+            "width": graph_static_size ? graph_h_size : "100%",
+            "height": graph_static_size ? graph_v_size: "100%",
+            "chartArea": [ "width": graph_static_size ? graph_h_size : "80%", "height": graph_static_size ? graph_v_size: "80%"],
+            "lineWidth": graph_line_thickness,
+            "colors": [getColorCode(graph_line_color)],
+            "hAxis": ["textStyle": ["fontSize": graph_haxis_font, "color": getColorCode(graph_hh_color)], "gridLines": ["color": getColorCode(graph_ha_color)]],
+            "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, "color": getColorCode(graph_vh_color)], "gridLines": ["color": getColorCode(graph_va_color)]],
+            "legend": !graph_show_legend ? ["position": "none"] : ["position": "bottom",  "textStyle": ["fontSize": graph_legend_font, "color": getColorCode(graph_title_color)]],
+            "backgroundColor": getColorCode(graph_background_color),
+            "curveType": !graph_smoothing ? "" : "function",
+            "title": !graph_show_title ? "" : graph_title,
+            "titleTextStyle": !graph_show_title ? "" : ["fontSize": graph_title_font, "color": getColorCode(graph_title_color)]
+        ]
     ]
     
     return options;
@@ -416,13 +392,14 @@ def getDrawType(){
         case "Area Graph": return "google.visualization.AreaChart";
     }
 }
+
 void removeLastChar(str) {
     str.subSequence(0, str.length() - 1)
     str
 }
 
 def getLineGraph() {
-    def fullSizeStyle = "width: 100%; height: 100%; overflow: hidden";
+    def fullSizeStyle = "margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden";
     
     def html = """
     <html style="${fullSizeStyle}">
@@ -431,73 +408,115 @@ def getLineGraph() {
       <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.0/moment.min.js" integrity="sha256-imB/oMaNA0YvIkDkF5mINRWpuFPEGVCEkHy6rm2lAzA=" crossorigin="anonymous"></script>
       <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
       <script type="text/javascript">
-        google.charts.load('current', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(onLoad);
+google.charts.load('current', {'packages':['corechart']});
+google.charts.setOnLoadCallback(onLoad);
 
-        let duration = ${getGraphDuration()};
+let options = [];
+let subscriptions = {};
+let graphData = [];
 
-        let options = [];
-        let graphData = [];
+function getOptions() {
+    return jQuery.get("${state.localEndpointURL}getOptions/?access_token=${state.endpointSecret}", (data) => {
+        options = data;
+        console.log("Got Options");
+        console.log(options);
+    });
+}
 
-        function getOptions() {
-            return jQuery.get("${state.localEndpointURL}getConfig/?access_token=${state.endpointSecret}", (data) => {
-                options = data;
-                console.log("Got Options");
-                console.log(options);
-            });
-        }
-
-        function getGraphData() {
-            return jQuery.get("${state.localEndpointURL}getData/" + (graphData.length === 0 ? btoa("none") : btoa(graphData[graphData.length - 1].date)) + "/?access_token=${state.endpointSecret}", (data) => {
-                console.log("Got Graph Data");
-                console.log(data);
-                graphData = graphData.concat(data);
-            });
-        }
-
-        async function update() {
-            try {
-                await getGraphData();
-            } finally {
-                //pop off the extras out of time bounds
-                graphData = graphData.filter((it) => {
-                    let itDate = moment(it.date).toDate();
-                    let min = new Date();
-                    min.setMinutes(min.getMinutes() - duration);
-                    return itDate.getTime() > min.getTime();
-                });
-
-                drawChart();
-            
-                let updateRate = parseInt(${graph_update_rate});
-                //reschedule update
-                if(updateRate) {
-                    setTimeout(() => {
-                        update();
-                    }, updateRate);
-                }
-            }
-        }
-
-        async function onLoad() {
-            //first load
-            await getOptions();
-
-            update();
-
-            //attach resize listener
-            window.addEventListener("resize", () => {
-                drawChart();
-            });
-        }
+function getSubscriptions() {
+    return jQuery.get("${state.localEndpointURL}getSubscriptions/?access_token=${state.endpointSecret}", (data) => {
+        console.log("Got Subscriptions");
+        console.log(data);
+        subscriptions = data;
         
-        function drawChart() {
-            let chartFormatData = [[{label: 'Date', type: 'date'}, {label: "${attribute}", type: 'number'}], ...graphData.map((it) => [moment(it.date).toDate(), it.value])];
-            let dataTable = google.visualization.arrayToDataTable(chartFormatData);
-            let chart = new ${drawType}(document.getElementById("timeline"));
+    });
+}
 
-            chart.draw(dataTable, options);
+function getGraphData() {
+    return jQuery.get("${state.localEndpointURL}getData/?access_token=${state.endpointSecret}", (data) => {
+        console.log("Got Graph Data");
+        console.log(data);
+        graphData = graphData.concat(data);
+    });
+}
+
+function parseEvent(event) {
+    const now = new Date().getTime();
+
+    let deviceId = event.deviceId;
+
+    //only accept relevent events
+    let deviceIndex = -1;
+    //subscriptions.forEach((val) => {
+        //if we are subscribed to this certain type
+        //if(val) {
+            let index = subscriptions.sensor.idAsLong === deviceId && event.name === subscriptions.attributes[0] ? 0 : -1;
+            if(index != -1) deviceIndex = index;
+        //}
+   // });
+
+    if(deviceIndex != -1) {
+        let value = event.value;
+        let attribute = subscriptions.attributes[0];
+
+        graphData.push({ name: attribute, date: now, value: event.value })
+
+        //update if we are realtime
+        if(options.graphUpdateRate === 0) update();
+    }
+}
+
+function update() {
+    //boot old data
+    let min = new Date().getTime();
+    min -= options.graphTimespan;
+
+    graphData = graphData.filter((it) => {
+        return it.date > min;
+    });
+
+    drawChart();   
+}
+
+async function onLoad() {
+    //first load
+    await getOptions();
+    await getSubscriptions();
+    await getGraphData();
+
+    update();
+
+    //start our update cycle
+    if(options.graphUpdateRate !== -1) {
+        //start websocket
+        websocket = new WebSocket("ws://" + location.hostname + "/eventsocket");
+        websocket.onopen = () => {
+            console.log("WebSocket Opened!");
         }
+        websocket.onmessage = (event) => {
+            parseEvent(JSON.parse(event.data));
+        }
+
+        if(options.graphUpdateRate !== 0) {
+            setInterval(() => {
+                update();
+            }, options.graphUpdateRate);
+        }
+    }
+
+    //attach resize listener
+    window.addEventListener("resize", () => {
+        drawChart();
+    });
+}
+
+function drawChart() {
+    let chartFormatData = [[{label: 'Date', type: 'date'}, {label: "${attribute}", type: 'number'}], ...graphData.map((it) => [moment(it.date).toDate(), it.value])];
+    let dataTable = google.visualization.arrayToDataTable(chartFormatData);
+    let chart = new ${drawType}(document.getElementById("timeline"));
+
+    chart.draw(dataTable, options.graphOptions);
+}
         </script>
       </head>
       <body style="${fullSizeStyle}">
@@ -579,39 +598,21 @@ def getDataMetrics() {
 }
 
 def getData() {
-    def rawDateStamp = params.lastDateStamp;
-    def lastDateStamp = new String(rawDateStamp.decodeBase64());
-    
-    def timeline = state.sensor_data;
-    
-    //return all data if no last Data Stamp is passed
-    if(lastDateStamp.equals("none")) {
-        return render(contentType: "text/json", data: JsonOutput.toJson(timeline));
-    } else {
-        def lastDateStampDate = Date.parse("yyyy-MM-dd HH:mm:ss.SSS", lastDateStamp);
-        def mostRecentDateStampDate = Date.parse("yyyy-MM-dd HH:mm:ss.SSS", timeline[timeline.size() - 1].date);
-        //if we actually have something newer
-        if(mostRecentDateStampDate > lastDateStampDate) {
-            //get the data we missed
-            int index = -1;
-            for(int i = timeline.size() - 1; i >= 0; i--) {
-                if(lastDateStamp.equals(timeline[i].date)) {
-                    index = i;
-                    break;
-                }
-            }
-        
-            //no data if error or no data
-            if(index == -1 || index == timeline.size() - 1) return render(contentType: "text/json", data: "[]");
-        
-            def subTimeline = timeline[(index + 1)..(timeline.size() - 1)];
-        
-            //check latest data 
-            return render(contentType: "text/json", data: JsonOutput.toJson(subTimeline));
-        } else return render(contentType: "text/json", data: "[]");
-    }
+    def timeline = buildData();
+    return render(contentType: "text/json", data: JsonOutput.toJson(timeline));
 }
 
-def getConfig() {
+def getOptions() {
     render(contentType: "text/json", data: JsonOutput.toJson(getChartOptions()));
+}
+
+def getSubscriptions() {
+    def obj = [
+        sensor: sensor,
+        attributes: [ attribute ]
+    ]
+    
+    def subscriptions = obj;
+    
+    return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
 }
