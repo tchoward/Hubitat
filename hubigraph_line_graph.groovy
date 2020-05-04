@@ -19,8 +19,9 @@ import groovy.json.*
 // Hubigraph Line Graph Changelog
 // v0.1 Initial release
 // v0.2 My son added webpage efficiencies, reduced load on hubitat by 75%.
-// V 0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
-// V 0.5 Multiple Lines on a Graph
+// v0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
+// v0.5 Multiple line support
+// v0.51 Select ANY device
 // Credit to Alden Howard for optimizing the code.
  
 def ignoredEvents() { return [ 'lastReceive' , 'reachable' , 
@@ -84,7 +85,7 @@ def deviceSelectionPage() {
     dynamicPage(name: "deviceSelectionPage") {
         section() { 
 	    
-            input "sensors", "capability.sensor", title: "Sensors", multiple: true, required: true, submitOnChange: true
+            input "sensors", "capability.*", title: "Sensors", multiple: true, required: true, submitOnChange: true
         
             if (sensors){
                 sensors.each {
