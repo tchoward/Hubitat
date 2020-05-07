@@ -84,6 +84,7 @@ def deviceSelectionPage() {
             input (type: "capability.switch", name: "switches", title: "Choose Switches", multiple: true);
             input (type: "capability.motionSensor", name: "motions", title: "Choose Motion Sensors", multiple: true);
             input (type: "capability.contactSensor", name: "contacts", title: "Choose Contact Sensors", multiple: true);
+            input (type: "capability.presenceSensor", name: "presences", title: "Choose Presence Sensors", multiple: true);
         }
     }
 }
@@ -198,19 +199,21 @@ def mainPage() {
          
                 
                     def paragraph_ = /<table width="100%" ID="Table2" style="margin: 0px;">/
-                    paragraph_ +=  "${getTableRow3("<i><u><b>DEVICE INFORMATION</b></u></i>", "","")}"
-                    paragraph_ +=  "${getTableRow3("<i><u>SWITCH</u></i>","<i><u>MOTION</u></i>","<i><u>CONTACTS</u></i>")}" 
+                    paragraph_ +=  "${getTableRow3("<i><u><b>DEVICE INFORMATION</b></u></i>", "","","")}"
+                    paragraph_ +=  "${getTableRow3("<i><u>SWITCH</u></i>","<i><u>MOTION</u></i>","<i><u>CONTACTS</u></i>","<i><u>PRESENCE</u></i>")}" 
                     num_switches = switches ?  switches.size() : 0;
                     num_motions = motions ?  motions.size() : 0;
                     num_contacts = contacts ?  contacts.size() : 0;
-                    max_ = Math.max(num_switches, Math.max(num_motions, num_contacts));
+                    num_presences = presences ?  presences.size() : 0;
+                    max_ = Math.max(num_switches, Math.max(num_motions, Math.max(num_contacts, num_presences)));
                 
-                    log.debug ("Max = $max_, $num_switches, $num_motions, $num_contacts");
+                    log.debug ("Max = $max_, $num_switches, $num_motions, $num_contacts, $num_presences");
                     for (i=0; i<max_; i++){
                         switchText = i<num_switches?switches[i]:"";
                         motionText = i<num_motions?motions[i]:"";
                         contactText = i<num_contacts?contacts[i]:"";
-                        paragraph_ += /${getTableRow3("$switchText", "$motionText", "$contactText")}/
+                        presenceText = i<num_presences?presences[i]:"";
+                        paragraph_ += /${getTableRow3("$switchText", "$motionText", "$contactText", "$presenceText" )}/
                     }    
                     paragraph_ += "</table>"
                     paragraph paragraph_
@@ -259,8 +262,8 @@ def getTableRow(col1, col2, col3, col4){
      html
 }
 
-def getTableRow3(col1, col2, col3){
-     def html = "<tr><td width='30%'>$col1</td><td width='30%'>$col2</td><td width='40%'>$col3</td></tr>"  
+def getTableRow3(col1, col2, col3, col4){
+     def html = "<tr><td width='23%'>$col1</td><td width='23%'>$col2</td><td width='23%'>$col3</td><td width='31%'>$col4</td></tr>"  
      html
 }
 
@@ -297,6 +300,7 @@ def getStartEventString(type) {
          case "switch": return "on";
          case "motion": return "active";
          case "contact": return "open";
+         case "presence": return "present";
     }
 }
 
@@ -305,6 +309,7 @@ def getEndEventString(type) {
          case "switch": return "off";
          case "motion": return "inactive";
          case "contact": return "closed";
+         case "presence": return "not present";
     }
 }
 
@@ -313,6 +318,7 @@ def buildData(){
     if (switches) data += buildDataCapability(switches, "switch");
     if (motions) data += buildDataCapability(motions, "motion");
     if (contacts) data += buildDataCapability(contacts, "contact");
+    if (presences) data += buildDataCapability(presences, "presence");
     return data;
 }
 
@@ -443,6 +449,7 @@ function parseEvent(event) {
         if(event.name == "switch") return event.value == "on";
         else if (event.name == "motion") return event.value == "active";
         else if (event.name == "contact") return event.value == "open";
+        else if (event.name == "presence") return event.value == "present";
     }
 
     let deviceId = event.deviceId;
@@ -687,7 +694,8 @@ def getSubscriptions() {
     def subscriptions = [
         switches: switches,
         motions: motions,
-        contacts: contacts
+        contacts: contacts,
+        presences: presences
     ]
     
     return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
