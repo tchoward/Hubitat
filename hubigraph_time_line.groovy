@@ -19,6 +19,7 @@
 // V 0.2 Fixed startup code which needed all three device types, now one will work
 // V 0.22 Update to support tiles
 // V 0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
+// V 0.4 Uses any device
  
 import groovy.json.JsonOutput
 
@@ -43,8 +44,9 @@ definition(
 preferences {
     section ("test"){
        page(name: "mainPage", title: "Main Page", install: true, uninstall: true)
-       page(name: "deviceSelectionPage")
-       page(name: "graphSetupPage")
+       page(name: "deviceSelectionPage", nextPage: "attributeConfigurationPage")
+       page(name: "attributeConfigurationPage", nextPage: "mainPage")
+       page(name: "graphSetupPage", nextPage: "mainPage")
        page(name: "enableAPIPage")
        page(name: "disableAPIPage")
     }
@@ -77,15 +79,62 @@ mappings {
     }
 }
 
-def deviceSelectionPage() {
+def getAttributeType(attrib, title){
+    
+    switch (attrib){
+         case "motion":         return ["motion", "Motion (active/inactive)"];
+         case "switch":         return ["switch", "Switch (on/off)"];
+         case "contact":        return ["contact", "Contact (open/close)"];
+         case "acceleration":   return ["acceleration", "Acceleration (active/inactive)"]
+         case "audioVolume":
+         case "number": return [title, "Number (Choose threshold)"];  
+    }
+}
+
+def deviceSelectionPage() {                  
           
     dynamicPage(name: "deviceSelectionPage") {
         section() { 
-            input (type: "capability.switch", name: "switches", title: "Choose Switches", multiple: true);
-            input (type: "capability.motionSensor", name: "motions", title: "Choose Motion Sensors", multiple: true);
-            input (type: "capability.contactSensor", name: "contacts", title: "Choose Contact Sensors", multiple: true);
+            input (type: "capability.*", name: "sensors", title: "Choose Sensors", multiple: true, submitOnChange: true);
+        
+            if (sensors) {
+                sensors.each {sensor->
+                    sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() };
+                    
+                    paragraph(sensor.displayName);
+                 
+                    input( type: "enum", name: "attributes_${sensor.id}", title: "Attributes to graph", required: true, multiple: true, options: sensor_attributes, defaultValue: "1", submitOnChange: false )
+                }
+            }
         }
     }
+
+}
+
+def attributeConfigurationPage() {
+    
+    def supportedTypes = [
+        "contact": ["start": "open", "end": "close"],
+        "switch": ["start": "on", "end": "off"],
+        "motion": ["start": "active", "end": "inactive"],
+        "other": ["open", "closed", "on", "off", "active", "inactive", "mute", "unmute", "not present", "present", "detected", "clear", "playing", "stopped", "locked", "unlocked", "disarmed", "armed home", "armed away", "not sleeping", "sleeping"]
+    ];
+                          
+          
+    dynamicPage(name: "attributeConfigurationPage") {
+        section() {
+            paragraph("Configure what counts as a 'start' or 'end' event for each attribute on the timeline. For example, Switches start when they are 'on' and end when they are 'off'.\n\nSome attributes will automatically populate. You can change them if you have a different configuration (chances are you won't).\n\nAdditionally, for devices with numeric values, you can define a range of values that count as 'start' or 'end'. For example, to select all the times a temperature is above 70.5 degrees farenheight, you would set the start to '> 70.5', and the end to '< 70.5'.\n\nSupported comparitors are: '<', '>', '<=', '>=', '==', '!='.\n\nBecause we are dealing with HTML, '<' is abbreviated to &amp;lt; after you save. That is completely normal. It will still work.");
+            sensors.each { sensor ->
+                def attributes = settings["attributes_${sensor.id}"];
+                attributes.each { attribute ->
+                    paragraph getTitle("${sensor.displayName}: ${attribute}");
+                    input( type: "text", name: "attribute_${sensor.id}_${attribute}_start", title: "Start event value", defaultValue: supportedTypes[attribute] ? supportedTypes[attribute].start : null, required: true);
+                    input( type: "text", name: "attribute_${sensor.id}_${attribute}_end", title: "End event value", defaultValue: supportedTypes[attribute] ? supportedTypes[attribute].end : null, required: true);
+                }
+            }
+        }
+    }
+
 }
 
 
@@ -191,7 +240,7 @@ def mainPage() {
                 paragraph "API has not been setup. Tap below to enable it."
                 href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
             } else {
-                href name: "deviceSelectionPage", title: "Select Device/Data", description: "", page: "deviceSelectionPage" 
+                href name: "deviceSelectionPage", title: "Select Device/Data", description: "", page: "deviceSelectionPage"
                 href name: "graphSetupPage", title: "Configure Graph", description: "", page: "graphSetupPage"
                 paragraph getLine();
                 paragraph "<i><u><b>LOCAL GRAPH URL</b></u></i>\n${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
@@ -292,32 +341,8 @@ def updated() {
     state.dataName = attribute;  
 }
 
-def getStartEventString(type) {
-    switch (type){
-         case "switch": return "on";
-         case "motion": return "active";
-         case "contact": return "open";
-    }
-}
-
-def getEndEventString(type) {
-    switch (type){
-         case "switch": return "off";
-         case "motion": return "inactive";
-         case "contact": return "closed";
-    }
-}
-
-def buildData(){
-    def data = []; 
-    if (switches) data += buildDataCapability(switches, "switch");
-    if (motions) data += buildDataCapability(motions, "motion");
-    if (contacts) data += buildDataCapability(contacts, "contact");
-    return data;
-}
-
-def buildDataCapability(device_type, capability_) {
-    def resp = []
+def buildData() {
+    def resp = [:]
     def now = new Date();
     def then = new Date();
     
@@ -325,47 +350,20 @@ def buildDataCapability(device_type, capability_) {
            then -= Integer.parseInt(graph_timespan).milliseconds;
     }
     
-    def start_event = getStartEventString(capability_);
-    def end_event = getEndEventString(capability_);
-    
-    log.debug("Initializing:: Capability = $capability_ from $then to $now");
-    
-    if(device_type) {
-      device_type.each {it->  
-          temp = it?.eventsBetween(then, now, [max: 500000])?.findAll{it.value == start_event || it.value == end_event}?.collect{[date: it.date, value: it.value]}
-          temp = temp.sort{ it.date };
-          temp = temp.collect{ [date: it.date.getTime(), value: it.value] }
-          
-          //Final Parsing
-          //firstTime = true;
-          //temp_start = null;
-          //place a short "start event to force the graph to the right range
-          finalList = [];
-          
-          if(temp.size() > 0) {
-              //if our first event is an end event, start at 1
-              for(int i = temp[0].value == start_event ? 0 : 1; i < temp.size() - 1; i += 2) {
-                  if(temp[i].date < temp[i + 1].date) finalList << [start: temp[i].date, end: temp[i + 1].date];
-              }
-          
-              //add orphaned nodes
-              if(temp[0].value != start_event) {
-                  finalList.add(0, [end: temp[0].date]);
-              } else if (temp[temp.size() - 1].value != end_event) {
-                  finalList << [start: temp[temp.size() - 1].date];
-              }
+    if(sensors) {
+      sensors.each {sensor ->
+          def attributes = settings["attributes_${sensor.id}"];
+          resp[sensor.id] = [:];
+          attributes.each { attribute ->
+              temp = sensor?.eventsBetween(then, now, [max: 500000])?.findAll{it.name == attribute}?.collect{[date: it.date, value: it.value]}
+              temp = temp.sort{ it.date };
+              temp = temp.collect{ [date: it.date.getTime(), value: it.value] }
+              
+              resp[sensor.id][attribute] = temp;
           }
-          //if it's already on, add an event
-          else if(it.currentState(capability_).value.equals(start_event)) {
-              finalList << [start: then.getDate()];
-          }
-          
-          resp << [id_:it.deviceId, events_:finalList];
       }
       
    }
-   
-   
    return resp
 }
 
@@ -399,6 +397,7 @@ def getTimeLine() {
         <head>
             <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.0/moment.min.js" integrity="sha256-imB/oMaNA0YvIkDkF5mINRWpuFPEGVCEkHy6rm2lAzA=" crossorigin="anonymous"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/he/1.2.0/he.min.js" integrity="sha256-awnFgdmMV/qmPoT6Fya+g8h/E4m0Z+UFwEHZck/HRcc=" crossorigin="anonymous"></script>
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
             <script type="text/javascript">
 google.charts.load('current', {'packages':['timeline']});
@@ -407,6 +406,7 @@ google.charts.setOnLoadCallback(onLoad);
 let options = [];
 let subscriptions = {};
 let graphData = {};
+let unparsedData = {};
 
 let websocket;
 
@@ -431,7 +431,7 @@ function getGraphData() {
     return jQuery.get("${state.localEndpointURL}getData/?access_token=${state.endpointSecret}", (data) => {
         console.log("Got Graph Data");
         console.log(data);
-        graphData = data;
+        unparsedData = data;
         
     });
 }
@@ -439,33 +439,20 @@ function getGraphData() {
 function parseEvent(event) {
     const now = new Date().getTime();
 
-    function getIsStart() {
-        if(event.name == "switch") return event.value == "on";
-        else if (event.name == "motion") return event.value == "active";
-        else if (event.name == "contact") return event.value == "open";
-    }
-
     let deviceId = event.deviceId;
+    let attribute = event.name;
 
     //only accept relevent events
-    let deviceIndex = -1;
-    Object.entries(subscriptions).forEach(([key, val]) => {
-        //if we are subscribed to this certain type
-        if(val) {
-            let index = val.findIndex((it) => it.idAsLong === deviceId);
-            if(index != -1) deviceIndex = index;
-        }
-    });
-
-    if(deviceIndex != -1) {
-        let isStart = getIsStart();
-        let pastEvents = graphData[deviceId];
+    if(Object.keys(subscriptions.sensors).includes("" + deviceId) && Object.keys(subscriptions.definitions[deviceId]).includes(attribute)) {
+        const pastEvents = graphData[deviceId][attribute];
         if(pastEvents.length > 0) {
-            if(!isStart && !pastEvents[pastEvents.length - 1].end) pastEvents[pastEvents.length - 1].end = now;
-            //if we have an end event last
-            else if(isStart && pastEvents[pastEvents.length - 1].end) {
-                pastEvents.push({ start: now });
-            }
+            const start_event = subscriptions.definitions[deviceId][attribute].start;
+            const end_event = subscriptions.definitions[deviceId][attribute].end;
+            const is_start = evalTest(start_event, event.value);
+            const is_end = evalTest(end_event, event.value);
+
+            if(is_end && !pastEvents[pastEvents.length - 1].end) pastEvents[pastEvents.length - 1].end = now;
+            else if(is_start && pastEvents[pastEvents.length - 1].end) pastEvents.push({ start: now });
         } else {
             pastEvents.push({ start: now });
         }
@@ -475,30 +462,63 @@ function parseEvent(event) {
     }
 }
 
+function evalTest(evalStrPre, value) {
+    const evalStr = he.decode(evalStrPre);
+    const operatorMatch = evalStr.replace(' ', '').match(/(<=)|(>=)|<|>|(==)|(!=)/g);
+
+    if(operatorMatch) {
+        const operator = operatorMatch[0];
+        const rest = parseFloat(evalStr.replace(operator, ''));
+        const floatValue = parseFloat(value);
+
+        switch (operator) {
+            case '<':
+                return floatValue < rest;
+            case '>':
+                return floatValue > rest;
+            case '==':
+                return floatValue == rest;
+            case '!=':
+                return floatValue != rest;
+            case '<=':
+                return floatValue <= rest;
+            case '>=':
+                return floatValue >= rest;
+            default:
+                
+        }
+    } else {
+        return value == evalStr;
+    }   
+}
+
 async function update() {
     let now = new Date().getTime();
     let min = now;
     min -= options.graphTimespan;
 
+    //parse data
+
     //boot old data
-    Object.entries(graphData).forEach(([name, arr]) => {
+    Object.entries(graphData).forEach(([id, allEvents]) => {
+        Object.entries(allEvents).forEach(([attribute, events]) => {
         //shift left points and mark for deletion if applicable
-        let newArr = arr.map(it => {
-            let ret = { ...it }
+            let newArr = events.map(it => {
+                let ret = { ...it }
 
-            if(it.end && it.end < min) {
-                ret = {};
-            }
-            else if(it.start && it.start < min) ret.start = min;
-            
+                if(it.end && it.end < min) {
+                    ret = {};
+                }
+                else if(it.start && it.start < min) ret.start = min;
 
-            return ret;
+                return ret;
+            });
+
+            //delete non-existant nodes
+            newArr = newArr.filter(it => it.start || it.end);
+
+            graphData[id][attribute] = newArr;
         });
-
-        //delete non-existant nodes
-        newArr = newArr.filter(it => it.start || it.end);
-
-        graphData[name] = newArr;
     });
 
     drawChart(now, min);
@@ -510,6 +530,42 @@ async function onLoad() {
     await getSubscriptions();
     await getGraphData();
 
+    let now = new Date().getTime();
+    let min = now;
+    min -= options.graphTimespan;
+
+    //parse data
+    Object.entries(unparsedData).forEach(([id, allEvents]) => {
+        graphData[id] = {};
+        Object.entries(allEvents).forEach(([attribute, events]) => {
+            graphData[id][attribute] = [];
+            const start_event = subscriptions.definitions[id][attribute].start;
+            const end_event = subscriptions.definitions[id][attribute].end;
+
+            const  thisOut = graphData[id][attribute];
+            if(events.length > 0) {
+                //if our first event is an end event, start at 1
+                thisOut.push(evalTest(start_event, events[0].value) ? { start: events[0].date } : { end: events[0].date });
+                for(let i = 1; i < events.length; i++) {
+                    const is_start = evalTest(start_event, events[i].value);
+                    const is_end = evalTest(end_event, events[i].value);
+                    
+                    //always add the first event
+                    if(is_end && !thisOut[thisOut.length - 1].end) thisOut[thisOut.length - 1].end = events[i].date;
+                    else if(is_start && thisOut[thisOut.length - 1].end) thisOut.push({ start: events[i].date });
+                }
+            }
+            //if it's already on, add an event
+            else if(evalTest(start_event, subscriptions.sensors[id].currentStates.find((it) => it.name == attribute).value)) {
+                thisOut.push({ start: min });
+            }
+        });
+    });
+
+    console.log("Parsed Data");
+    console.log(Object.assign({}, graphData));
+
+    //update data
     update();
 
     //start our update cycle
@@ -546,37 +602,32 @@ function drawChart(now, min) {
     dataTable.addColumn({ type: 'date', id: 'Start' });
     dataTable.addColumn({ type: 'date', id: 'End' });
 
-    Object.entries(graphData).forEach(([deviceId, arr]) => {
-        let newArr = [...arr];
+    Object.entries(graphData).forEach(([id, allEvents]) => {
+        Object.entries(allEvents).forEach(([attribute, events]) => {
+            let newArr = [...events];
 
-        //add endpoints for orphans
-        newArr = newArr.map((it) => {
-            if(!it.start) {
-                return {...it, start: min }
+            //add endpoints for orphans
+            newArr = newArr.map((it) => {
+                if(!it.start) {
+                    return {...it, start: min }
+                }
+                else if(!it.end) return {...it, end: now}
+                return it;
+            });
+
+            //add endpoint buffers
+            if(newArr.length == 0) {
+                newArr.push({ start: min, end: min });
+                newArr.push({ start: now, end: now });
+            } else {
+                if(newArr[0].start != min) newArr.push({ start: min, end: min });
+                if(newArr[newArr.length - 1].end != now) newArr.push({ start: now, end: now });
             }
-            else if(!it.end) return {...it, end: now}
-            return it;
+
+            let name = subscriptions.sensors[id].displayName;
+
+            dataTable.addRows(newArr.map((parsed) => [name + " : " + attribute, moment(parsed.start).toDate(), moment(parsed.end).toDate()]));
         });
-
-        //add endpoint buffers
-        if(newArr.length == 0) {
-            newArr.push({ start: min, end: min });
-            newArr.push({ start: now, end: now });
-        } else {
-            if(newArr[0].start != min) newArr.push({ start: min, end: min });
-            if(newArr[newArr.length - 1].end != now) newArr.push({ start: now, end: now });
-        }
-
-        let name;
-        Object.entries(subscriptions).forEach(([key, val]) => {
-            //if we are subscribed to this certain type
-            if(val) {
-                let found = val.find(it => it.id === deviceId);
-                if(found) name = found.displayName;
-            }
-        });
-
-        dataTable.addRows(newArr.map((parsed) => [name, moment(parsed.start).toDate(), moment(parsed.end).toDate()]));
     });
 
     
@@ -667,16 +718,16 @@ def getGraph() {
 def getData() {
     def timeline = buildData();
     
-    def formatEvents = [:];
+    /*def formatEvents = [:];
     
     timeline.each{device->
         formatEvents[device.id_] = [];
         device.events_.each{event->
             formatEvents[device.id_] << ["start": event.start, "end": event.end];
         }
-    }
+    }*/
         
-    return render(contentType: "text/json", data: JsonOutput.toJson(formatEvents));
+    return render(contentType: "text/json", data: JsonOutput.toJson(timeline));
 }
 
 def getOptions() {
@@ -684,11 +735,24 @@ def getOptions() {
 }
 
 def getSubscriptions() {
+    def definitions = [:]
+    sensors.each { sensor ->
+        definitions[sensor.id] = [:];
+        def attributes = settings["attributes_${sensor.id}"];
+        attributes.each { attribute ->
+            definitions[sensor.id][attribute] = ["start": settings["attribute_${sensor.id}_${attribute}_start"], "end": settings["attribute_${sensor.id}_${attribute}_end"]];
+        }
+    }
+                                                                                    
+    def sensors_fmt = [:];
+    sensors.each { it ->
+        sensors_fmt[it.id] = [ "id": it.id, "displayName": it.displayName, "currentStates": it.currentStates ];
+    }
+    
     def subscriptions = [
-        switches: switches,
-        motions: motions,
-        contacts: contacts
-    ]
+        "sensors": sensors_fmt,
+        "definitions": definitions
+    ];
     
     return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
 }
