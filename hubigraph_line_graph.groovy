@@ -22,6 +22,8 @@ import groovy.json.*
 // v0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
 // v0.5 Multiple line support
 // v0.51 Select ANY device
+// v0.60 Select AXIS to graph on
+    
 // Credit to Alden Howard for optimizing the code.
  
 def ignoredEvents() { return [ 'lastReceive' , 'reachable' , 
@@ -90,10 +92,9 @@ def deviceSelectionPage() {
             if (sensors){
                 sensors.each {
                     sensor_events = it.events([max:250]).name;
-                    supported_attrs = sensor_events.unique(false);
-                    
+                    supported_attrs = sensor_events.unique(false);           
                     paragraph(it.displayName);
-                    input( type: "enum", name: "attributes_${it.id}", title: "Attributes to graph", required: true, multiple: true, options: supported_attrs, defaultValue: "1", submitOnChange: true )
+                    input( type: "enum", name: "attributes_${it.id}", title: "Attributes to graph", required: true, multiple: true, options: supported_attrs, defaultValue: "1")
                 }
             }
         }
@@ -117,6 +118,7 @@ def graphSetupPage(){
             input( type: "bool", name: "graph_smoothing", title: "Smooth Graph Points", defaultValue: true);
             input( type: "enum", name: "graph_type", title: "Graph Type", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph"] )
             
+                        
             //Title
            
             paragraph getTitle("Title");
@@ -136,13 +138,20 @@ def graphSetupPage(){
             }
             
             //Axis
-            paragraph getTitle("Graph Axis");
+            paragraph getTitle("Horizontal Axis");
             input( type: "enum", name: "graph_haxis_font", title: "Horizonal Axis Font Size", defaultValue: "9", options: fontEnum); 
             input( type: "enum", name: "graph_hh_color", title: "Horizonal Header Color", defaultValue: "Black", options: colorEnum);
             input( type: "enum", name: "graph_ha_color", title: "Horizonal Axis Color", defaultValue: "Gray", options: colorEnum);
+            paragraph getTitle("Vertical Axis");
             input( type: "enum", name: "graph_vaxis_font", title: "Vertical Font Size", defaultValue: "9", options: fontEnum); 
             input( type: "enum", name: "graph_vh_color", title: "Vertical Header Color", defaultValue: "Black", options: colorEnum);
             input( type: "enum", name: "graph_va_color", title: "Vertical Axis Color", defaultValue: "Gray", options: colorEnum);
+            paragraph getTitle("Left Axis");
+            input( type: "number", name: "graph_vaxis_1_min", title: "Minimum for left axis (blank for auto)", defaultValue: "", range: "");
+            input( type: "number", name: "graph_vaxis_1_max", title: "Maximum for left axis (blank for auto)", defaultValue: "", range: "");
+            paragraph getTitle("Right Axis");
+            input( type: "number", name: "graph_vaxis_2_min", title: "Minimum for right axis (blank for auto)", defaultValue: "", range: "");
+            input( type: "number", name: "graph_vaxis_2_max", title: "Maximum for right axis (blank for auto)", defaultValue: "", range: "");
             
             //Legend
             paragraph getTitle("Legend");
@@ -156,6 +165,7 @@ def graphSetupPage(){
             sensors.each { sensor ->
                 settings["attributes_${sensor.id}"].each { attribute ->
                     paragraph getTitle("Line for ${sensor.displayName}: ${attribute}");
+                    input( type: "enum", name: "graph_axis_number_${sensor.id}_${attribute}", title: "Graph Axis Number", defaultValue: "0", options: [["0" : "Left Axis"], ["1": "Right Axis"]]);
                     input( type: "enum", name: "graph_line_color_${sensor.id}_${attribute}", title: "Line Color", defaultValue: "Blue", options: colorEnum); 
                     input( type: "enum", name: "graph_line_thickness_${sensor.id}_${attribute}", title: "Line Thickness", defaultValue: "2", options: fontEnum); 
                 }
@@ -256,12 +266,13 @@ def mainPage() {
                 if (sensors){
                     def paragraph_ = /${getLine()}/
                     paragraph_ +=  "<table>"
-                    paragraph_ +=   "${getTableRow2("<b><u>DEVICE</b></u>", "<b><u>ATTRIBUTES</b></u>", "<b><u>LINE COLOR</b></u>", "<b><u>LINE WIDTH</b></u>")}"
+                    paragraph_ +=   "${getTableRow2("<b><u>DEVICE</b></u>", "<b><u>ATTRIBUTES</b></u>", "<b><u>LINE COLOR</b></u>", "<b><u>LINE WIDTH</b></u>", "<b><u>AXIS</b></u>")}"
                     sensors.each { sensor ->
                         settings["attributes_${sensor.id}"].each { attribute_ ->
                             text_color = settings["graph_line_color_${sensor.id}_${attribute_}"];
                             line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute_}"];
-                            paragraph_ += /${getTableRow2("$sensor", "$attribute_", "${getColorString(text_color)}", "$line_thickness")}/
+                            if (settings["graph_axis_number_${sensor.id}_${attribute_}"]=="0") axis_num = "LEFT" else axis_num = "RIGHT"
+                            paragraph_ += /${getTableRow2("$sensor", "$attribute_", "${getColorString(text_color)}", "$line_thickness", "$axis_num")}/
                            
                         }
                       
@@ -339,8 +350,8 @@ def getTableRow(col1, col2, col3, col4){
      html
 }
 
-def getTableRow2(col1, col2, col3, col4){
-     def html = "<tr><td width='30%'>$col1</td><td width='30%'>$col2</td><td width='30%'>$col3</td><td width='30%'>$col4</td></tr>"  
+def getTableRow2(col1, col2, col3, col4, col5){
+     def html = "<tr><td width='30%'>$col1</td><td width='30%'>$col2</td><td width='20%'>$col3</td><td width='20%'>$col4</td><td width='20%'>$col5</td></tr>"  
      html
 }
 
@@ -419,23 +430,29 @@ def getChartOptions(){
             "chartArea": [ "width": graph_static_size ? graph_h_size : "80%", "height": graph_static_size ? graph_v_size: "80%"],
             "hAxis": ["textStyle": ["fontSize": graph_haxis_font, "color": graph_hh_color], "gridLines": ["color": graph_ha_color]],
             "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, "color": graph_vh_color], "gridLines": ["color": graph_va_color]],
+            "vAxes": [
+                0: ["label": "Axis 1", "viewWindow": ["min": graph_vaxis_1_min != "" ?  graph_vaxis_1_min : null, "max":  graph_vaxis_1_max != "" ?  graph_vaxis_1_max : null]],
+                1: ["label": "Axis 1", "viewWindow": ["min": graph_vaxis_2_min != "" ?  graph_vaxis_2_min : null, "max":  graph_vaxis_2_max != "" ?  graph_vaxis_2_max : null]]
+            ],
             "legend": !graph_show_legend ? ["position": "none"] : ["position": "bottom",  "textStyle": ["fontSize": graph_legend_font, "color": graph_title_color]],
             "backgroundColor": graph_background_color,
             "curveType": !graph_smoothing ? "" : "function",
             "title": !graph_show_title ? "" : graph_title,
             "titleTextStyle": !graph_show_title ? "" : ["fontSize": graph_title_font, "color": graph_title_color],
             "interpolateNulls": true, //for null vals on our chart
-            "series": []
+            "series": [],
         ]
     ];
     
     //add colors and thicknesses
     sensors.each { sensor ->
         settings["attributes_${sensor.id}"].each { attribute ->
+            def axis = Integer.parseInt(settings["graph_axis_number_${sensor.id}_${attribute}"]);
             def text_color = settings["graph_line_color_${sensor.id}_${attribute}"];
             def line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute}"];
             
             def annotations = [
+                "targetAxisIndex": axis,
                 "color": text_color,
                 "lineWidth": line_thickness
             ];
