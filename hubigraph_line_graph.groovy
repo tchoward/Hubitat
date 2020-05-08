@@ -23,6 +23,7 @@ import groovy.json.*
 // v0.5 Multiple line support
 // v0.51 Select ANY device
 // v0.60 Select AXIS to graph on
+// v0.70 A lot more options
     
 // Credit to Alden Howard for optimizing the code.
  
@@ -117,8 +118,8 @@ def graphSetupPage(){
             input( type: "enum", name: "graph_background_color", title: "Background Color", defaultValue: "White", options: colorEnum);
             input( type: "bool", name: "graph_smoothing", title: "Smooth Graph Points", defaultValue: true);
             input( type: "enum", name: "graph_type", title: "Graph Type", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph"] )
-            
-                        
+            input( type: "bool", name: "graph_y_orientation", title: "Flip Graph to Vertical (Rotate 90 degrees)", defaultValue: false);
+            input( type: "bool", name: "graph_z_orientation", title: "Reverse Data Order? (Flip Data left to Right)", defaultValue: false);            
             //Title
            
             paragraph getTitle("Title");
@@ -127,6 +128,7 @@ def graphSetupPage(){
                 input( type: "text", name: "graph_title", title: "Input Graph Title", default: "Graph Title");
                 input( type: "enum", name: "graph_title_font", title: "Graph Title Font", defaultValue: "9", options: fontEnum); 
                 input( type: "enum", name: "graph_title_color", title: "Graph Title Color", defaultValue: "Black", options: colorEnum); 
+                input( type: "bool", name: "graph_title_inside", title: "Put Title Inside Graph", defaultValue: false);
             }
             
             //Size
@@ -142,23 +144,46 @@ def graphSetupPage(){
             input( type: "enum", name: "graph_haxis_font", title: "Horizonal Axis Font Size", defaultValue: "9", options: fontEnum); 
             input( type: "enum", name: "graph_hh_color", title: "Horizonal Header Color", defaultValue: "Black", options: colorEnum);
             input( type: "enum", name: "graph_ha_color", title: "Horizonal Axis Color", defaultValue: "Gray", options: colorEnum);
+            input( type: "number", name: "graph_h_num_grid", title: "Num Horizontal Gridlines (blank for auto)", defaultValue: "", range: "0..100");
+            
             paragraph getTitle("Vertical Axis");
             input( type: "enum", name: "graph_vaxis_font", title: "Vertical Font Size", defaultValue: "9", options: fontEnum); 
             input( type: "enum", name: "graph_vh_color", title: "Vertical Header Color", defaultValue: "Black", options: colorEnum);
             input( type: "enum", name: "graph_va_color", title: "Vertical Axis Color", defaultValue: "Gray", options: colorEnum);
+            
             paragraph getTitle("Left Axis");
             input( type: "number", name: "graph_vaxis_1_min", title: "Minimum for left axis (blank for auto)", defaultValue: "", range: "");
             input( type: "number", name: "graph_vaxis_1_max", title: "Maximum for left axis (blank for auto)", defaultValue: "", range: "");
+            input( type: "number", name: "graph_vaxis_1_num_lines", title: "Num gridlines (blank for auto)", defaultValue: "", range: "0..100");
+            input( type: "bool", name: "graph_show_left_label", title: "Show Left Axis Label on Graph", defaultValue: false, submitOnChange: true);
+            if (graph_show_left_label==true){
+                input( type: "text", name: "graph_left_label", title: "Input Left Axis Label", default: "Left Axis Label");
+                input( type: "enum", name: "graph_left_font", title: "Left Axis Font Size", defaultValue: "9", options: fontEnum); 
+                input( type: "enum", name: "graph_left_color", title: "Left Axis Color", defaultValue: "White", options: colorEnum);
+            }
+            
             paragraph getTitle("Right Axis");
             input( type: "number", name: "graph_vaxis_2_min", title: "Minimum for right axis (blank for auto)", defaultValue: "", range: "");
             input( type: "number", name: "graph_vaxis_2_max", title: "Maximum for right axis (blank for auto)", defaultValue: "", range: "");
+            input( type: "number", name: "graph_vaxis_2_num_lines", title: "Num gridlines (blank for auto) -- Must be greater than num tics to be effective", defaultValue: "", range: "0..100");
+            input( type: "bool", name: "graph_show_right_label", title: "Show Right Axis Label on Graph", defaultValue: false, submitOnChange: true);
+            if (graph_show_right_label==true){
+                input( type: "text", name: "graph_right_label", title: "Input Right Axis Label", default: "Right Axis Label");
+                input( type: "enum", name: "graph_right_font", title: "Right Axis Font Size", defaultValue: "9", options: fontEnum); 
+                input( type: "enum", name: "graph_right_color", title: "Right Axis Color", defaultValue: "White", options: colorEnum);
+             }
             
             //Legend
+            def legendPosition = [["top": "Top"], ["bottom":"Bottom"], ["in": "Inside Top"]];
+            def insidePosition = [["start": "Left"], ["center": "Center"], ["end": "Right"]];
             paragraph getTitle("Legend");
             input( type: "bool", name: "graph_show_legend", title: "Show Legend on Graph", defaultValue: false, submitOnChange: true);
             if (graph_show_legend==true){
                 input( type: "enum", name: "graph_legend_font", title: "Legend Font Size", defaultValue: "9", options: fontEnum); 
-                input( type: "enum", name: "graph_legend_color", title: "Legends Color", defaultValue: "Black", options: colorEnum); 
+                input( type: "enum", name: "graph_legend_color", title: "Legends Color", defaultValue: "Black", options: colorEnum);
+                input( type: "enum", name: "graph_legend_position", title: "Legend Position", defaultValue: "Bottom", options: legendPosition);
+                input( type: "enum", name: "graph_legend_inside_position", title: "Legend Justification", defaultValue: "center", options: insidePosition);
+                
             }
             
             //Line
@@ -428,19 +453,48 @@ def getChartOptions(){
             "width": graph_static_size ? graph_h_size : "100%",
             "height": graph_static_size ? graph_v_size: "100%",
             "chartArea": [ "width": graph_static_size ? graph_h_size : "80%", "height": graph_static_size ? graph_v_size: "80%"],
-            "hAxis": ["textStyle": ["fontSize": graph_haxis_font, "color": graph_hh_color], "gridLines": ["color": graph_ha_color]],
-            "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, "color": graph_vh_color], "gridLines": ["color": graph_va_color]],
+            "hAxis": ["textStyle": ["fontSize": graph_haxis_font, "color": graph_hh_color], 
+                      "gridlines": ["color": graph_ha_color, 
+                                    "count": graph_h_num_grid != "" ? graph_h_num_grid : null
+                                   ]
+                     
+                     ],
+            "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, 
+                                    "color": graph_vh_color], 
+                      "gridLines": ["color": graph_va_color],
+                     ],
             "vAxes": [
-                0: ["label": "Axis 1", "viewWindow": ["min": graph_vaxis_1_min != "" ?  graph_vaxis_1_min : null, "max":  graph_vaxis_1_max != "" ?  graph_vaxis_1_max : null]],
-                1: ["label": "Axis 1", "viewWindow": ["min": graph_vaxis_2_min != "" ?  graph_vaxis_2_min : null, "max":  graph_vaxis_2_max != "" ?  graph_vaxis_2_max : null]]
+                0: ["title" : graph_show_left_label ? graph_left_label: null,  
+                    "titleTextStyle": ["color": graph_left_color, "fontSize": graph_left_font],
+                    "viewWindow": ["min": graph_vaxis_1_min != "" ?  graph_vaxis_1_min : null, 
+                                   "max":  graph_vaxis_1_max != "" ?  graph_vaxis_1_max : null],
+                    "gridlines": ["count" : graph_vaxis_1_num_tics != "" ? graph_vaxis_1_num_tics : null ],
+                    "minorGridlines": ["count" : 0]
+                   ],
+                
+                1: ["title": graph_show_right_label ? graph_right_label : null,
+                    "titleTextStyle": ["color": graph_right_color, "fontSize": graph_right_font],
+                    "viewWindow": ["min": graph_vaxis_2_min != "" ?  graph_vaxis_2_min : null, 
+                                   "max":  graph_vaxis_2_max != "" ?  graph_vaxis_2_max : null],
+                    "gridlines": ["count" : graph_vaxis_2_num_tics != "" ? graph_vaxis_2_num_tics : null ],
+                    "minorGridlines": ["count" : 0]
+                    ]
+                
             ],
-            "legend": !graph_show_legend ? ["position": "none"] : ["position": "bottom",  "textStyle": ["fontSize": graph_legend_font, "color": graph_title_color]],
+            "legend": !graph_show_legend ? ["position": "none"] : ["position": graph_legend_position,  
+                                                                   "alignment": graph_legend_inside_position, 
+                                                                   "textStyle": ["fontSize": graph_legend_font, 
+                                                                                 "color": graph_legend_color]],
             "backgroundColor": graph_background_color,
             "curveType": !graph_smoothing ? "" : "function",
             "title": !graph_show_title ? "" : graph_title,
             "titleTextStyle": !graph_show_title ? "" : ["fontSize": graph_title_font, "color": graph_title_color],
+            "titlePosition" :  graph_title_inside ? "in" : "out",
             "interpolateNulls": true, //for null vals on our chart
+            "orientation" : graph_y_orientation == true ? "vertical" : "horizontal",
+            "reverseCategories" : graph_x_orientation,
             "series": [],
+            
         ]
     ];
     
