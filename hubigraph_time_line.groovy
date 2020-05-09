@@ -114,11 +114,51 @@ def deviceSelectionPage() {
 def attributeConfigurationPage() {
     
     def supportedTypes = [
-        "contact": ["start": "open", "end": "close"],
-        "switch": ["start": "on", "end": "off"],
-        "motion": ["start": "active", "end": "inactive"],
-        "other": ["open", "closed", "on", "off", "active", "inactive", "mute", "unmute", "not present", "present", "detected", "clear", "playing", "stopped", "locked", "unlocked", "disarmed", "armed home", "armed away", "not sleeping", "sleeping"]
-    ];
+        "alarm":           ["start": "on",       
+                            "end": "off"],
+        "contact":         ["start": "open",      
+                            "end": "closed"],
+        "switch":          ["start": "on",        
+                            "end": "off"],
+        "motion":          ["start": "active", 
+                            "end": "inactive"],
+        "mute":            ["start": "muted", 
+                            "end": "unmuted"],
+        "presence":        ["start":"present",
+                            "end":"not present"],
+        "holdableButton":  ["start":"true",
+                            "end":"false"],
+        "carbonMonoxide":  ["start":"detected",
+                            "end":"clear"],
+        "playing":         ["start":"playing", 
+                            "end":"stopped"],
+        "door":            ["start": "open",      
+                            "end": "closed"],
+        "speed":           ["start": "on",        
+                            "end": "off"],
+        "lock":            ["start": "unlocked",        
+                            "end": "locked"],
+        "shock":           ["start": "detected",        
+                            "end": "clear"],
+        "sleepSensor":     ["start": "sleeping",        
+                            "end": "not sleeping"],
+        "smoke":           ["start":"detected",
+                            "end":"clear"],
+        "sound":           ["start":"detected",
+                            "end":"not detected"],
+        "tamper":          ["start":"detected",
+                            "end":"clear"],
+        "valve":           ["start": "open",      
+                            "end": "closed"],
+        "camera":          ["start": "on",        
+                            "end": "off"],
+        "water":           ["start": "wet",        
+                            "end": "dry"],
+        "windowShade":     ["start": "open",      
+                            "end": "closed"],
+        "acceleration":    ["start": "inactive", 
+                            "end": "active"]        
+         ];
                           
           
     dynamicPage(name: "attributeConfigurationPage") {
