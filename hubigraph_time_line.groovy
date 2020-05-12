@@ -20,6 +20,7 @@
 // V 0.22 Update to support tiles
 // V 0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
 // V 0.4 Uses any device
+// V 0.5 Allows ordering of devices
  
 import groovy.json.JsonOutput
 
@@ -92,23 +93,58 @@ def getAttributeType(attrib, title){
 }
 
 def deviceSelectionPage() {                  
-          
     dynamicPage(name: "deviceSelectionPage") {
         section() { 
-            input (type: "capability.*", name: "sensors", title: "Choose Sensors", multiple: true, submitOnChange: true);
-        
+            input (type: "capability.*", name: "sensors", title: "Choose Sensors", multiple: true, submitOnChange: true)
             if (sensors) {
-                sensors.each {sensor->
-                    sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() };
+                def all = (1..sensors.size()).collect{ "" + it };
+                validateOrder(all);
+                sensors.eachWithIndex {sensor, idx ->
+                    id = sensor.id;
+                    sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() };      
+                    paragraph getTitle(sensor.displayName);
                     
-                    paragraph(sensor.displayName);
-                 
-                    input( type: "enum", name: "attributes_${sensor.id}", title: "Attributes to graph", required: true, multiple: true, options: sensor_attributes, defaultValue: "1", submitOnChange: false )
+                    input( type: "enum", name: "attributes_${id}", title: "Attributes to graph", required: true, multiple: true, options: sensor_attributes, defaultValue: "1", submitOnChange: false )
+                    input( type: "enum", name: "displayOrder_${id}", title: "Order to Display on Timeline", required: true, multiple:false, options: all, defaultValue: idx, submitOnChange: true);
                 }
             }
         }
     }
 
+}
+
+def validateOrder(all) {
+    def order = [];
+    sensors.eachWithIndex {sensor, idx ->
+        order << settings["displayOrder_${sensor.id}"];
+    }
+    
+    //if we are initialized and need to check
+    if(state.lastOrder && state.lastOrder[0]) {
+        def remains = all.findAll { !order.contains(it) }
+    
+        def dupes = [];
+        
+        order.each {it ->
+            if(order.count(it) > 1) dupes << it;
+        }
+        
+        sensors.eachWithIndex {sensor, idx ->
+            if(state.lastOrder[idx] == order[idx] && dupes.contains(settings["displayOrder_${sensor.id}"])) {
+                settings["displayOrder_${sensor.id}"] = remains[0];
+                app.updateSetting("displayOrder_${sensor.id}", [value: remains[0], type: "enum"]);
+                remains.removeAt(0);
+            }
+        }
+    }
+    
+    //reconstruct order
+    order = [];
+    sensors.eachWithIndex {sensor, idx ->
+        order << settings["displayOrder_${sensor.id}"];
+    }
+    
+    state.lastOrder = order;
 }
 
 def attributeConfigurationPage() {
@@ -642,8 +678,8 @@ function drawChart(now, min) {
     dataTable.addColumn({ type: 'date', id: 'Start' });
     dataTable.addColumn({ type: 'date', id: 'End' });
 
-    Object.entries(graphData).forEach(([id, allEvents]) => {
-        Object.entries(allEvents).forEach(([attribute, events]) => {
+    subscriptions.order.forEach(id => {
+        Object.entries(graphData[id]).forEach(([attribute, events]) => {
             let newArr = [...events];
 
             //add endpoints for orphans
@@ -669,8 +705,6 @@ function drawChart(now, min) {
             dataTable.addRows(newArr.map((parsed) => [name + " : " + attribute, moment(parsed.start).toDate(), moment(parsed.end).toDate()]));
         });
     });
-
-    
 
     let chart = new google.visualization.Timeline(document.getElementById("timeline"));
     chart.draw(dataTable, options.graphOptions);
@@ -789,9 +823,15 @@ def getSubscriptions() {
         sensors_fmt[it.id] = [ "id": it.id, "displayName": it.displayName, "currentStates": it.currentStates ];
     }
     
+    def order = [sensors.size()];
+    sensors.each {sensor ->
+        order[Integer.parseInt(settings["displayOrder_${sensor.id}"]) - 1] = sensor.idAsLong;
+    }
+    
     def subscriptions = [
         "sensors": sensors_fmt,
-        "definitions": definitions
+        "definitions": definitions,
+        "order": order
     ];
     
     return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
