@@ -17,6 +17,7 @@ import groovy.json.*
  */
 
 // Hubigraph Line Graph Changelog
+// *****ALPHA BUILD
 // v0.1 Initial release
 // v0.2 My son added webpage efficiencies, reduced load on hubitat by 75%.
 // v0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
@@ -25,6 +26,8 @@ import groovy.json.*
 // v0.60 Select AXIS to graph on
 // v0.70 A lot more options
 // v0.80 Added Horizontal Axis Formatting
+// ****BETA BUILD
+// v0.1 Added Hubigraph Tile support with Auto-add Dashboard Tile
     
 // Credit to Alden Howard for optimizing the code.
  
@@ -147,7 +150,7 @@ def graphSetupPage(){
             input( type: "enum", name: "graph_ha_color", title: "Horizonal Axis Color", defaultValue: "Gray", options: colorEnum);
             input( type: "number", name: "graph_h_num_grid", title: "Num Horizontal Gridlines (blank for auto)", defaultValue: "", range: "0..100");
             
-            input( type: "bool", name: "dummy", title: "Show Sring Formatting Help", defaultValue: false, submitOnChange: true);
+            input( type: "bool", name: "dummy", title: "Show String Formatting Help", defaultValue: false, submitOnChange: true);
             if (dummy == true){
                 paragraph_ = "<table>"
                 paragraph_ += getTableRow("<b>Name", "<b>Format" ,"<b>Result</b>", "");
@@ -404,6 +407,12 @@ def mainPage() {
             }
         }
         section(){
+            input( type: "bool", name: "install_device", title: "Install Hubigraph Tile Device for Dashboard Display", defaultValue: false, submitOnChange: true);
+            if (install_device==true){   
+                 input( type: "text", name: "device_name", title: "<b>Name for HubiGraph Tile Device</b>", default: "Hubigraph LineGraph Tile" ); 
+            }
+        }
+        section(){
             if (state.endpoint){
                 paragraph getLine();
                 input( type: "text", name: "app_name", title: "<b>Rename the Application?</b>", default: "Hubigraph Line Graph", submitOnChange: true ) 
@@ -413,6 +422,34 @@ def mainPage() {
         }    
         
     }
+}
+
+def createHubiGraphTile() {
+	log.info "Creating HubiGraph Child Device"
+    
+    def childDevice = getChildDevice("HUBIGRAPH_${app.id}");     
+    log.debug childDevice
+   
+    if (!childDevice) {
+        if (!device_name) device_name="Dummy Device";
+        log.debug("Creating Device $device_name");
+    	childDevice = addChildDevice("tchoward", "Hubigraph Tile Device", "HUBIGRAPH_${app.id}", null,[completedSetup: true, label: device_name]) 
+        log.info "Created HTTP Switch [${childDevice}]"
+        
+        //Send the html automatically
+        childDevice.setGraph("${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
+        log.info "Sent setGraph: ${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
+	}
+    else {
+    	
+        childDevice.label = device_name;
+        log.info "Label Updated to [${device_name}]"
+        
+        //Send the html automatically
+        childDevice.setGraph("${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
+        log.info "Sent setGraph: ${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
+	}
+
 }
 
 def getLine(){	  
@@ -451,10 +488,20 @@ def uninstalled() {
             log.warn "Unable to revoke API access token: $e"
         }
     }
+    removeChildDevices(getChildDevices());
+}
+
+private removeChildDevices(delete) {
+	delete.each {deleteChildDevice(it.deviceNetworkId)}
 }
 
 def updated() {
     app.updateLabel(app_name);
+    
+    if (install_device == true){
+        createHubiGraphTile();
+    }
+    
 }
 
 def initialize() {
@@ -479,10 +526,12 @@ private buildData() {
                 def respEvents = [];    
                 
                 log.debug("Checking:: $sensor.displayName: $attribute id:$sensor.id");
-                respEvents << sensor.eventsBetween(then, today, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date, value: it.value ]}
+               // respEvents << sensor.eventsBetween(then, today, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date, value: it.value ]}
+                respEvents << sensor.eventsSince(then, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date, value: it.value ]}
                 respEvents = respEvents.sort{ it.date };
                 respEvents = respEvents.flatten();
                 respEvents = respEvents.reverse();
+                log.debug("Total Events: ${respEvents.size()}");
                 
                 //convert the date to ms
                 respEvents = respEvents.collect{ [date: it.date.getTime(), value: it.value] }
@@ -589,6 +638,7 @@ def getLineGraph() {
     <html style="${fullSizeStyle}">
     <head>
       <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/3.0.16/svg.min.js" integrity="sha256-MCvBrhCuX8GNt0gmv06kZ4jGIi1R2QNaSkadjRzinFs=" crossorigin="anonymous"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.0/moment.min.js" integrity="sha256-imB/oMaNA0YvIkDkF5mINRWpuFPEGVCEkHy6rm2lAzA=" crossorigin="anonymous"></script>
       <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
       <script type="text/javascript">
