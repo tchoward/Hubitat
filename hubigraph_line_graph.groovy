@@ -24,6 +24,7 @@ import groovy.json.*
 // v0.51 Select ANY device
 // v0.60 Select AXIS to graph on
 // v0.70 A lot more options
+// v0.80 Added Horizontal Axis Formatting
     
 // Credit to Alden Howard for optimizing the code.
  
@@ -146,6 +147,38 @@ def graphSetupPage(){
             input( type: "enum", name: "graph_ha_color", title: "Horizonal Axis Color", defaultValue: "Gray", options: colorEnum);
             input( type: "number", name: "graph_h_num_grid", title: "Num Horizontal Gridlines (blank for auto)", defaultValue: "", range: "0..100");
             
+            input( type: "bool", name: "dummy", title: "Show Sring Formatting Help", defaultValue: false, submitOnChange: true);
+            if (dummy == true){
+                paragraph_ = "<table>"
+                paragraph_ += getTableRow("<b>Name", "<b>Format" ,"<b>Result</b>", "");
+                paragraph_ += getTableRow("Year", "Y", "2020", "");
+                paragraph_ += getTableRow("Month Number", "M", "12", "");
+                paragraph_ += getTableRow("Month Name ", "MMM", "Feb", "");
+                paragraph_ += getTableRow("Month Full Name", "MMMM", "February", "");
+                paragraph_ += getTableRow("Day of Month", "d", "February", "");
+                paragraph_ += getTableRow("Day of Week", "EEE", "Mon", "");
+                paragraph_ += getTableRow("Day of Week", "EEEE", "Monday", "");
+                paragraph_ += getTableRow("Period", "a", "AM or PM", "");
+                paragraph_ += getTableRow("Hour (12)", "h", "1..12", "");
+                paragraph_ += getTableRow("Hour (12)", "hh", "01..12", "");
+                paragraph_ += getTableRow("Hour (24)", "H", "1..23", "");
+                paragraph_ += getTableRow("Hour (24)", "HH", "01..23", "");
+                paragraph_ += getTableRow("Minute", "m", "1..59", "");
+                paragraph_ += getTableRow("Minute", "mm", "01..59", "");
+                paragraph_ += getTableRow("Seconds", "s", "1..59", "");
+                paragraph_ += getTableRow("Seconds", "ss", "01..59", "");
+                paragraph_ += "</table>"
+                paragraph paragraph_
+                paragraph_ = /<b>Example: "EEEE, MMM d, Y hh:mm:ss a" = "Monday, June 2, 2020 08:21:33 AM"/
+                paragraph_ += "</b>"
+                paragraph paragraph_
+            }
+            input( type: "string", name: "graph_h_format", title: "Horizontal Axis Format", defaultValue: "", submitOnChange: true);
+            if (graph_h_format != ""){
+                today = new Date();
+                paragraph "Horizontal Axis Sample: ${today.format(graph_h_format)}"
+            }
+            
             paragraph getTitle("Vertical Axis");
             input( type: "enum", name: "graph_vaxis_font", title: "Vertical Font Size", defaultValue: "9", options: fontEnum); 
             input( type: "enum", name: "graph_vh_color", title: "Vertical Header Color", defaultValue: "Black", options: colorEnum);
@@ -186,11 +219,24 @@ def graphSetupPage(){
                 
             }
             
-            //Line
+            //Get the total number of devices
+            state.num_devices = 0;
             sensors.each { sensor ->
                 settings["attributes_${sensor.id}"].each { attribute ->
+                    state.num_devices++;
+                }
+            }
+            def availableAxis = [["0" : "Left Axis"], ["1": "Right Axis"]];
+            if (state.num_devices == 1) {
+                    availableAxis = [["0" : "Left Axis"], ["1": "Right Axis"], ["2": "Both Axes"]]; 
+            }
+            
+            
+            //Line
+            sensors.each { sensor ->        
+                settings["attributes_${sensor.id}"].each { attribute ->
                     paragraph getTitle("Line for ${sensor.displayName}: ${attribute}");
-                    input( type: "enum", name: "graph_axis_number_${sensor.id}_${attribute}", title: "Graph Axis Number", defaultValue: "0", options: [["0" : "Left Axis"], ["1": "Right Axis"]]);
+                    input( type: "enum", name: "graph_axis_number_${sensor.id}_${attribute}", title: "Graph Axis Number", defaultValue: "0", options: availableAxis);
                     input( type: "enum", name: "graph_line_color_${sensor.id}_${attribute}", title: "Line Color", defaultValue: "Blue", options: colorEnum); 
                     input( type: "enum", name: "graph_line_thickness_${sensor.id}_${attribute}", title: "Line Thickness", defaultValue: "2", options: fontEnum); 
                 }
@@ -296,7 +342,11 @@ def mainPage() {
                         settings["attributes_${sensor.id}"].each { attribute_ ->
                             text_color = settings["graph_line_color_${sensor.id}_${attribute_}"];
                             line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute_}"];
-                            if (settings["graph_axis_number_${sensor.id}_${attribute_}"]=="0") axis_num = "LEFT" else axis_num = "RIGHT"
+                            switch (settings["graph_axis_number_${sensor.id}_${attribute_}"]){
+                                case "0": axis_num = "LEFT"; break;
+                                case "1": axis_num = "RIGHT"; break;
+                                case "2": axis_num = "BOTH"; break; 
+                            }
                             paragraph_ += /${getTableRow2("$sensor", "$attribute_", "${getColorString(text_color)}", "$line_thickness", "$axis_num")}/
                            
                         }
@@ -428,7 +478,7 @@ private buildData() {
             settings["attributes_${sensor.id}"].each { attribute ->
                 def respEvents = [];    
                 
-                log.debug("Checking:: $sensor.displayName: $attribute");
+                log.debug("Checking:: $sensor.displayName: $attribute id:$sensor.id");
                 respEvents << sensor.eventsBetween(then, today, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date, value: it.value ]}
                 respEvents = respEvents.sort{ it.date };
                 respEvents = respEvents.flatten();
@@ -441,6 +491,7 @@ private buildData() {
             }
         }
     }
+    //log.debug("Resp: $resp");  
     
     return resp;
 }
@@ -456,8 +507,8 @@ def getChartOptions(){
             "hAxis": ["textStyle": ["fontSize": graph_haxis_font, "color": graph_hh_color], 
                       "gridlines": ["color": graph_ha_color, 
                                     "count": graph_h_num_grid != "" ? graph_h_num_grid : null
-                                   ]
-                     
+                                   ],
+                      "format":     graph_h_format==""?"":graph_h_format                          
                      ],
             "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, 
                                     "color": graph_vh_color], 
@@ -506,14 +557,14 @@ def getChartOptions(){
             def line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute}"];
             
             def annotations = [
-                "targetAxisIndex": axis,
+                "targetAxisIndex": axis, 
                 "color": text_color,
                 "lineWidth": line_thickness
             ];
             
             options.graphOptions.series << annotations;  
         }
-    }
+    }    
     
     return options;
 }
@@ -522,6 +573,7 @@ def getDrawType(){
     switch (graph_type){
         case "Line Graph": return "google.visualization.LineChart";
         case "Area Graph": return "google.visualization.AreaChart";
+        case "Combo Graph": return "google.visualization.ComboChart";
     }
 }
 
