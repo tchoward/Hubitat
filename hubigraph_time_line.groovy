@@ -21,6 +21,8 @@
 // V 0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
 // V 0.4 Uses any device
 // V 0.5 Allows ordering of devices
+// ****BETA BUILD
+// v0.1 Added Hubigraph Tile support with Auto-add Dashboard Tile
  
 import groovy.json.JsonOutput
 
@@ -361,7 +363,12 @@ def mainPage() {
                 } //graph_timespan
             }//else
         }
-        
+        section(){
+            input( type: "bool", name: "install_device", title: "Install Hubigraph Tile Device for Dashboard Display", defaultValue: false, submitOnChange: true);
+            if (install_device==true){   
+                 input( type: "text", name: "device_name", title: "<b>Name for HubiGraph Tile Device</b>", default: "Hubigraph Tile" ); 
+            }
+        }
         section(){
             if (state.endpoint){
                 paragraph getLine();
@@ -373,6 +380,35 @@ def mainPage() {
         
     }
 }
+
+def createHubiGraphTile() {
+	log.info "Creating HubiGraph Child Device"
+    
+    def childDevice = getChildDevice("HUBIGRAPH_${app.id}");     
+    log.debug childDevice
+   
+    if (!childDevice) {
+        if (!device_name) device_name="Dummy Device";
+        log.debug("Creating Device $device_name");
+    	childDevice = addChildDevice("tchoward", "Hubigraph Tile Device", "HUBIGRAPH_${app.id}", null,[completedSetup: true, label: device_name]) 
+        log.info "Created HTTP Switch [${childDevice}]"
+        
+        //Send the html automatically
+        childDevice.setGraph("${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
+        log.info "Sent setGraph: ${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
+	}
+    else {
+    	
+        childDevice.label = device_name;
+        log.info "Label Updated to [${device_name}]"
+        
+        //Send the html automatically
+        childDevice.setGraph("${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
+        log.info "Sent setGraph: ${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
+	}
+
+}
+
 
 def getLine(){	  
 	def html = "<hr style='background-color:#1A77C9; height: 1px; border: 0;'>"
@@ -410,11 +446,21 @@ def uninstalled() {
             log.warn "Unable to revoke API access token: $e"
         }
     }
+    removeChildDevices(getChildDevices());
 }
+
+private removeChildDevices(delete) {
+	delete.each {deleteChildDevice(it.deviceNetworkId)}
+}
+
 
 def updated() {
     app.updateLabel(app_name);
-    state.dataName = attribute;  
+    state.dataName = attribute;
+    
+     if (install_device == true){
+        createHubiGraphTile();
+    }
 }
 
 def buildData() {
