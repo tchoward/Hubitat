@@ -174,7 +174,7 @@ def graphSetupPage(){
                 paragraph paragraph_
             }
             input( type: "string", name: "graph_h_format", title: "Horizontal Axis Format", defaultValue: "", submitOnChange: true);
-            if (graph_h_format != ""){
+            if (graph_h_format){
                 today = new Date();
                 paragraph "Horizontal Axis Sample: ${today.format(graph_h_format)}"
             }
