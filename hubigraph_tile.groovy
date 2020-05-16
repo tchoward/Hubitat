@@ -16,7 +16,6 @@ def setGraph(str) {
   const thisFrame = this;
   const body = thisFrame.contentDocument.body;
   const start = () => {
-    this.handle = setTimeout(() => {
       if(thisFrame.dataset.fullscreen == 'false') {
         thisFrame.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999;';
         thisFrame.dataset.fullscreen = 'true';
@@ -24,19 +23,9 @@ def setGraph(str) {
         thisFrame.style = 'width: 100%; height: 100%;';
         thisFrame.dataset.fullscreen = 'false';
       }
-
-      this.handle = -1;
-    }, 1000);
   }
 
-  const end = () => {
-    if(this.handle !== -1) clearTimeout(this.handle);
-  }
-
-  body.addEventListener('mousedown', start);
-  body.addEventListener('touchstart', start);
-  body.addEventListener('mouseup', end);
-  body.addEventListener('touchend', end);
+  body.addEventListener('dblclick', start);
 
 })()"></iframe>""");
     sendEvent(event);
