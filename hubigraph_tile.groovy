@@ -1,9 +1,10 @@
 metadata{
 	definition( name: "Hubigraph Tile Device", namespace: "tchoward", author: "Thomas Howard") {
 		// Indicate what capabilities the device should be capable of
-		attribute "Graph", "string"
-        
-        command "setGraph", ["String"]
+		
+        capability "Actuator"
+        attribute  "Graph", "string"        
+        command    "setGraph", ["String"]
     }
 	preferences{
 	}
