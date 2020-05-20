@@ -84,20 +84,18 @@ def deviceSelectionPage() {
             input "sensor_", "capability.*", title: "Sensor", multiple: false, required: true, submitOnChange: true
         
             if (sensor_){
-                sensor_events = sensor_.events([max:250]);
-                supported_attrs = sensor_events.name.unique(false);
+                attributes_ = sensor_.getSupportedAttributes();
                 final_attrs = [];
-                supported_attrs.each { attr->
-                    state_ = sensor_.currentState(attr);
-                    if (state_) {
-                        val = sensor_.currentState(attr).value;
-                        log.debug("attr = $attr val = $val");
-                        if (val.isNumber()) {
-                            final_attrs += attr
+                attributes_.each{attribute_->
+                    //Check to see if there is a valid number
+                    if (attribute_.getDataType() == "NUMBER"){
+                        currentState_ =  sensor_.currentState(attribute_.getName());
+                        //Check to see if there is a valid event for this attribute
+                        if (currentState_) {
+                            final_attrs += attribute_.getName();
                         }
                     }
                 }
-                log.debug("Final Attributes = $final_attrs");
                 paragraph(sensor_.displayName);
                 if (final_attrs == []){
                     paragraph "No supported Numerical Attributes, please select a different Sensor"
@@ -108,11 +106,11 @@ def deviceSelectionPage() {
                         if (state_) {
                             currentValue = state_.value;
                             paragraph getTitle("Please input the min/max and threshold values")
-                            paragraph "Current Value = $currentValue"
-                            input( type: "number", name: "minValue_", title: "Minimum Value for Gauge", required: true, multiple: false, defaultValue: 0, submitOnChange: true);
-                            input( type: "number", name: "maxValue_", title: "Maximum Value for Gauge", required: true, multiple: false, defaultValue: 100, submitOnChange: true);
-                             
-                            
+                            paragraph "Current Value = $currentValue"                          
+                            input( type: "number", name: "minValue_", title: "Minimum Value for Gauge", required: true, multiple: false);
+                            input( type: "number", name: "maxValue_", title: "Maximum Value for Gauge", required: true, multiple: false);
+                        } else {
+                             paragraph "<b>No recent valid events</b> Please select a different Attribute"   
                         }
                     }
                 }
