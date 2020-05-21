@@ -142,7 +142,7 @@ def graphSetupPage(){
             paragraph getTitle("General Options");
             input( type: "string", name: "gauge_title", title: "Select Gauge Title", multiple: false, required: false, defaultValue: "Gauge Title")
             input( type: "string", name: "gauge_units", title: "Select Gauge Number Units", multiple: false, required: false, defaultValue: "")
-            input( type: "number", name: "gauge_number_format", title: "Select Number decimal places", multiple: false, required: false, defaultValue: "1")
+            input( type: "string", name: "gauge_number_format", title: "Select Number Formatting (Example #.## = 1.23, #.# = 1.2, # = 1)", multiple: false, required: false, defaultValue: "#")
             paragraph getLine();
             if (!num_highlights){
                    num_highlights = 0;
@@ -331,15 +331,7 @@ def updated() {
 }
 
 def buildData() {
-    switch (gauge_number_format){
-        case 0: str="###"; break;
-        case 1: str="###.#"; break;
-        case 2: str="###.##"; break; 
-        case 3: str="###.###"; break; 
-        case 4: str="###.####"; break; 
-    }
-    DecimalFormat df2 = new DecimalFormat(str);
-    return Double.valueOf(df2.format(extractNumber(sensor_.currentState(attribute_).getStringValue())));
+    return extractNumber(sensor_.currentState(attribute_).getStringValue());
     
 }
 
@@ -474,7 +466,7 @@ function parseEvent(event) {
     if(subscriptions.id == deviceId && subscriptions.attribute.includes(event.name)) {
         let value = event.value;
 
-graphData.value = parseFloat(parseFloat(value.match(/[0-9.]+/g)[0]).toFixed(${gauge_number_format}));
+graphData.value = parseFloat(value.match(/[0-9.]+/g)[0]);
 
         update();
     }
@@ -516,7 +508,12 @@ function drawChart() {
     let dataTable = new google.visualization.DataTable();
     dataTable.addColumn('string', 'Label');
     dataTable.addColumn('number', 'Value');
-dataTable.addRow(['${gauge_title}', graphData.value]);
+    dataTable.addRow(['${gauge_title}', graphData.value]);
+
+    var formatter = new google.visualization.NumberFormat(
+        {suffix: "${gauge_units}", pattern: "${gauge_number_format}"}
+    );
+    formatter.format(dataTable, 1);
 
     let chart = new google.visualization.Gauge(document.getElementById("timeline"));
     chart.draw(dataTable, options.graphOptions);
