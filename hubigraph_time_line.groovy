@@ -23,6 +23,7 @@
 // V 0.5 Allows ordering of devices
 // ****BETA BUILD
 // v0.1 Added Hubigraph Tile support with Auto-add Dashboard Tile
+// v0.2 Added Custom Device/Attribute Labels
  
 import groovy.json.JsonOutput
 
@@ -206,6 +207,7 @@ def attributeConfigurationPage() {
                 def attributes = settings["attributes_${sensor.id}"];
                 attributes.each { attribute ->
                     paragraph getTitle("${sensor.displayName}: ${attribute}");
+                    input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "Override Device Name -- use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE", defaultValue: "%deviceName%: %attributeName%");
                     input( type: "text", name: "attribute_${sensor.id}_${attribute}_start", title: "Start event value", defaultValue: supportedTypes[attribute] ? supportedTypes[attribute].start : null, required: true);
                     input( type: "text", name: "attribute_${sensor.id}_${attribute}_end", title: "End event value", defaultValue: supportedTypes[attribute] ? supportedTypes[attribute].end : null, required: true);
                 }
@@ -748,7 +750,7 @@ function drawChart(now, min) {
 
             let name = subscriptions.sensors[id].displayName;
 
-            dataTable.addRows(newArr.map((parsed) => [name + " : " + attribute, moment(parsed.start).toDate(), moment(parsed.end).toDate()]));
+            dataTable.addRows(newArr.map((parsed) => [subscriptions.labels[id][attribute].replace('%deviceName%', name).replace('%attributeName%', attribute), moment(parsed.start).toDate(), moment(parsed.end).toDate()]));
         });
     });
 
@@ -758,7 +760,7 @@ function drawChart(now, min) {
         </script>
       </head>
       <body style="${fullSizeStyle}">
-          <div id="timeline" style="${fullSizeStyle}"></div>
+          <div id="timeline" style="${fullSizeStyle}" align="center"></div>
       </body>
     </html>
     """
@@ -855,12 +857,15 @@ def getOptions() {
 }
 
 def getSubscriptions() {
-    def definitions = [:]
+    def definitions = [:];
+    def labels = [:];
     sensors.each { sensor ->
         definitions[sensor.id] = [:];
+        labels[sensor.id] = [:];
         def attributes = settings["attributes_${sensor.id}"];
         attributes.each { attribute ->
             definitions[sensor.id][attribute] = ["start": settings["attribute_${sensor.id}_${attribute}_start"], "end": settings["attribute_${sensor.id}_${attribute}_end"]];
+            labels[sensor.id][attribute] = settings["graph_name_override_${sensor.id}_${attribute}"];
         }
     }
                                                                                     
@@ -877,6 +882,7 @@ def getSubscriptions() {
     def subscriptions = [
         "sensors": sensors_fmt,
         "definitions": definitions,
+        "labels": labels,
         "order": order
     ];
     
