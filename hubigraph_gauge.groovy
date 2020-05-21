@@ -18,6 +18,7 @@
 // V 0.1 Intial release
 
 import groovy.json.JsonOutput
+import java.text.DecimalFormat;
 
 def ignoredEvents() { return [ 'lastReceive' , 'reachable' , 
                          'buttonReleased' , 'buttonPressed', 'lastCheckinDate', 'lastCheckin', 'buttonHeld' ] }
@@ -75,6 +76,11 @@ mappings {
     }
 }
 
+def extractNumber( String input ) {
+  val = input.findAll( /-?\d+\.\d*|-?\d*\.\d+|-?\d+/ )*.toDouble()
+  val[0]
+}
+
 def deviceSelectionPage() {
     def supported_attrs;
         
@@ -82,7 +88,7 @@ def deviceSelectionPage() {
         section() { 
 	    
             input "sensor_", "capability.*", title: "Sensor", multiple: false, required: true, submitOnChange: true
-        
+                        
             if (sensor_){
                 attributes_ = sensor_.getSupportedAttributes();
                 final_attrs = [];
@@ -136,7 +142,7 @@ def graphSetupPage(){
             paragraph getTitle("General Options");
             input( type: "string", name: "gauge_title", title: "Select Gauge Title", multiple: false, required: false, defaultValue: "Gauge Title")
             input( type: "string", name: "gauge_units", title: "Select Gauge Number Units", multiple: false, required: false, defaultValue: "")
-            input( type: "string", name: "gauge_number_format", title: "Select Number Formatting (Example #.## = 1.23, #.# = 1.2, # = 1)", multiple: false, required: false, defaultValue: "#")
+            input( type: "number", name: "gauge_number_format", title: "Select Number decimal places", multiple: false, required: false, defaultValue: "1")
             paragraph getLine();
             if (!num_highlights){
                    num_highlights = 0;
@@ -325,7 +331,16 @@ def updated() {
 }
 
 def buildData() {
-    return sensor_.currentState(attribute_).doubleValue;
+    switch (gauge_number_format){
+        case 0: str="###"; break;
+        case 1: str="###.#"; break;
+        case 2: str="###.##"; break; 
+        case 3: str="###.###"; break; 
+        case 4: str="###.####"; break; 
+    }
+    DecimalFormat df2 = new DecimalFormat(str);
+    return Double.valueOf(df2.format(extractNumber(sensor_.currentState(attribute_).getStringValue())));
+    
 }
 
 def getChartOptions(){
@@ -427,7 +442,6 @@ let graphData = {};
 
 let websocket;
 
-
 function getOptions() {
     return jQuery.get("${state.localEndpointURL}getOptions/?access_token=${state.endpointSecret}", (data) => {
         options = data;
@@ -460,7 +474,7 @@ function parseEvent(event) {
     if(subscriptions.id == deviceId && subscriptions.attribute.includes(event.name)) {
         let value = event.value;
 
-        graphData.value = parseInt(value);
+graphData.value = parseFloat(parseFloat(value.match(/[0-9.]+/g)[0]).toFixed(${gauge_number_format}));
 
         update();
     }
@@ -502,12 +516,7 @@ function drawChart() {
     let dataTable = new google.visualization.DataTable();
     dataTable.addColumn('string', 'Label');
     dataTable.addColumn('number', 'Value');
-    dataTable.addRow(["${gauge_title}", graphData.value]);
-
-    var formatter = new google.visualization.NumberFormat(
-        {suffix: "${gauge_units}", pattern: "${gauge_number_format}"}
-    );
-    formatter.format(dataTable, 1);
+dataTable.addRow(['${gauge_title}', graphData.value]);
 
     let chart = new google.visualization.Gauge(document.getElementById("timeline"));
     chart.draw(dataTable, options.graphOptions);
@@ -612,4 +621,3 @@ def getSubscriptions() {
     
     return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
 }
-
