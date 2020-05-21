@@ -1,5 +1,5 @@
 /**
- *  Hubigraph Gauge Child App
+ *  Hubigraph Timeline Child App
  *
  *  Copyright 2020, but let's behonest, you'll copy it
  *
@@ -88,13 +88,13 @@ def deviceSelectionPage() {
                 final_attrs = [];
                 attributes_.each{attribute_->
                     //Check to see if there is a valid number
-                    if (attribute_.getDataType() == "NUMBER"){
-                        currentState_ =  sensor_.currentState(attribute_.getName());
+                    //if (attribute_.getDataType() == "NUMBER"){
+                    //    currentState_ =  sensor_.currentState(attribute_.getName());
                         //Check to see if there is a valid event for this attribute
-                        if (currentState_) {
+                    //    if (currentState_ != null) {
                             final_attrs += attribute_.getName();
-                        }
-                    }
+                    //    }
+                   // }
                 }
                 paragraph(sensor_.displayName);
                 if (final_attrs == []){
@@ -103,7 +103,7 @@ def deviceSelectionPage() {
                     input( type: "enum", name: "attribute_", title: "Attribute for Gauge", required: true, multiple: false, options: final_attrs, defaultValue: "1", submitOnChange: true)
                     if (attribute_){
                         state_ =  sensor_.currentState(attribute_);
-                        if (state_) {
+                        if (state_ != null) {
                             currentValue = state_.value;
                             paragraph getTitle("Please input the min/max and threshold values")
                             paragraph "Current Value = $currentValue"                          
@@ -505,7 +505,7 @@ function drawChart() {
     dataTable.addRow(["${gauge_title}", graphData.value]);
 
     var formatter = new google.visualization.NumberFormat(
-{suffix: "${gauge_units}", pattern: "${gauge_number_format}"}
+        {suffix: "${gauge_units}", pattern: "${gauge_number_format}"}
     );
     formatter.format(dataTable, 1);
 
@@ -612,3 +612,4 @@ def getSubscriptions() {
     
     return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
 }
+
