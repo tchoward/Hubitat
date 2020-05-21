@@ -28,6 +28,7 @@ import groovy.json.*
 // v0.80 Added Horizontal Axis Formatting
 // ****BETA BUILD
 // v0.1 Added Hubigraph Tile support with Auto-add Dashboard Tile
+// v0.2 Added Custom Device/Attribute Labels
     
 // Credit to Alden Howard for optimizing the code.
  
@@ -110,7 +111,7 @@ def graphSetupPage(){
     def fontEnum = [["1":"1"], ["2":"2"], ["3":"3"], ["4":"4"], ["5":"5"], ["6":"6"], ["7":"7"], ["8":"8"], ["9":"9"], ["10":"10"], 
                     ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]];  
     
-    def colorEnum = [["#800000":"Maroon"], ["#FF0000":"Red"], ["#FF0000":"Orange"], ["#FFFF00":"Yellow"], ["#808000":"Olive"], ["#008000":"Green"],
+    def colorEnum = [["#800000":"Maroon"], ["#FF0000":"Red"], ["#FFA500":"Orange"], ["#FFFF00":"Yellow"], ["#808000":"Olive"], ["#008000":"Green"],
                     ["#800080":"Purple"], ["#FF00FF":"Fuchsia"], ["#00FF00":"Lime"], ["#008080":"Teal"], ["#00FFFF":"Aqua"], ["#0000FF":"Blue"], ["#000080":"Navy"],
                     ["#000000":"Black"], ["#C0C0C0":"Gray"], ["#C0C0C0":"Silver"], ["#FFFFFF":"White"], ["rgba(255, 255, 255, 0)":"Transparent"]];
     
@@ -121,9 +122,11 @@ def graphSetupPage(){
             input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: true, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
             input( type: "enum", name: "graph_background_color", title: "Background Color", defaultValue: "White", options: colorEnum);
             input( type: "bool", name: "graph_smoothing", title: "Smooth Graph Points", defaultValue: true);
-            input( type: "enum", name: "graph_type", title: "Graph Type", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph"] )
+            input( type: "enum", name: "graph_type", title: "Graph Type", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"] )
             input( type: "bool", name: "graph_y_orientation", title: "Flip Graph to Vertical (Rotate 90 degrees)", defaultValue: false);
-            input( type: "bool", name: "graph_z_orientation", title: "Reverse Data Order? (Flip Data left to Right)", defaultValue: false);            
+            input( type: "bool", name: "graph_z_orientation", title: "Reverse Data Order? (Flip Data left to Right)", defaultValue: false);
+            
+            
             //Title
            
             paragraph getTitle("Title");
@@ -222,6 +225,7 @@ def graphSetupPage(){
                 
             }
             
+            paragraph getTitle("Devices -- Attributes");
             //Get the total number of devices
             state.num_devices = 0;
             sensors.each { sensor ->
@@ -238,10 +242,11 @@ def graphSetupPage(){
             //Line
             sensors.each { sensor ->        
                 settings["attributes_${sensor.id}"].each { attribute ->
-                    paragraph getTitle("Line for ${sensor.displayName}: ${attribute}");
-                    input( type: "enum", name: "graph_axis_number_${sensor.id}_${attribute}", title: "Graph Axis Number", defaultValue: "0", options: availableAxis);
-                    input( type: "enum", name: "graph_line_color_${sensor.id}_${attribute}", title: "Line Color", defaultValue: "Blue", options: colorEnum); 
-                    input( type: "enum", name: "graph_line_thickness_${sensor.id}_${attribute}", title: "Line Thickness", defaultValue: "2", options: fontEnum); 
+                    paragraph getTitle("${sensor.displayName}: ${attribute}");
+                    input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "Graph Axis Number", defaultValue: "0", options: availableAxis);
+                    input( type: "enum", name:   "graph_line_color_${sensor.id}_${attribute}", title: "Line Color", defaultValue: "Blue", options: colorEnum); 
+                    input( type: "enum", name:   "graph_line_thickness_${sensor.id}_${attribute}", title: "Line Thickness", defaultValue: "2", options: fontEnum); 
+                    input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "Override Device Name -- use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE", defaultValue: "%deviceName%: %attributeName%");
                 }
             }
         }
@@ -622,7 +627,7 @@ def getDrawType(){
     switch (graph_type){
         case "Line Graph": return "google.visualization.LineChart";
         case "Area Graph": return "google.visualization.AreaChart";
-        case "Combo Graph": return "google.visualization.ComboChart";
+        case "Scatter Plot": return "google.visualization.ScatterChart";
     }
 }
 
@@ -755,7 +760,7 @@ function drawChart() {
     subscriptions.ids.forEach((deviceId) => {
         colNums[deviceId] = {};
         subscriptions.attributes[deviceId].forEach((attr) => {
-            dataTable.addColumn({ label: subscriptions.sensors[deviceId].displayName + ": " + attr, type: 'number' });
+            dataTable.addColumn({ label: subscriptions.labels[deviceId][attr].replace('%deviceName%', subscriptions.sensors[deviceId].displayName).replace('%attributeName%', attr), type: 'number' });
             colNums[deviceId][attr] = i++;
         });
     });
@@ -801,7 +806,7 @@ window.onBeforeUnload = onBeforeUnload;
         </script>
       </head>
       <body style="${fullSizeStyle}">
-        <div id="timeline" style="${fullSizeStyle}"></div>
+        <div id="timeline" style="${fullSizeStyle}" align="center"></div>
       </body>
        
     </html>
@@ -866,21 +871,27 @@ def getOptions() {
 
 def getSubscriptions() {
     def ids = [];
-    def sensorsM = [:];
+    def sensors_ = [:];
     def attributes = [:];
-    sensors.each {
-        ids << it.idAsLong;
+    def labels = [:];
+    sensors.each {sensor->
+        ids << sensor.idAsLong;
         
         //only take what we need
-        sensorsM[it.id] = [ id: it.id, idAsLong: it.idAsLong, displayName: it.displayName ];
+        sensors_[sensor.id] = [ id: sensor.id, idAsLong: sensor.idAsLong, displayName: sensor.displayName ];        
+        attributes[sensor.id] = settings["attributes_${sensor.id}"];
         
-        attributes[it.id] = settings["attributes_${it.id}"];
+        labels[sensor.id] = [:];
+        settings["attributes_${sensor.id}"].each { attr ->
+            labels[sensor.id][attr] = settings["graph_name_override_${sensor.id}_${attr}"];
+        }
     }
     
     def obj = [
         ids: ids,
-        sensors: sensorsM,
-        attributes: attributes
+        sensors: sensors_,
+        attributes: attributes, 
+        labels : labels
     ]
     
     def subscriptions = obj;
