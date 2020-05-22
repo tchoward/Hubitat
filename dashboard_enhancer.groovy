@@ -1,7 +1,7 @@
 import groovy.json.*;
 
 definition(
-    name: "Dashboard Enhancer",
+    name: "HubiPanel",
     namespace: "tchoward",
     author: "Thomas Howard",
     description: "Switch dashboards with ease",
@@ -65,7 +65,7 @@ def mainPage() {
             else paragraph("Click done to enable OAuth and return to the app to get the link.");
 		}
         section(){
-            input( type: "text", name: "app_name", title: "<b>Rename the Application?</b>", default: "Dashboard Enhancer", submitOnChange: true ) 
+            input( type: "text", name: "app_name", title: "<b>Rename the Application?</b>", default: "HubiPanel", submitOnChange: true ) 
         }
 	}
 }
