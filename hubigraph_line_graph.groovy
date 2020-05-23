@@ -125,6 +125,7 @@ def graphSetupPage(){
             input( type: "enum", name: "graph_type", title: "Graph Type", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"] )
             input( type: "bool", name: "graph_y_orientation", title: "Flip Graph to Vertical (Rotate 90 degrees)", defaultValue: false);
             input( type: "bool", name: "graph_z_orientation", title: "Reverse Data Order? (Flip Data left to Right)", defaultValue: false);
+            input (type: "number", name: "graph_max_points", title: "Maximum number of Data Points? (Zero for ALL)", defaultValue: 0);
             
             
             //Title
@@ -532,14 +533,22 @@ private buildData() {
                 
                 log.debug("Checking:: $sensor.displayName: $attribute id:$sensor.id");
                // respEvents << sensor.eventsBetween(then, today, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date, value: it.value ]}
-                respEvents << sensor.eventsSince(then, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date, value: it.value ]}
+                respEvents << sensor.eventsSince(then, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date.getTime(), value: Float.parseFloat(it.value) ]}
                 respEvents = respEvents.sort{ it.date };
                 respEvents = respEvents.flatten();
                 respEvents = respEvents.reverse();
-                log.debug("Total Events: ${respEvents.size()}");
                 
-                //convert the date to ms
-                respEvents = respEvents.collect{ [date: it.date.getTime(), value: it.value] }
+                //graph_max_ponts
+                if (graph_max_points > 0) {
+                    reduction = (int) Math.ceil((float)respEvents.size() / graph_max_points);
+                    respEvents = respEvents.collate(reduction).collect{ group -> 
+                        group.inject([ date: 0, value: 0.0f ]){ col, it -> 
+                            col.date += it.date / group.size();
+                            col.value += + it.value / group.size();
+                            return col;
+                        } 
+                    };                             
+                }                    
                 
                 resp[sensor.id][attribute] = respEvents;
             }
@@ -551,7 +560,9 @@ private buildData() {
 }
 
 def getChartOptions(){
+    
     def options = [
+        "graphReduction": graph_max_points,
         "graphTimespan": Integer.parseInt(graph_timespan),
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
         "graphOptions": [
@@ -653,6 +664,9 @@ let options = [];
 let subscriptions = {};
 let graphData = {};
 
+//stack for accumulating points to average
+let stack = {};
+
 let websocket;
 
 function getOptions() {
@@ -689,7 +703,17 @@ function parseEvent(event) {
         let value = event.value;
         let attribute = event.name;
 
-        graphData[deviceId][attribute].push({ date: now, value })
+        stack[deviceId][attribute].push({ date: now, value });
+        
+        //check the stack
+        const graphEvents = graphData[deviceId][attribute];
+        const stackEvents = stack[deviceId][attribute];
+        const span = graphEvents[1].date - graphEvents[0].date;
+        if(stackEvents[stackEvents.length - 1].date - graphEvents[graphEvents.length - 1].date >= span || (stackEvents.length > 1 && stackEvents[stackEvents.length - 1].date - stackEvents[0].date >= span)) {
+            //push the stack
+            graphData[deviceId][attribute].push(stack[deviceId][attribute].reduce((accum, it) =>  accum = { date: accum.date + it.date / stackEvents.length, value: accum.value + it.value / stackEvents.length }, { date: 0, value: 0.0 }));
+            stack[deviceId][attribute] = [];
+        }
 
         //update if we are realtime
         if(options.graphUpdateRate === 0) update();
@@ -716,6 +740,14 @@ async function onLoad() {
     await getOptions();
     await getSubscriptions();
     await getGraphData();
+
+    //create stack
+    Object.entries(graphData).forEach(([deviceId, attrs]) => {
+        stack[deviceId] = {};
+        Object.keys(attrs).forEach(attr => {
+            stack[deviceId][attr] = [];
+        });
+    })
 
     update();
 
@@ -784,6 +816,20 @@ function drawChart() {
                 //}
             });
             
+        });
+    });
+
+    //map the stack
+    Object.entries(stack).forEach(([deviceIndex, attributes]) => {
+        Object.entries(attributes).forEach(([attribute, events]) => {
+            if(events.length > 0) {
+                const event = events.reduce((accum, it) =>  accum = { date: accum.date, value: accum.value + it.value / events.length }, { date: now, value: 0.0 });
+
+                let newEntry = Array.apply(null, new Array(totalCols + 1));
+                newEntry[0] = event.date;
+                newEntry[colNums[deviceIndex][attribute] + 1] = event.value;
+                parsedGraphData.push(newEntry);
+            }
         });
     });
 
