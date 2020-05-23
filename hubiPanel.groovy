@@ -59,7 +59,8 @@ def mainPage() {
 	dynamicPage(name: "mainPage", uninstall: true, install: true) {
 		section() {
             if(state.endpoint) {
-                input(type: "text", name: "dashboardToken", title: "Dashboard Access Token (Can be obtained from any dashboard, try activating fullscreen and checking the url bar)", required: true)
+                input(type: "text", name: "dashboardToken", title: "Base Dashboard App Access Token - Can be obtained from any dashboard, try activating fullscreen and checking the url bar\nEx: (http://255.255.255.255/apps/api/1/menu?access_token=<span style='font-weight: bold;'>xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>))", required: true)
+                input(type: "number", name: "dashboardAppId", title: "Base Dashboard App Id - Can be obtained from any dashboard, try activating fullscreen and checking the url bar\nEx: (http://255.255.255.255/apps/api/<span style='font-weight: bold;'>1</span>/menu?access_token=xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx))", required: true)
                 paragraph("""<a href="${state.fullEndpoint}?access_token=${state.secret}">${state.fullEndpoint}?access_token=${state.secret}</a>""")
             }
             else paragraph("Click done to enable OAuth and return to the app to get the link.");
@@ -102,7 +103,7 @@ def getMain() {
 
 def getDashboards() {
     def resp;
-    httpGet("http://127.0.0.1:8080/apps/api/1/menu?access_token=${dashboardToken}") { it ->
+    httpGet("http://127.0.0.1:8080/apps/api/${dashboardAppId}/menu?access_token=${dashboardToken}") { it ->
         //                                          //head        //script
         def script = it.getData().getAt(0).children()[0].children()[13].text();
         
@@ -129,7 +130,7 @@ def getDashboardLayout() {
     
     def resp;
     
-    httpGet("http://127.0.0.1:8080/apps/api/1/dashboard/${dashboardId}/layout?access_token=${dashboardToken}") { it ->
+    httpGet("http://127.0.0.1:8080/apps/api/${dashboardAppId}/dashboard/${dashboardId}/layout?access_token=${dashboardToken}") { it ->
         resp = it.getData();
     }
     
@@ -141,7 +142,7 @@ def getDashboardDevices() {
     
     def resp;
     
-    httpGet("http://127.0.0.1:8080/apps/api/1/dashboard/${dashboardId}/devices2?access_token=${dashboardToken}") { it ->
+    httpGet("http://127.0.0.1:8080/apps/api/${dashboardAppId}/dashboard/${dashboardId}/devices2?access_token=${dashboardToken}") { it ->
         resp = it.getData();
     }
     
