@@ -61,7 +61,7 @@ def mainPage() {
             if(state.endpoint) {
                 input(type: "text", name: "dashboardToken", title: "Base Dashboard App Access Token - Can be obtained from any dashboard, try activating fullscreen and checking the url bar\nEx: (http://255.255.255.255/apps/api/1/menu?access_token=<span style='font-weight: bold;'>xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>))", required: true)
                 input(type: "number", name: "dashboardAppId", title: "Base Dashboard App Id - Can be obtained from any dashboard, try activating fullscreen and checking the url bar\nEx: (http://255.255.255.255/apps/api/<span style='font-weight: bold;'>1</span>/menu?access_token=xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx))", required: true)
-                paragraph("""<a href="${state.fullEndpoint}?access_token=${state.secret}&endpoint=${state.endpoint}&hubIp=${getHubIP()}">${state.fullEndpoint}?access_token=${state.secret}&endpoint=${state.endpoint}&hubIp=${getHubIP()}</a>""")
+                paragraph("""<a href="${state.fullEndpoint}?access_token=${state.secret}&dashboardAppId=${dashboardAppId}&endpoint=${state.endpoint}&hubIp=${getHubIP()}">${state.fullEndpoint}?access_token=${state.secret}&dashboardAppId=${dashboardAppId}&endpoint=${state.endpoint}&hubIp=${getHubIP()}</a>""")
             }
             else paragraph("Click done to enable OAuth and return to the app to get the link.");
 		}
