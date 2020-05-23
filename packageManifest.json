@@ -1,0 +1,50 @@
+{
+  "packageName": "HubiGraphs",
+  "author": "Thomas Howard",
+  "version": "0.2",
+  "minimumHEVersion": "0.0",
+  "dateReleased": "2020-05-22",
+  "apps": [
+    {
+      "id": "8707a4e2-785d-4916-acd7-749a0ed10d7c",
+      "name": "Hubigraphs",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraphs.groovy",
+      "required": true,
+      "oauth": false
+    },
+    {
+      "id": "027b6424-ea31-4f28-9eb4-9e117cf650ef",
+      "name": "Hubigraph Line Graph",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_line_graph.groovy",
+      "required": true,
+      "oauth": true
+    },
+    {
+      "id": "e0706d77-175c-4aa7-9972-317dcbefe19c",
+      "name": "Hubigraph Gauge",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_gauge.groovy",
+      "required": true,
+      "oauth": true
+    },
+    {
+      "id": "b2ba592b-4ad2-473f-b5a7-378cc6972535",
+      "name": "Hubigraph Time Line",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_time_line.groovy",
+      "required": true,
+      "oauth": true
+    }
+  ],
+  "drivers": [
+    {
+      "id": "7bc3bac8-f9c8-4022-9e53-4e70b9f729b6",
+      "name": "Hubigraph Tile Device",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_tile.groovy",
+      "required": true
+    }
+  ]
+}
