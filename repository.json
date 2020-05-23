@@ -1,0 +1,12 @@
+{
+  "author": "Thomas Howard",
+  "gitHubUrl": "https://github.com/tchoward",
+  "packages": [
+    {
+      "name": "HubiGraphs",
+      "category": "Convenience",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/packageManifest.json",
+      "description": "All your graphing needs, hosted locally on your hub!"
+    }
+  ]
+}
