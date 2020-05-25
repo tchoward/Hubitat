@@ -24,6 +24,7 @@
 // ****BETA BUILD
 // v0.1 Added Hubigraph Tile support with Auto-add Dashboard Tile
 // v0.2 Added Custom Device/Attribute Labels
+// v0.3 Added waiting screen for initial graph loading & sped up load times
  
 import groovy.json.JsonOutput
 
@@ -479,7 +480,8 @@ def buildData() {
           def attributes = settings["attributes_${sensor.id}"];
           resp[sensor.id] = [:];
           attributes.each { attribute ->
-              temp = sensor?.eventsBetween(then, now, [max: 500000])?.findAll{it.name == attribute}?.collect{[date: it.date, value: it.value]}
+              temp = sensor.statesSince(attribute, then, [max: 50000]).collect{[ date: it.date, value: it.value ]}
+              //temp = sensor?.eventsBetween(then, now, [max: 500000])?.findAll{it.name == attribute}?.collect{[date: it.date, value: it.value]}
               temp = temp.sort{ it.date };
               temp = temp.collect{ [date: it.date.getTime(), value: it.value] }
               
@@ -533,6 +535,29 @@ let graphData = {};
 let unparsedData = {};
 
 let websocket;
+
+class Loader {
+    constructor() {
+        this.elem = jQuery(jQuery(document.body).prepend(`
+            <div class="loaderContainer">
+                <div class="dotsContainer">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+                <div class="text"></div>
+            </div>
+        `).children()[0]);
+    }
+
+    setText(text) {
+        this.elem.find('.text').text(text);
+    }
+
+    remove() {
+        this.elem.remove();
+    }
+}
 
 function getOptions() {
     return jQuery.get("${state.localEndpointURL}getOptions/?access_token=${state.endpointSecret}", (data) => {
@@ -616,7 +641,7 @@ function evalTest(evalStrPre, value) {
     }   
 }
 
-async function update() {
+async function update(callback) {
     let now = new Date().getTime();
     let min = now;
     min -= options.graphTimespan;
@@ -645,14 +670,100 @@ async function update() {
         });
     });
 
-    drawChart(now, min);
+    drawChart(now, min, callback);
 }
 
 async function onLoad() {
+    //append our css
+    jQuery(document.head).append(`
+        <style>
+            .loaderContainer {
+                position: fixed;
+                z-index: 100;
+
+                width: 100%;
+                height: 100%;
+
+                background-color: white;
+                
+                display: flex;
+                flex-flow: column nowrap;
+                justify-content: center;
+                align-items: middle;
+            }
+
+            .dotsContainer {
+                height: 60px;
+                padding-bottom: 10px;
+
+                display: flex;
+                flex-flow: row nowrap;
+                justify-content: center;
+                align-items: flex-end;
+            }
+
+            @keyframes bounce {
+                0% {
+                    transform: translateY(0);
+                }
+
+                50% {
+                    transform: translateY(-50px);
+                }
+
+                100% {
+                    transform: translateY(0);
+                }
+            }
+
+            .dot {
+                box-sizing: border-box;
+
+                margin: 0 25px;
+
+                width: 10px;
+                height: 10px;
+
+                border: solid 5px black;
+                border-radius: 5px;
+
+                animation-name: bounce;
+                animation-duration: 1s;
+                animation-iteration-count: infinite;
+            }
+
+            .dot:nth-child(1) {
+                animation-delay: 0ms;
+            }
+
+            .dot:nth-child(2) {
+                animation-delay: 333ms;
+            }
+
+            .dot:nth-child(3) {
+                animation-delay: 666ms;
+            }
+
+            .text {
+                font-family: Arial;
+                font-weight: 200;
+                font-size: 2rem;
+                text-align: center;
+            }
+        </style>
+    `);
+
+    let loader = new Loader();
+
     //first load
+    loader.setText('Getting options (1/4)');
     await getOptions();
+    loader.setText('Getting device data (2/4)');
     await getSubscriptions();
+    loader.setText('Getting events (3/4)');
     await getGraphData();
+
+    loader.setText('Drawing chart (4/4)');
 
     let now = new Date().getTime();
     let min = now;
@@ -690,7 +801,10 @@ async function onLoad() {
     console.log(Object.assign({}, graphData));
 
     //update data
-    update();
+    update(() => {
+        //destroy loader when we are done with it
+        loader.remove();
+    });
 
     //start our update cycle
     if(options.graphUpdateRate !== -1) {
@@ -720,7 +834,7 @@ async function onLoad() {
     });
 }
 
-function drawChart(now, min) {
+function drawChart(now, min, callback) {
     let dataTable = new google.visualization.DataTable();
     dataTable.addColumn({ type: 'string', id: 'Device' });
     dataTable.addColumn({ type: 'date', id: 'Start' });
@@ -755,6 +869,10 @@ function drawChart(now, min) {
     });
 
     let chart = new google.visualization.Timeline(document.getElementById("timeline"));
+
+    //if we have a callback
+    if(callback) google.visualization.events.addListener(chart, 'ready', callback);
+
     chart.draw(dataTable, options.graphOptions);
 }
         </script>
