@@ -1,5 +1,4 @@
-import groovy.json.*
-
+import groovy.json.*;
 /**
  *  Hubigraph Line Graph Child App
  *
@@ -29,6 +28,7 @@ import groovy.json.*
 // ****BETA BUILD
 // v0.1 Added Hubigraph Tile support with Auto-add Dashboard Tile
 // v0.2 Added Custom Device/Attribute Labels
+// v0.3 Added waiting screen for initial graph loading & sped up load times
     
 // Credit to Alden Howard for optimizing the code.
  
@@ -116,8 +116,8 @@ def graphSetupPage(){
                     ["#000000":"Black"], ["#C0C0C0":"Gray"], ["#C0C0C0":"Silver"], ["#FFFFFF":"White"], ["rgba(255, 255, 255, 0)":"Transparent"]];
     
     dynamicPage(name: "graphSetupPage") {
-        section(){
-            paragraph getTitle("General Options");
+        section(getTitle("General Options"))
+        {        
             input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: true, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
             input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: true, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
             input( type: "enum", name: "graph_background_color", title: "Background Color", defaultValue: "White", options: colorEnum);
@@ -533,7 +533,8 @@ private buildData() {
                 
                 log.debug("Checking:: $sensor.displayName: $attribute id:$sensor.id");
                // respEvents << sensor.eventsBetween(then, today, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date, value: it.value ]}
-                respEvents << sensor.eventsSince(then, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date.getTime(), value: Float.parseFloat(it.value) ]}
+                //respEvents << sensor.eventsSince(then, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date.getTime(), value: Float.parseFloat(it.value) ]}
+                respEvents << sensor.statesSince(attribute, then, [max: 50000]).collect{[ date: it.date.getTime(), value: Float.parseFloat(it.value) ]}
                 respEvents = respEvents.sort{ it.date };
                 respEvents = respEvents.flatten();
                 respEvents = respEvents.reverse();
@@ -554,7 +555,7 @@ private buildData() {
             }
         }
     }
-    //log.debug("Resp: $resp");  
+    log.debug("Done");  
     
     return resp;
 }
@@ -669,6 +670,29 @@ let stack = {};
 
 let websocket;
 
+class Loader {
+    constructor() {
+        this.elem = jQuery(jQuery(document.body).prepend(`
+            <div class="loaderContainer">
+                <div class="dotsContainer">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+                <div class="text"></div>
+            </div>
+        `).children()[0]);
+    }
+
+    setText(text) {
+        this.elem.find('.text').text(text);
+    }
+
+    remove() {
+        this.elem.remove();
+    }
+}
+
 function getOptions() {
     return jQuery.get("${state.localEndpointURL}getOptions/?access_token=${state.endpointSecret}", (data) => {
         options = data;
@@ -720,7 +744,7 @@ function parseEvent(event) {
     }
 }
 
-function update() {
+function update(callback) {
     //boot old data
     let min = new Date().getTime();
     min -= options.graphTimespan;
@@ -732,14 +756,98 @@ function update() {
         });
     });
 
-    drawChart();   
+    drawChart(callback);   
 }
 
 async function onLoad() {
+    //append our css
+    jQuery(document.head).append(`
+        <style>
+            .loaderContainer {
+                position: fixed;
+                z-index: 100;
+
+                width: 100%;
+                height: 100%;
+                
+                display: flex;
+                flex-flow: column nowrap;
+                justify-content: center;
+                align-items: middle;
+            }
+
+            .dotsContainer {
+                height: 60px;
+                padding-bottom: 10px;
+
+                display: flex;
+                flex-flow: row nowrap;
+                justify-content: center;
+                align-items: flex-end;
+            }
+
+            @keyframes bounce {
+                0% {
+                    transform: translateY(0);
+                }
+
+                50% {
+                    transform: translateY(-50px);
+                }
+
+                100% {
+                    transform: translateY(0);
+                }
+            }
+
+            .dot {
+                box-sizing: border-box;
+
+                margin: 0 25px;
+
+                width: 10px;
+                height: 10px;
+
+                border: solid 5px black;
+                border-radius: 5px;
+
+                animation-name: bounce;
+                animation-duration: 1s;
+                animation-iteration-count: infinite;
+            }
+
+            .dot:nth-child(1) {
+                animation-delay: 0ms;
+            }
+
+            .dot:nth-child(2) {
+                animation-delay: 333ms;
+            }
+
+            .dot:nth-child(3) {
+                animation-delay: 666ms;
+            }
+
+            .text {
+                font-family: Arial;
+                font-weight: 200;
+                font-size: 2rem;
+                text-align: center;
+            }
+        </style>
+    `);
+
+    let loader = new Loader();
+
     //first load
+    loader.setText('Getting options (1/4)');
     await getOptions();
+    loader.setText('Getting device data (2/4)');
     await getSubscriptions();
+    loader.setText('Getting events (3/4)');
     await getGraphData();
+
+    loader.setText('Drawing chart (4/4)');
 
     //create stack
     Object.entries(graphData).forEach(([deviceId, attrs]) => {
@@ -749,7 +857,10 @@ async function onLoad() {
         });
     })
 
-    update();
+    update(() => {
+        //destroy loader when we are done with it
+        loader.remove();
+    });
 
     //start our update cycle
     if(options.graphUpdateRate !== -1) {
@@ -779,7 +890,7 @@ function onBeforeUnload() {
     if(websocket) websocket.close();
 }
 
-function drawChart() {
+function drawChart(callback) {
     let now = new Date().getTime();
     let min = now - options.graphTimespan;
 
@@ -838,11 +949,15 @@ function drawChart() {
     parsedGraphData.forEach(it => {
         dataTable.addRow(it);
     });
-    let chart = new ${drawType}(document.getElementById("timeline"));
 
     let graphOptions = Object.assign({}, options.graphOptions);
 
     graphOptions.hAxis = Object.assign(graphOptions.hAxis, { viewWindow: { min: moment(min).toDate(), max: moment(now).toDate() } });
+
+    let chart = new ${drawType}(document.getElementById("timeline"));
+
+    //if we have a callback
+    if(callback) google.visualization.events.addListener(chart, 'ready', callback);
 
     chart.draw(dataTable, graphOptions);
 }
