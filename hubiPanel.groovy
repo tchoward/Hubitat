@@ -61,7 +61,8 @@ def mainPage() {
             if(state.endpoint) {
                 input(type: "text", name: "dashboardToken", title: "Base Dashboard App Access Token - Can be obtained from any dashboard, try activating fullscreen and checking the url bar\nEx: (http://255.255.255.255/apps/api/1/menu?access_token=<span style='font-weight: bold;'>xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</span>))", required: true)
                 input(type: "number", name: "dashboardAppId", title: "Base Dashboard App Id - Can be obtained from any dashboard, try activating fullscreen and checking the url bar\nEx: (http://255.255.255.255/apps/api/<span style='font-weight: bold;'>1</span>/menu?access_token=xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx))", required: true)
-                paragraph("""<a href="${state.fullEndpoint}?access_token=${state.secret}&dashboardAppId=${dashboardAppId}&endpoint=${state.endpoint}&hubIp=${getHubIP()}">${state.fullEndpoint}?access_token=${state.secret}&dashboardAppId=${dashboardAppId}&endpoint=${state.endpoint}&hubIp=${getHubIP()}</a>""")
+                paragraph("""<a href="${state.fullEndpoint}?access_token=${state.secret}&dashboardAppId=${dashboardAppId}&dashboardAccessToken=${dashboardToken}" target="_blank">${state.fullEndpoint}?access_token=${state.secret}&dashboardAppId=${dashboardAppId}&dashboardAccessToken=${dashboardToken}</a>""")
+                paragraph("""<a href="${state.fullEndpoint}/settings/?access_token=${state.secret}&dashboardAppId=${dashboardAppId}&dashboardAccessToken=${dashboardToken}" target="_blank">Click Here to go to settings if you get locked out</a>""")
             }
             else paragraph("Click done to enable OAuth and return to the app to get the link.");
 		}
@@ -105,7 +106,7 @@ def getMain() {
     
     resp = resp.replaceAll("/static/js/", "https://cdn.plumpynuggets.com/static/js/");
     
-    return render(contentType: "text/html", data: resp, headers: ["Access-Control-Allow-Origin": "*"]);
+    return render(contentType: "text/html", data: resp);
 }
 
 def getDashboards() {
@@ -114,22 +115,18 @@ def getDashboards() {
         //                                          //head        //script
         def script = it.getData().getAt(0).children()[0].children()[13].text();
         
-        def token = "";
         def dashboards = "";
         
         script.eachLine {
-            def tokenIndex = it.indexOf("var access_token = \"");
             def dashboardsIndex = it.indexOf("var dashboardsJson = ");
-            if(tokenIndex != -1) token = it.substring(tokenIndex + "var access_token = \"".length(), it.lastIndexOf("\""));
-            else if(dashboardsIndex != -1) dashboards = it.substring(dashboardsIndex + "var dashboardsJson = ".length(), it.lastIndexOf("]") + 1);
+            if(dashboardsIndex != -1) dashboards = it.substring(dashboardsIndex + "var dashboardsJson = ".length(), it.lastIndexOf("]") + 1);
         }
         
         resp = [
-            "token": token,
             "dashboards": new JsonSlurper().parseText(dashboards)
         ]
     }
-    return render(contentType: "text/json", data: JsonOutput.toJson(resp), headers: ["Access-Control-Allow-Origin": "*"]);
+    return render(contentType: "text/json", data: JsonOutput.toJson(resp), headers: ["Access-Control-Allow-Origin": "http://localhost:3000"]);
 }
 
 def getDashboardLayout() {
@@ -141,7 +138,7 @@ def getDashboardLayout() {
         resp = it.getData();
     }
     
-    return render(contentType: "text/json", data: JsonOutput.toJson(resp), headers: ["Access-Control-Allow-Origin": "*"]);
+    return render(contentType: "text/json", data: JsonOutput.toJson(resp), headers: ["Access-Control-Allow-Origin": "http://localhost:3000"]);
 }
 
 def getDashboardDevices() {
@@ -153,15 +150,15 @@ def getDashboardDevices() {
         resp = it.getData();
     }
     
-    return render(contentType: "text/json", data: JsonOutput.toJson(resp), headers: ["Access-Control-Allow-Origin": "*"]);
+    return render(contentType: "text/json", data: JsonOutput.toJson(resp), headers: ["Access-Control-Allow-Origin": "http://localhost:3000"]);
 }
 
 def getOptions() {
     log.debug(state.options);
-    return render(contentType: "text/json", data: (state.options ? state.options : "{error: true}"), headers: ["Access-Control-Allow-Origin": "*"]); 
+    return render(contentType: "text/json", data: (state.options ? state.options : "{error: true}"), headers: ["Access-Control-Allow-Origin": "http://localhost:3000"]); 
 }
 
 def postOptions() {
     state.options = request.body;
-    return render(headers: ["Access-Control-Allow-Origin": "*"]);
+    return render(headers: ["Access-Control-Allow-Origin": "http://localhost:3000"]);
 }
