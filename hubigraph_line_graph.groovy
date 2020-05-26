@@ -276,7 +276,6 @@ def enableAPIPage() {
 }
 
 def getTimeString(string_){
-    //log.debug("Looking for $string_")
     switch (string_.toInteger()){
         case -1: return "Never";
         case 0: return "Real Time"; 
@@ -288,7 +287,7 @@ def getTimeString(string_){
         case 1800000:return "Half Hour";
         case 3600000:return "1 Hour";
     }
-    log.debug("NOT FOUND");
+    logDebug("NOT FOUND");
 }
 
 def getTimsSpanString(string_){
@@ -304,7 +303,7 @@ def getTimsSpanString(string_){
         case 259200000: return "3 Days";
         case 604800000: return "1 Week";
     }
-    log.debug("NOT FOUND");
+    logDebug("NOT FOUND");
 }
 
 def getColorString(string_){
@@ -425,8 +424,17 @@ def mainPage() {
                 href url: "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}", title: "Graph -- Please Click <span style='font-weight: bold; font-size: 12px; padding: 10px; border-radius: 3px; box-shadow: 1px 1px 5px -2px black; margin: 5px;'>Done</span> to save settings before viewing the graph"
                 href "disableAPIPage", title: "Disable API", description: ""
             }
+        }
+        section(){
+           input( type: "bool", name: "debug", title: "Enable Debug Logging?", defaultValue: false); 
         }    
         
+    }
+}
+
+def logDebug(str){
+    if (debug==true){
+        log.debug(str);   
     }
 }
 
@@ -434,11 +442,11 @@ def createHubiGraphTile() {
 	log.info "Creating HubiGraph Child Device"
     
     def childDevice = getChildDevice("HUBIGRAPH_${app.id}");     
-    log.debug childDevice
+    logDebug(childDevice);
    
     if (!childDevice) {
         if (!device_name) device_name="Dummy Device";
-        log.debug("Creating Device $device_name");
+        logDebug("Creating Device $device_name");
     	childDevice = addChildDevice("tchoward", "Hubigraph Tile Device", "HUBIGRAPH_${app.id}", null,[completedSetup: true, label: device_name]) 
         log.info "Created HTTP Switch [${childDevice}]"
         
@@ -480,7 +488,7 @@ def getTitle(myText=""){
 }
 
 def installed() {
-    log.debug "Installed with settings: ${settings}"
+    logDebug "Installed with settings: ${settings}"
     initialize()
 }
 
@@ -523,7 +531,7 @@ private buildData() {
            then -= Integer.parseInt(graph_timespan).milliseconds;
     }
     
-    log.debug("Initializing:: Device = $sensor  Attribute = $attribute from $then to $today");
+    logDebug("Initializing:: Device = $sensor  Attribute = $attribute from $then to $today");
     
     if(sensors) {
         sensors.each { sensor ->
@@ -531,11 +539,10 @@ private buildData() {
             settings["attributes_${sensor.id}"].each { attribute ->
                 def respEvents = [];    
                 
-                log.debug("Checking:: $sensor.displayName: $attribute id:$sensor.id");
-               // respEvents << sensor.eventsBetween(then, today, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date, value: it.value ]}
-                //respEvents << sensor.eventsSince(then, [max: 50000]).findAll{"${it.name}" == attribute}.collect{[ date: it.date.getTime(), value: Float.parseFloat(it.value) ]}
-                respEvents << sensor.statesSince(attribute, then, [max: 50000]).collect{[ date: it.date.getTime(), value: Float.parseFloat(it.value) ]}
-                respEvents = respEvents.sort{ it.date };
+                logDebug("Checking:: $sensor.displayName: $attribute id:$sensor.id");
+                def reg = ~/[a-z,A-Z]+/;
+            
+                respEvents << sensor.statesSince(attribute, then, [max: 50000]).collect{[ date: it.date.getTime(), value: Float.parseFloat(it.value - reg ) ]}
                 respEvents = respEvents.flatten();
                 respEvents = respEvents.reverse();
                 
@@ -555,7 +562,7 @@ private buildData() {
             }
         }
     }
-    log.debug("Done");  
+    logDebug("Done");  
     
     return resp;
 }
@@ -1019,7 +1026,7 @@ def getDataMetrics() {
     def then = new Date().getTime();
     data = getData();
     def now = new Date().getTime();
-    log.debug("Command Time (ms): ${now - then}");
+    logDebug("Command Time (ms): ${now - then}");
     return data;
 }
 
