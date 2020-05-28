@@ -4,6 +4,7 @@ definition(
     author: "Thomas Howard",
     description: "Hubitat Graph Creator Parent App",
     category: "My Apps",
+    installOnOpen: true,
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
@@ -14,7 +15,7 @@ preferences {
     page(name: "mainPage", title: "Graph Creator", install: true, uninstall: true,submitOnChange: true) {
         section {
             app(name: "hubiGraphLine", appName: "Hubigraph Line Graph", namespace: "tchoward", title: "Create New Line Graph", multiple: true)
-			app(name: "hubiGraphTime", appName: "Hubigraph Time Line", namespace: "tchoward", title: "Create New TimeLine", multiple: true)
+	    app(name: "hubiGraphTime", appName: "Hubigraph Time Line", namespace: "tchoward", title: "Create New TimeLine", multiple: true)
             app(name: "hubiGauge", appName: "Hubigraph Gauge", namespace: "tchoward", title: "Create New Gauge", multiple: true)
         }
     }
