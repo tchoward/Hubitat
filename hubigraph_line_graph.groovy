@@ -29,6 +29,7 @@ import groovy.json.*;
 // v0.1 Added Hubigraph Tile support with Auto-add Dashboard Tile
 // v0.2 Added Custom Device/Attribute Labels
 // v0.3 Added waiting screen for initial graph loading & sped up load times
+// v0.33 Bug Fixes
     
 // Credit to Alden Howard for optimizing the code.
  
@@ -113,7 +114,7 @@ def graphSetupPage(){
     
     def colorEnum = [["#800000":"Maroon"], ["#FF0000":"Red"], ["#FFA500":"Orange"], ["#FFFF00":"Yellow"], ["#808000":"Olive"], ["#008000":"Green"],
                     ["#800080":"Purple"], ["#FF00FF":"Fuchsia"], ["#00FF00":"Lime"], ["#008080":"Teal"], ["#00FFFF":"Aqua"], ["#0000FF":"Blue"], ["#000080":"Navy"],
-                    ["#000000":"Black"], ["#C0C0C0":"Gray"], ["#C0C0C0":"Silver"], ["#FFFFFF":"White"], ["rgba(255, 255, 255, 0)":"Transparent"]];
+                    ["#000000":"Black"], ["#C0C0C0":"Gray"], ["#C0C0C0":"Silver"], ["#FFFFFF":"White"], ["transparent":"Transparent"]];
     
     dynamicPage(name: "graphSetupPage") {
         section(getTitle("General Options"))
@@ -609,7 +610,7 @@ def getChartOptions(){
                                                                    "alignment": graph_legend_inside_position, 
                                                                    "textStyle": ["fontSize": graph_legend_font, 
                                                                                  "color": graph_legend_color]],
-            "backgroundColor": graph_background_color,
+            "backgroundColor": graph_background_color == "rgba(255, 255, 255, 0)"  ? "transparent" : graph_background_color,
             "curveType": !graph_smoothing ? "" : "function",
             "title": !graph_show_title ? "" : graph_title,
             "titleTextStyle": !graph_show_title ? "" : ["fontSize": graph_title_font, "color": graph_title_color],
