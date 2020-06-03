@@ -385,8 +385,7 @@ def createHubiGraphTile() {
 	log.info "Creating HubiGraph Child Device"
     
     def childDevice = getChildDevice("HUBIGRAPH_${app.id}");     
-    logdebug childDevice
-   
+       
     if (!childDevice) {
         if (!device_name) device_name="Dummy Device";
         log.debug("Creating Device $device_name");
