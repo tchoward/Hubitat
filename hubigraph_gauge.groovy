@@ -16,6 +16,7 @@
 
 // Hubigraph Gauge Change Log
 // V 0.1 Intial release
+// V 1.0 Released (not Beta) Cleanup and Preview Enabled
 
 import groovy.json.JsonOutput
 import java.text.DecimalFormat;
@@ -75,7 +76,11 @@ mappings {
         ]
     }
 }
-
+def logDebug (log){
+    if (debug == true){
+      log.debug(log);   
+    }
+}
 def extractNumber( String input ) {
   val = input.findAll( /-?\d+\.\d*|-?\d*\.\d+|-?\d+/ )*.toDouble()
   val[0]
@@ -151,9 +156,9 @@ def graphSetupPage(){
             int num_ = num_highlights.toInteger();
             if (num_highlights && num_ > 0){
                 
-                log.debug("Looping over $num_highlights");
+                logDebug("Looping over $num_highlights");
                 for (i=0; i<num_; i+=1){
-                    log.debug("i: $i num_: $num_")   
+                    logDebug("i: $i num_: $num_")   
                     input (type: "enum", name: "highlight_color${i}", title: "Select Highlight Color Region #${i}", multiple: false, options:colorEnum);
                     input (type: "number", name: "highlight_start${i}", title: "Select Highlight Start Region Value #${i}");
                 }
@@ -185,7 +190,7 @@ def disableAPIPage() {
                    revokeAccessToken();
                 }
                 catch (e) {
-                    log.debug "Unable to revoke access token: $e"
+                    logDebug "Unable to revoke access token: $e"
                 }
                 state.endpoint = null
             }
@@ -207,6 +212,30 @@ def enableAPIPage() {
     }
 }
 
+def loadPreview(){
+  logDebug("Value - $state.count_");
+  if (!state.count_) state.count_ = 5;
+  def html = ""
+    
+    html+= """
+<iframe id="preview" style="width: 50%; height: 50%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"></iframe>
+<script>
+function resize() {
+    const box = jQuery('#formApp')[0].getBoundingClientRect();
+    const h = box.width*0.5;
+    jQuery('#preview').css('height', h);
+}
+
+resize();
+
+jQuery(window).on('resize', () => {
+    resize();
+});
+</script>
+"""
+}
+
+
 def mainPage() {
     def timeEnum = [["0":"Never"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], 
                     ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]]
@@ -214,23 +243,24 @@ def mainPage() {
     dynamicPage(name: "mainPage") {        
         section(){
             if (!state.endpoint) {
-                paragraph "API has not been setup. Tap below to enable it."
+                paragraph getTitle("API has not been setup. Tap below to enable it.");
                 href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
             } else {
+                paragraph getTitle("Graph Options");
                 href name: "deviceSelectionPage", title: "Select Device/Data", description: "", page: "deviceSelectionPage"
                 href name: "graphSetupPage", title: "Configure Graph", description: "", page: "graphSetupPage"
-                paragraph getLine();
-                paragraph "<i><u><b>LOCAL GRAPH URL</b></u></i>\n${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
+                paragraph getTitle("Local URL for Graph");
+                paragraph "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
                 if (sensor_){
-                    paragraph "Selected Device = ${sensor_.displayName} : $attribute_"
-                    paragraph "Min: $minValue_"
-                    paragraph "Max: $maxValue_"                
+                    paragraph getTitle("Preview");
+                    paragraph loadPreview()                
                 }
                
                 
             }//else
         }
         section(){
+            paragraph getTitle("Hubigraph Tile Installation");
             input( type: "bool", name: "install_device", title: "Install Hubigraph Tile Device for Dashboard Display", defaultValue: false, submitOnChange: true);
             if (install_device==true){   
                  input( type: "text", name: "device_name", title: "<b>Name for HubiGraph Tile Device</b>", default: "Hubigraph Tile" ); 
@@ -238,40 +268,40 @@ def mainPage() {
         }
         section(){
             if (state.endpoint){
-                paragraph getLine();
+                paragraph getTitle("Hubigraph Application Name");
                 input( type: "text", name: "app_name", title: "<b>Rename the Application?</b>", default: "Hubigraph Line Graph", submitOnChange: true ) 
-                href url: "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}", title: "Graph -- Please Click <span style='font-weight: bold; font-size: 12px; padding: 10px; border-radius: 3px; box-shadow: 1px 1px 5px -2px black; margin: 5px;'>Done</span> to save settings before viewing the graph"
+                paragraph getTitle("Disable Oauth Authorization");
                 href "disableAPIPage", title: "Disable API", description: ""
             }
+        }
+        section(){
+           paragraph getTitle("Hubigraph Debugging");
+           input( type: "bool", name: "debug", title: "Enable Debug Logging?", defaultValue: false); 
         }    
         
     }
 }
 
 def createHubiGraphTile() {
-	log.info "Creating HubiGraph Child Device"
+	logDebug("Creating HubiGraph Child Device");
     
     def childDevice = getChildDevice("HUBIGRAPH_${app.id}");     
-    log.debug childDevice
+    logDebug(childDevice)
    
     if (!childDevice) {
         if (!device_name) device_name="Dummy Device";
-        log.debug("Creating Device $device_name");
+        logDebug("Creating Device $device_name");
     	childDevice = addChildDevice("tchoward", "Hubigraph Tile Device", "HUBIGRAPH_${app.id}", null,[completedSetup: true, label: device_name]) 
-        log.info "Created HTTP Switch [${childDevice}]"
         
         //Send the html automatically
         childDevice.setGraph("${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
-        log.info "Sent setGraph: ${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
 	}
     else {
     	
         childDevice.label = device_name;
-        log.info "Label Updated to [${device_name}]"
         
         //Send the html automatically
         childDevice.setGraph("${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
-        log.info "Sent setGraph: ${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
 	}
 
 }
@@ -299,7 +329,7 @@ def getTitle(myText=""){
 }
 
 def installed() {
-    log.debug "Installed with settings: ${settings}"
+    logDebug "Installed with settings: ${settings}"
     updated();
 }
 
@@ -345,11 +375,9 @@ def getChartOptions(){
     }
     
     highlightString = "";
-    log.debug "Looking for ${num_highlights.toInteger()}"
     switch (num_highlights.toInteger()){
            
         case 3: 
-        log.debug "Loading 3"
         redColor = highlight_color2;
         redFrom  = highlight_start2;
         redTo    = highlight_end;
@@ -365,7 +393,6 @@ def getChartOptions(){
         break;
             
         case 2:
-        log.debug "Loading 2"
 
         yellowColor  = highlight_color1;
         yellowFrom   = highlight_start1;
@@ -378,7 +405,6 @@ def getChartOptions(){
         break;
         
         case 1: 
-        log.debug "Loading 1"
 
         greenColor  = highlight_color0;
         greenFrom   = highlight_start0;
@@ -386,7 +412,6 @@ def getChartOptions(){
         
         break;
     }
-    log.debug "$greenColor $greenFrom $greenTo"
     def options = [
         "graphOptions": [
             "width": graph_static_size ? graph_h_size : "100%",
@@ -566,7 +591,7 @@ def initializeAppEndpoint() {
             }
         }
         catch(e) {
-            log.debug("Error: $e");
+            logDebug("Error: $e");
             state.endpoint = null
         }
     }
