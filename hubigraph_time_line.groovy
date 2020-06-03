@@ -25,6 +25,8 @@
 // v0.1 Added Hubigraph Tile support with Auto-add Dashboard Tile
 // v0.2 Added Custom Device/Attribute Labels
 // v0.3 Added waiting screen for initial graph loading & sped up load times
+// V 1.0 Released (not Beta) Cleanup and Preview Enabled
+
  
 import groovy.json.JsonOutput
 
@@ -200,13 +202,14 @@ def attributeConfigurationPage() {
                             "end": "active"]        
          ];
                           
-          
+    state.count_ = 0;     
     dynamicPage(name: "attributeConfigurationPage") {
         section() {
             paragraph("Configure what counts as a 'start' or 'end' event for each attribute on the timeline. For example, Switches start when they are 'on' and end when they are 'off'.\n\nSome attributes will automatically populate. You can change them if you have a different configuration (chances are you won't).\n\nAdditionally, for devices with numeric values, you can define a range of values that count as 'start' or 'end'. For example, to select all the times a temperature is above 70.5 degrees farenheight, you would set the start to '> 70.5', and the end to '< 70.5'.\n\nSupported comparitors are: '<', '>', '<=', '>=', '==', '!='.\n\nBecause we are dealing with HTML, '<' is abbreviated to &amp;lt; after you save. That is completely normal. It will still work.");
             sensors.each { sensor ->
                 def attributes = settings["attributes_${sensor.id}"];
                 attributes.each { attribute ->
+                    state.count_++;
                     paragraph getTitle("${sensor.displayName}: ${attribute}");
                     input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "Override Device Name -- use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE", defaultValue: "%deviceName%: %attributeName%");
                     input( type: "text", name: "attribute_${sensor.id}_${attribute}_start", title: "Start event value", defaultValue: supportedTypes[attribute] ? supportedTypes[attribute].start : null, required: true);
@@ -248,6 +251,28 @@ def graphSetupPage(){
     }
 }
 
+def loadPreview(){
+  if (!state.count_) state.count_ = 5;
+  def html = ""
+    
+    html+= """
+<iframe id="preview" style="width: 100%; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"></iframe>
+<script>
+function resize() {
+    const box = jQuery('#formApp')[0].getBoundingClientRect();
+    const h = 35 * ${state.count_.floatValue()} + 30;
+    jQuery('#preview').css('height', h);
+}
+
+resize();
+
+jQuery(window).on('resize', () => {
+    resize();
+});
+</script>
+"""
+}
+
 def disableAPIPage() {
     dynamicPage(name: "disableAPIPage") {
         section() {
@@ -279,7 +304,6 @@ def enableAPIPage() {
 }
 
 def getTimeString(string_){
-    //log.debug("Looking for $string_")
     switch (string_.toInteger()){
         case -1: return "Never";
         case 0: return "Real Time"; 
@@ -318,55 +342,25 @@ def mainPage() {
     dynamicPage(name: "mainPage") {        
         section(){
             if (!state.endpoint) {
-                paragraph "API has not been setup. Tap below to enable it."
+                paragraph getTitle("API has not been setup. Tap below to enable it.");
                 href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
             } else {
+                paragraph getTitle("Graph Options");
                 href name: "deviceSelectionPage", title: "Select Device/Data", description: "", page: "deviceSelectionPage"
                 href name: "graphSetupPage", title: "Configure Graph", description: "", page: "graphSetupPage"
-                paragraph getLine();
+                paragraph getTitle("Local URL for Graph");
                 paragraph "<i><u><b>LOCAL GRAPH URL</b></u></i>\n${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
-         
-                
-                    def paragraph_ = /<table width="100%" ID="Table2" style="margin: 0px;">/
-                    paragraph_ +=  "${getTableRow3("<i><u><b>DEVICE INFORMATION</b></u></i>", "","")}"
-                    paragraph_ +=  "${getTableRow3("<i><u>SWITCH</u></i>","<i><u>MOTION</u></i>","<i><u>CONTACTS</u></i>")}" 
-                    num_switches = switches ?  switches.size() : 0;
-                    num_motions = motions ?  motions.size() : 0;
-                    num_contacts = contacts ?  contacts.size() : 0;
-                    max_ = Math.max(num_switches, Math.max(num_motions, num_contacts));
-                
-                    log.debug ("Max = $max_, $num_switches, $num_motions, $num_contacts");
-                    for (i=0; i<max_; i++){
-                        switchText = i<num_switches?switches[i]:"";
-                        motionText = i<num_motions?motions[i]:"";
-                        contactText = i<num_contacts?contacts[i]:"";
-                        paragraph_ += /${getTableRow3("$switchText", "$motionText", "$contactText")}/
-                    }    
-                    paragraph_ += "</table>"
-                    paragraph paragraph_
-                 
+          
+                                   
                 if (graph_timespan){
-                    
-                
-                    def timeString = getTimsSpanString(graph_timespan);
-                    graph_update_rate = graph_update_rate ? graph_update_rate : 0
-                    paragraph_ =  "<table>"
-                    paragraph_ += "${getTableRow("<b><u>GRAPH SELECTIONS</b></u>", "<b><u>VALUE</b></u>", "<b><u>SIZE</b></u>", "<b><u>COLOR</b></u>")}"
-                    paragraph_ += /${getTableRow("Timespan", timeString,"","")}/
-                    paragraph_ += /${getTableRow("Update Rate", getTimeString(graph_update_rate), "", "")}/ 
-                    if (graph_static_size==true){
-                        paragraph_ += /${getTableRow("Graph Size", "$graph_h_size X $graph_v_size", "","")}/
-                    } else {
-                        paragraph_ += /${getTableRow("Graph Size", "DYNAMIC", "","")}/
-                    }
-                    paragraph_ += /${getTableRow("Axis", "", graph_axis_font, graph_axis_color)}/
-                    paragraph_ += /${getTableRow("Background", "", "", graph_background_color)}/
-                    paragraph_ += "</table>"
-                    paragraph paragraph_
+                    paragraph getTitle("Preview");
+                    paragraph loadPreview();
+                   
                 } //graph_timespan
             }//else
         }
         section(){
+            paragraph getTitle("Hubigraph Tile Installation");
             input( type: "bool", name: "install_device", title: "Install Hubigraph Tile Device for Dashboard Display", defaultValue: false, submitOnChange: true);
             if (install_device==true){   
                  input( type: "text", name: "device_name", title: "<b>Name for HubiGraph Tile Device</b>", default: "Hubigraph Tile" ); 
@@ -374,13 +368,16 @@ def mainPage() {
         }
         section(){
             if (state.endpoint){
-                paragraph getLine();
+                paragraph getTitle("Hubigraph Application Name");
                 input( type: "text", name: "app_name", title: "<b>Rename the Application?</b>", default: "Hubigraph Line Graph", submitOnChange: true ) 
-                href url: "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}", title: "Graph -- Please Click <span style='font-weight: bold; font-size: 12px; padding: 10px; border-radius: 3px; box-shadow: 1px 1px 5px -2px black; margin: 5px;'>Done</span> to save settings before viewing the graph"
+                paragraph getTitle("Disable Oauth Authorization");
                 href "disableAPIPage", title: "Disable API", description: ""
             }
         }    
-        
+        section(){
+           paragraph getTitle("Hubigraph Debugging");
+           input( type: "bool", name: "debug", title: "Enable Debug Logging?", defaultValue: false); 
+        }    
     }
 }
 
@@ -388,7 +385,7 @@ def createHubiGraphTile() {
 	log.info "Creating HubiGraph Child Device"
     
     def childDevice = getChildDevice("HUBIGRAPH_${app.id}");     
-    log.debug childDevice
+    logdebug childDevice
    
     if (!childDevice) {
         if (!device_name) device_name="Dummy Device";
