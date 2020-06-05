@@ -109,7 +109,6 @@ def deviceSelectionPage() {
                     id = sensor.id;
                     sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() };      
                     paragraph getTitle(sensor.displayName);
-                    
                     input( type: "enum", name: "attributes_${id}", title: "Attributes to graph", required: true, multiple: true, options: sensor_attributes, defaultValue: "1", submitOnChange: false )
                     input( type: "enum", name: "displayOrder_${id}", title: "Order to Display on Timeline", required: true, multiple:false, options: all, defaultValue: idx, submitOnChange: true);
                 }
@@ -206,14 +205,17 @@ def attributeConfigurationPage() {
     dynamicPage(name: "attributeConfigurationPage") {
         section() {
             paragraph("Configure what counts as a 'start' or 'end' event for each attribute on the timeline. For example, Switches start when they are 'on' and end when they are 'off'.\n\nSome attributes will automatically populate. You can change them if you have a different configuration (chances are you won't).\n\nAdditionally, for devices with numeric values, you can define a range of values that count as 'start' or 'end'. For example, to select all the times a temperature is above 70.5 degrees farenheight, you would set the start to '> 70.5', and the end to '< 70.5'.\n\nSupported comparitors are: '<', '>', '<=', '>=', '==', '!='.\n\nBecause we are dealing with HTML, '<' is abbreviated to &amp;lt; after you save. That is completely normal. It will still work.");
+            cnt = 1;
             sensors.each { sensor ->
                 def attributes = settings["attributes_${sensor.id}"];
                 attributes.each { attribute ->
                     state.count_++;
                     paragraph getTitle("${sensor.displayName}: ${attribute}");
                     input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "Override Device Name -- use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE", defaultValue: "%deviceName%: %attributeName%");
+                    colorSelector("attribute_${sensor.id}_${attribute}", "Line", getColorCode(cnt), false);
                     input( type: "text", name: "attribute_${sensor.id}_${attribute}_start", title: "Start event value", defaultValue: supportedTypes[attribute] ? supportedTypes[attribute].start : null, required: true);
                     input( type: "text", name: "attribute_${sensor.id}_${attribute}_end", title: "End event value", defaultValue: supportedTypes[attribute] ? supportedTypes[attribute].end : null, required: true);
+                    cnt += 1;
                 }
             }
         }
@@ -221,19 +223,84 @@ def attributeConfigurationPage() {
 
 }
 
+def fontSizeSelector(varname, label, defaultSize, min, max){
+    
+    def fontSize;
+    def varFontSize = "${varname}_font"
+    
+    settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : defaultSize;
+    
+    def html = "";
+    
+    html += 
+    """
+    <table style="width:100%">
+    <tr><td><label for="settings[${varFontSize}]" class="control-label">${label} Font Size</td>
+        <td style="text-align:right; font-size:${settings[varFontSize]}px">Font Size: ${settings[varFontSize]}</td>
+        </label>
+    </tr>
+    </table>
+    <input type="range" min = "$min" max = "$max" name="settings[${varFontSize}]" class="mdl-textfield__input submitOnChange " value="${settings[varFontSize]}" placeholder="Click to set" id="settings[${varFontSize}]">
+    <div class="form-group">
+        <input type="hidden" name="${varFontSize}.type" value="number">
+        <input type="hidden" name="${varFontSize}.multiple" value="false">
+    </div>
+    """.replace('\t', '').replace('\n', '').replace('  ', '');
+    
+    paragraph html
+    
+}
+
+def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
+    def html = ""
+    def varnameColor = "${varname}_color";
+    def varnameTransparent = "${varname}_color_transparent"
+    def colorTitle = "${label} Color"
+    def notTransparentTitle = "Transparent";
+    def transparentTitle = "${label}: Transparent"
+    
+    settings[varnameColor] = settings[varnameColor] ? settings[varnameColor]: defaultColorValue;
+    settings[varnameTransparent] = settings[varnameTransparent] ? settings[varnameTransparent]: defaultTransparentValue;
+    
+    def isTransparent = settings[varnameTransparent];
+    
+    html += 
+    """
+    <div style="display: flex; flex-flow: row wrap;">
+        <div style="display: flex; flex-flow: row nowrap; flex-basis: 100%;">
+            ${!isTransparent ? """<label for="settings[${varnameColor}]" class="control-label" style="flex-grow: 1">${colorTitle}</label>""" : """"""}
+            <label for="settings[${varnameTransparent}]" class="control-label" style="width: auto;">${isTransparent ? transparentTitle: notTransparentTitle}</label>
+        </div>
+        ${!isTransparent ? """
+            <div style="flex-grow: 1; flex-basis: 1px; padding-right: 8px;">
+                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]">
+            </div>
+        """ : ""}
+        <div class="submitOnChange">
+            <input name="checkbox[${varnameTransparent}]" id="settings[${varnameTransparent}]" style="width: 27.6px; height: 27.6px;" type="checkbox" onmousedown="((e) => { jQuery('#${varnameTransparent}').val('${!isTransparent}'); })()" ${isTransparent ? 'checked' : ''} />
+            <input id="${varnameTransparent}" name="settings[${varnameTransparent}]" type="hidden" value="${isTransparent}" />
+        </div>
+        <div class="form-group">
+            <input type="hidden" name="${varnameColor}.type" value="color">
+            <input type="hidden" name="${varnameColor}.multiple" value="false">
+
+            <input type="hidden" name="${varnameTransparent}.type" value="bool">
+            <input type="hidden" name="${varnameTransparent}.multiple" value="false">
+        </div>
+    </div>
+    """.replace('\t', '').replace('\n', '').replace('  ', '');
+    paragraph html    
+}
+
 
 def graphSetupPage(){
-    def fontEnum = [["1":"1"], ["2":"2"], ["3":"3"], ["4":"4"], ["5":"5"], ["6":"6"], ["7":"7"], ["8":"8"], ["9":"9"], ["10":"10"], 
-                    ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]];  
-    
-    def colorEnum = ["Maroon", "Red", "Orange", "Yellow", "Olive", "Green", "Purple", "Fuchsia", "Lime", "Teal", "Aqua", "Blue", "Navy", "Black", "Gray", "Silver", "White", "Transparent"];
     
     dynamicPage(name: "graphSetupPage") {
         section(){
             paragraph getTitle("General Options");
             input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: false, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
             input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: false, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")     
-            input( type: "enum", name: "graph_background_color", title: "Background Color", defaultValue: "White", options: colorEnum);
+            colorSelector("graph_background", "Background", "White", false);
             
             //Size
             paragraph getTitle("Graph Size");
@@ -245,8 +312,8 @@ def graphSetupPage(){
             
             //Axis
             paragraph getTitle("Axes");
-            input( type: "enum", name: "graph_axis_font", title: "Graph Axis Font Size", defaultValue: "9", options: fontEnum); 
-            input( type: "enum", name: "graph_axis_color", title: "Graph Axis Text Color", defaultValue: "Black", options: colorEnum);
+            fontSizeSelector("graph_axis", "Vertical Axis", 9, 2, 20);
+            colorSelector("graph_axis", "Axis", "Black", false);
         }
     }
 }
@@ -255,22 +322,23 @@ def loadPreview(){
   if (!state.count_) state.count_ = 5;
   def html = ""
     
-    html+= """
-<iframe id="preview" style="width: 100%; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"></iframe>
-<script>
-function resize() {
-    const box = jQuery('#formApp')[0].getBoundingClientRect();
-    const h = 35 * ${state.count_.floatValue()} + 30;
-    jQuery('#preview').css('height', h);
-}
+    html+= 
+        """
+        <iframe id="preview" style="width: 100%; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"></iframe>
+        <script>
+            function resize() {
+                const box = jQuery('#formApp')[0].getBoundingClientRect();
+                const h = 35 * ${state.count_.floatValue()} + 30;
+                jQuery('#preview').css('height', h);
+            }
 
-resize();
+            resize();
 
-jQuery(window).on('resize', () => {
-    resize();
-});
-</script>
-"""
+            jQuery(window).on('resize', () => {
+                resize();
+            });
+        </script>
+    """
 }
 
 def disableAPIPage() {
@@ -303,38 +371,6 @@ def enableAPIPage() {
     }
 }
 
-def getTimeString(string_){
-    switch (string_.toInteger()){
-        case -1: return "Never";
-        case 0: return "Real Time"; 
-        case 1000:return "1 Second"; 
-        case 5000:return "5 Seconds"; 
-        case 60000:return "1 Minute"; 
-        case 300000:return "5 Minutes"; 
-        case 600000:return "10 Minutes"; 
-        case 1800000:return "Half Hour";
-        case 3600000:return "1 Hour";
-    }
-    log.debug("NOT FOUND");
-}
-
-def getTimsSpanString(string_){
-    switch (string_.toInteger()){
-        case -1: return "Never";
-        case 0: return "Real Time"; 
-        case 1000:return "1 Second"; 
-        case 5000:return "5 Seconds"; 
-        case 60000:return "1 Minute"; 
-        case 3600000:return "1 Hour";
-        case 43200000: return "12 Hours";
-        case 86400000: return "1 Day";
-        case 259200000: return "3 Days";
-        case 604800000: return "1 Week";
-    }
-    log.debug("NOT FOUND");
-}
-
-
 def mainPage() {
     def timeEnum = [["0":"Never"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], 
                     ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]]
@@ -349,9 +385,9 @@ def mainPage() {
                 href name: "deviceSelectionPage", title: "Select Device/Data", description: "", page: "deviceSelectionPage"
                 href name: "graphSetupPage", title: "Configure Graph", description: "", page: "graphSetupPage"
                 paragraph getTitle("Local URL for Graph");
-                paragraph "<i><u><b>LOCAL GRAPH URL</b></u></i>\n${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
-          
-                                   
+                paragraph "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
+                
+                
                 if (graph_timespan){
                     paragraph getTitle("Preview");
                     paragraph loadPreview();
@@ -385,7 +421,8 @@ def createHubiGraphTile() {
 	log.info "Creating HubiGraph Child Device"
     
     def childDevice = getChildDevice("HUBIGRAPH_${app.id}");     
-       
+    
+   
     if (!childDevice) {
         if (!device_name) device_name="Dummy Device";
         log.debug("Creating Device $device_name");
@@ -425,7 +462,13 @@ def getTableRow3(col1, col2, col3){
 }
 
 def getTitle(myText=""){
-    def html = "<div class='row-full' style='background-color:#1A77C9;color:white;font-weight: bold'>"
+    def html = "<div class='row-full' style='background-color:#1A77C9;color:white;font-weight: bold; text-align: center; font-size: 20px '>"
+    html += "${myText}</div>"
+    html
+}
+
+def getSubTitle(myText=""){
+    def html = "<div class='row-full' style='background-color:#8CC9CB;color:white'>"
     html += "${myText}</div>"
     html
 }
@@ -490,6 +533,21 @@ def buildData() {
 }
 
 def getChartOptions(){
+    
+    colors = [];
+    sensors.each {sensor->
+        def attributes = settings["attributes_${sensor.id}"];
+        attributes.each {attribute->
+            attrib_string = "attribute_${sensor.id}_${attribute}_color"
+            transparent_attrib_string = "attribute_${sensor.id}_${attribute}_color_transparent"
+            log.debug ("${settings[attrib_string]} ${settings[transparent_attrib_string]}");
+            colors << (settings[transparent_attrib_string] ? "transparent" : settings[attrib_string]);
+           
+        }
+    }
+    
+    log.debug colors
+    
     def options = [
         "graphTimespan": Integer.parseInt(graph_timespan),
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
@@ -497,11 +555,14 @@ def getChartOptions(){
             "width": graph_static_size ? graph_h_size : "100%",
             "height": graph_static_size ? graph_v_size: "100%",
             "timeline": [
-                "rowLabelStyle": ["fontSize": graph_axis_font, "color": getColorCode(graph_axis_color)],
+                "rowLabelStyle": ["fontSize": graph_axis_font, "color": graph_axis_color_transparent ? "transparent" : graph_axis_color],
                 "barLabelStyle": ["fontSize": graph_axis_font]
             ],
-            "backgroundColor": getColorCode(graph_background_color)
-        ]
+            "backgroundColor": graph_background_color_transparent ? "transparent" : graph_background_color,
+            "colors" : colors
+        ],
+        
+        
     ]
     
     return options;
@@ -924,26 +985,24 @@ def initializeAppEndpoint() {
 }
 
 def getColorCode(code){
+    
+    ret = "#FFFFFF"
     switch (code){
-        case "Maroon":  ret = "#800000"; break;
-        case "Red":	    ret = "#FF0000"; break;
-        case "Orange":	ret = "#FFA500"; break;	
-        case "Yellow":	ret = "#FFFF00"; break;	
-        case "Olive":	ret = "#808000"; break;	
-        case "Green":	ret = "#008000"; break;	
-        case "Purple":	ret = "#800080"; break;	
-        case "Fuchsia":	ret = "#FF00FF"; break;	
-        case "Lime":	ret = "#00FF00"; break;	
-        case "Teal":	ret = "#008080"; break;	
-        case "Aqua":	ret = "#00FFFF"; break;	
-        case "Blue":	ret = "#0000FF"; break;	
-        case "Navy":	ret = "#000080"; break;	
-        case "Black":	ret = "#000000"; break;	
-        case "Gray":	ret = "#808080"; break;	
-        case "Silver":	ret = "#C0C0C0"; break;	
-        case "White":	ret = "#FFFFFF"; break;
-        case "Transparent": ret = "transparent"; break;
+        case 7:  ret = "#800000"; break;
+        case 1:	    ret = "#FF0000"; break;
+        case 6:	ret = "#FFA500"; break;	
+        case 8:	ret = "#FFFF00"; break;	
+        case 9:	ret = "#808000"; break;	
+        case 2:	ret = "#008000"; break;	
+        case 5:	ret = "#800080"; break;	
+        case 4:	ret = "#FF00FF"; break;	
+        case 10: ret = "#00FF00"; break;	
+        case 11: ret = "#008080"; break;	
+        case 12: ret = "#00FFFF"; break;	
+        case 3:	ret = "#0000FF"; break;	
+        case 13: ret = "#000080"; break;	
     }
+    return ret;
 }
 
 //oauth endpoints
