@@ -162,7 +162,28 @@ def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
         </div>
         ${!isTransparent ? """
             <div style="flex-grow: 1; flex-basis: 1px; padding-right: 8px;">
-                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]">
+                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]" list="presetColors">
+                  <datalist id="presetColors">
+                    <option>#800000</option>
+                    <option>#FF0000</option>
+                    <option>#FFA500</option>
+                    <option>#FFFF00</option>
+
+                    <option>#808000</option>
+                    <option>#008000</option>
+                    <option>#00FF00</option>
+                    
+                    <option>#800080</option>
+                    <option>#FF00FF</option>
+                    
+                    <option>#000080</option>
+                    <option>#0000FF</option>
+                    <option>#00FFFF</option>
+
+                    <option>#FFFFFF</option>
+                    <option>#C0C0C0</option>
+                    <option>#000000</option>
+                  </datalist>
             </div>
         """ : ""}
         <div class="submitOnChange">
@@ -197,7 +218,7 @@ def graphSetupPage(){
         {   
             input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: true, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
             input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: true, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
-            colorSelector("graph_background", "Background", "White", false);
+            colorSelector("graph_background", "Background", "#FFFFFF", false);
             
             input( type: "bool", name: "graph_smoothing", title: "Smooth Graph Points", defaultValue: true);
             input( type: "enum", name: "graph_type", title: "Graph Type", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"] )
@@ -213,7 +234,7 @@ def graphSetupPage(){
             if (graph_show_title==true) {
                 input( type: "text", name: "graph_title", title: "Input Graph Title", default: "Graph Title");
                 fontSizeSelector("graph_title", "Title", 9, 2, 20);
-                colorSelector("graph_title", "Title", "Black", false);
+                colorSelector("graph_title", "Title", "#000000", false);
                 input( type: "bool", name: "graph_title_inside", title: "Put Title Inside Graph", defaultValue: false);
             }
             
@@ -228,8 +249,8 @@ def graphSetupPage(){
             //Axis
             paragraph getTitle("Horizontal Axis");
             fontSizeSelector("graph_haxis", "Horizonal Axis", 9, 2, 20);
-            colorSelector("graph_hh", "Horizonal Header", "Gray", false);
-            colorSelector("graph_ha", "Horizonal Axis", "Gray", false);
+            colorSelector("graph_hh", "Horizonal Header", "#C0C0C0", false);
+            colorSelector("graph_ha", "Horizonal Axis", "#C0C0C0", false);
             input( type: "number", name: "graph_h_num_grid", title: "Num Horizontal Gridlines (blank for auto)", defaultValue: "", range: "0..100");
             
             input( type: "bool", name: "dummy", title: "Show String Formatting Help", defaultValue: false, submitOnChange: true);
@@ -266,8 +287,8 @@ def graphSetupPage(){
             
             paragraph getTitle("Vertical Axis");
             fontSizeSelector("graph_vaxis", "Title", 9, 2, 20);
-            colorSelector("graph_vh", "Vertical Header", "Black", false);
-            colorSelector("graph_va", "Vertical Header", "Gray", false);
+            colorSelector("graph_vh", "Vertical Header", "#000000", false);
+            colorSelector("graph_va", "Vertical Header", "#C0C0C0", false);
 
             
             
@@ -279,7 +300,7 @@ def graphSetupPage(){
             if (graph_show_left_label==true){
                 input( type: "text", name: "graph_left_label", title: "Input Left Axis Label", default: "Left Axis Label");
                 fontSizeSelector("graph_left", "Left Axis", 9, 2, 20);
-                colorSelector("graph_left", "Left Axis", "White", false);
+                colorSelector("graph_left", "Left Axis", "#FFFFFF", false);
             }
             
             paragraph getTitle("Right Axis");
@@ -290,7 +311,7 @@ def graphSetupPage(){
             if (graph_show_right_label==true){
                 input( type: "text", name: "graph_right_label", title: "Input Right Axis Label", default: "Right Axis Label");
                 fontSizeSelector("graph_right", "Right Axis", 9, 2, 20);
-                colorSelector("graph_right", "Right Axis", "White", false);
+                colorSelector("graph_right", "Right Axis", "#FFFFFF", false);
              }
             
             //Legend
@@ -300,7 +321,7 @@ def graphSetupPage(){
             input( type: "bool", name: "graph_show_legend", title: "Show Legend on Graph", defaultValue: false, submitOnChange: true);
             if (graph_show_legend==true){
                 fontSizeSelector("graph_legend", "Legend Font", 9, 2, 20);
-                colorSelector("graph_legend", "Legend", "Black", false);
+                colorSelector("graph_legend", "Legend", "#000000", false);
                 input( type: "enum", name: "graph_legend_position", title: "Legend Position", defaultValue: "Bottom", options: legendPosition);
                 input( type: "enum", name: "graph_legend_inside_position", title: "Legend Justification", defaultValue: "center", options: insidePosition);
                 
@@ -321,13 +342,15 @@ def graphSetupPage(){
             
             
             //Line
+            cnt = 1;
             sensors.each { sensor ->        
                 settings["attributes_${sensor.id}"].each { attribute ->
                     paragraph getSubTitle("${sensor.displayName}: ${attribute}");
                     input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "Graph Axis Number", defaultValue: "0", options: availableAxis);
-                    colorSelector("graph_line_${sensor.id}_${attribute}", "${sensor}: ${attribute} Line", "Blue", false);
+                    colorSelector("graph_line_${sensor.id}_${attribute}", "${sensor}: ${attribute} Line", getColorCode(cnt), false);
                     input( type: "enum", name:   "graph_line_thickness_${sensor.id}_${attribute}", title: "Line Thickness", defaultValue: "2", options: fontEnum); 
                     input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "Override Device Name -- use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE", defaultValue: "%deviceName%: %attributeName%");
+                    cnt += 1;
                 }
             }
         }
@@ -1154,3 +1177,25 @@ def getSubscriptions() {
     
     return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
 }
+
+def getColorCode(code){
+    
+    ret = "#FFFFFF"
+    switch (code){
+        case 7:  ret = "#800000"; break;
+        case 1:	    ret = "#FF0000"; break;
+        case 6:	ret = "#FFA500"; break;	
+        case 8:	ret = "#FFFF00"; break;	
+        case 9:	ret = "#808000"; break;	
+        case 2:	ret = "#008000"; break;	
+        case 5:	ret = "#800080"; break;	
+        case 4:	ret = "#FF00FF"; break;	
+        case 10: ret = "#00FF00"; break;	
+        case 11: ret = "#008080"; break;	
+        case 12: ret = "#00FFFF"; break;	
+        case 3:	ret = "#0000FF"; break;	
+        case 13: ret = "#000080"; break;	
+    }
+    return ret;
+}
+
