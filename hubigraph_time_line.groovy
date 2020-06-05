@@ -1,6 +1,5 @@
-import groovy.json.*;
 /**
- *  Hubigraph Line Graph Child App
+ *  Hubigraph Timeline Child App
  *
  *  Copyright 2020, but let's behonest, you'll copy it
  *
@@ -16,35 +15,31 @@ import groovy.json.*;
  */
 
 // Hubigraph Line Graph Changelog
-// *****ALPHA BUILD
-// v0.1 Initial release
-// v0.2 My son added webpage efficiencies, reduced load on hubitat by 75%.
-// v0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
-// v0.5 Multiple line support
-// v0.51 Select ANY device
-// v0.60 Select AXIS to graph on
-// v0.70 A lot more options
-// v0.80 Added Horizontal Axis Formatting
+// V 0.1 Intial release
+// V 0.2 Fixed startup code which needed all three device types, now one will work
+// V 0.22 Update to support tiles
+// V 0.3 Loading Update; Removed ALL processing from Hub, uses websocket endpoint
+// V 0.4 Uses any device
+// V 0.5 Allows ordering of devices
 // ****BETA BUILD
 // v0.1 Added Hubigraph Tile support with Auto-add Dashboard Tile
 // v0.2 Added Custom Device/Attribute Labels
 // v0.3 Added waiting screen for initial graph loading & sped up load times
-// v0.32 Bug Fixes
 // V 1.0 Released (not Beta) Cleanup and Preview Enabled
 
-    
-// Credit to Alden Howard for optimizing the code.
  
+import groovy.json.JsonOutput
+
 def ignoredEvents() { return [ 'lastReceive' , 'reachable' , 
                          'buttonReleased' , 'buttonPressed', 'lastCheckinDate', 'lastCheckin', 'buttonHeld' ] }
 
-def version() { return "v1.0" }
+def version() { return "v0.22" }
 
 definition(
-    name: "Hubigraph Line Graph",
+    name: "Hubigraph Time Line",
     namespace: "tchoward",
     author: "Thomas Howard",
-    description: "Hubigraph Line Graph",
+    description: "Hubigraph Time Line",
     category: "",
     parent: "tchoward:Hubigraphs",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
@@ -56,58 +51,176 @@ definition(
 preferences {
     section ("test"){
        page(name: "mainPage", title: "Main Page", install: true, uninstall: true)
-       page(name: "deviceSelectionPage")
-       page(name: "graphSetupPage")
+       page(name: "deviceSelectionPage", nextPage: "attributeConfigurationPage")
+       page(name: "attributeConfigurationPage", nextPage: "mainPage")
+       page(name: "graphSetupPage", nextPage: "mainPage")
        page(name: "enableAPIPage")
        page(name: "disableAPIPage")
-}
+    }
    
 
-    mappings {
-        path("/graph/") {
+mappings {
+    path("/graph/") {
             action: [
-                GET: "getGraph"
-            ]
-        }
-    
-        path("/getData/") {
-            action: [
-                GET: "getData"
-            ]
-        }
-        
-        path("/getOptions/") {
-            action: [
-                GET: "getOptions"
-            ]
-        }
-        
-        path("/getSubscriptions/") {
-            action: [
-                GET: "getSubscriptions"
+              GET: "getGraph"
             ]
         }
     }
+    
+    path("/getData/") {
+        action: [
+            GET: "getData"
+        ]
+    }
+        
+    path("/getOptions/") {
+        action: [
+            GET: "getOptions"
+        ]
+    }
+    
+    path("/getSubscriptions/") {
+        action: [
+            GET: "getSubscriptions"
+        ]
+    }
 }
 
-def deviceSelectionPage() {
-    def supported_attrs;
-        
+def getAttributeType(attrib, title){
+    
+    switch (attrib){
+         case "motion":         return ["motion", "Motion (active/inactive)"];
+         case "switch":         return ["switch", "Switch (on/off)"];
+         case "contact":        return ["contact", "Contact (open/close)"];
+         case "acceleration":   return ["acceleration", "Acceleration (active/inactive)"]
+         case "audioVolume":
+         case "number": return [title, "Number (Choose threshold)"];  
+    }
+}
+
+def deviceSelectionPage() {                  
     dynamicPage(name: "deviceSelectionPage") {
         section() { 
-	    
-            input "sensors", "capability.*", title: "Sensors", multiple: true, required: true, submitOnChange: true
-        
-            if (sensors){
-                sensors.each {
-                    sensor_events = it.events([max:250]).name;
-                    supported_attrs = sensor_events.unique(false);           
-                    paragraph(it.displayName);
-                    input( type: "enum", name: "attributes_${it.id}", title: "Attributes to graph", required: true, multiple: true, options: supported_attrs, defaultValue: "1")
+            input (type: "capability.*", name: "sensors", title: "Choose Sensors", multiple: true, submitOnChange: true)
+            if (sensors) {
+                def all = (1..sensors.size()).collect{ "" + it };
+                validateOrder(all);
+                sensors.eachWithIndex {sensor, idx ->
+                    id = sensor.id;
+                    sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() };      
+                    paragraph getTitle(sensor.displayName);
+                    input( type: "enum", name: "attributes_${id}", title: "Attributes to graph", required: true, multiple: true, options: sensor_attributes, defaultValue: "1", submitOnChange: false )
+                    input( type: "enum", name: "displayOrder_${id}", title: "Order to Display on Timeline", required: true, multiple:false, options: all, defaultValue: idx, submitOnChange: true);
                 }
             }
         }
     }
+
+}
+
+def validateOrder(all) {
+    def order = [];
+    sensors.eachWithIndex {sensor, idx ->
+        order << settings["displayOrder_${sensor.id}"];
+    }
+    
+    //if we are initialized and need to check
+    if(state.lastOrder && state.lastOrder[0]) {
+        def remains = all.findAll { !order.contains(it) }
+    
+        def dupes = [];
+        
+        order.each {it ->
+            if(order.count(it) > 1) dupes << it;
+        }
+        
+        sensors.eachWithIndex {sensor, idx ->
+            if(state.lastOrder[idx] == order[idx] && dupes.contains(settings["displayOrder_${sensor.id}"])) {
+                settings["displayOrder_${sensor.id}"] = remains[0];
+                app.updateSetting("displayOrder_${sensor.id}", [value: remains[0], type: "enum"]);
+                remains.removeAt(0);
+            }
+        }
+    }
+    
+    //reconstruct order
+    order = [];
+    sensors.eachWithIndex {sensor, idx ->
+        order << settings["displayOrder_${sensor.id}"];
+    }
+    
+    state.lastOrder = order;
+}
+
+def attributeConfigurationPage() {
+    
+    def supportedTypes = [
+        "alarm":           ["start": "on",       
+                            "end": "off"],
+        "contact":         ["start": "open",      
+                            "end": "closed"],
+        "switch":          ["start": "on",        
+                            "end": "off"],
+        "motion":          ["start": "active", 
+                            "end": "inactive"],
+        "mute":            ["start": "muted", 
+                            "end": "unmuted"],
+        "presence":        ["start":"present",
+                            "end":"not present"],
+        "holdableButton":  ["start":"true",
+                            "end":"false"],
+        "carbonMonoxide":  ["start":"detected",
+                            "end":"clear"],
+        "playing":         ["start":"playing", 
+                            "end":"stopped"],
+        "door":            ["start": "open",      
+                            "end": "closed"],
+        "speed":           ["start": "on",        
+                            "end": "off"],
+        "lock":            ["start": "unlocked",        
+                            "end": "locked"],
+        "shock":           ["start": "detected",        
+                            "end": "clear"],
+        "sleepSensor":     ["start": "sleeping",        
+                            "end": "not sleeping"],
+        "smoke":           ["start":"detected",
+                            "end":"clear"],
+        "sound":           ["start":"detected",
+                            "end":"not detected"],
+        "tamper":          ["start":"detected",
+                            "end":"clear"],
+        "valve":           ["start": "open",      
+                            "end": "closed"],
+        "camera":          ["start": "on",        
+                            "end": "off"],
+        "water":           ["start": "wet",        
+                            "end": "dry"],
+        "windowShade":     ["start": "open",      
+                            "end": "closed"],
+        "acceleration":    ["start": "inactive", 
+                            "end": "active"]        
+         ];
+                          
+    state.count_ = 0;     
+    dynamicPage(name: "attributeConfigurationPage") {
+        section() {
+            paragraph("Configure what counts as a 'start' or 'end' event for each attribute on the timeline. For example, Switches start when they are 'on' and end when they are 'off'.\n\nSome attributes will automatically populate. You can change them if you have a different configuration (chances are you won't).\n\nAdditionally, for devices with numeric values, you can define a range of values that count as 'start' or 'end'. For example, to select all the times a temperature is above 70.5 degrees farenheight, you would set the start to '> 70.5', and the end to '< 70.5'.\n\nSupported comparitors are: '<', '>', '<=', '>=', '==', '!='.\n\nBecause we are dealing with HTML, '<' is abbreviated to &amp;lt; after you save. That is completely normal. It will still work.");
+            cnt = 1;
+            sensors.each { sensor ->
+                def attributes = settings["attributes_${sensor.id}"];
+                attributes.each { attribute ->
+                    state.count_++;
+                    paragraph getTitle("${sensor.displayName}: ${attribute}");
+                    input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "Override Device Name -- use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE", defaultValue: "%deviceName%: %attributeName%");
+                    colorSelector("attribute_${sensor.id}_${attribute}", "Line", getColorCode(cnt), false);
+                    input( type: "text", name: "attribute_${sensor.id}_${attribute}_start", title: "Start event value", defaultValue: supportedTypes[attribute] ? supportedTypes[attribute].start : null, required: true);
+                    input( type: "text", name: "attribute_${sensor.id}_${attribute}_end", title: "End event value", defaultValue: supportedTypes[attribute] ? supportedTypes[attribute].end : null, required: true);
+                    cnt += 1;
+                }
+            }
+        }
+    }
+
 }
 
 def fontSizeSelector(varname, label, defaultSize, min, max){
@@ -136,8 +249,6 @@ def fontSizeSelector(varname, label, defaultSize, min, max){
     
     paragraph html
     
-    //input (type: "range", name: varFontSize, title: "${label}:<p style='font-size:${settings["$varFontSize"]}px'>Font Size: ${settings["$varFontSize"]}</p>", min: "2", max: "20", submitOnChange: true);
-    
 }
 
 def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
@@ -162,7 +273,28 @@ def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
         </div>
         ${!isTransparent ? """
             <div style="flex-grow: 1; flex-basis: 1px; padding-right: 8px;">
-                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]">
+                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]" list="presetColors">
+                  <datalist id="presetColors">
+                    <option>#800000</option>
+                    <option>#FF0000</option>
+                    <option>#FFA500</option>
+                    <option>#FFFF00</option>
+
+                    <option>#808000</option>
+                    <option>#008000</option>
+                    <option>#00FF00</option>
+                    
+                    <option>#800080</option>
+                    <option>#FF00FF</option>
+                    
+                    <option>#000080</option>
+                    <option>#0000FF</option>
+                    <option>#00FFFF</option>
+
+                    <option>#FFFFFF</option>
+                    <option>#C0C0C0</option>
+                    <option>#000000</option>
+                  </datalist>
             </div>
         """ : ""}
         <div class="submitOnChange">
@@ -182,40 +314,14 @@ def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
 }
 
 
-
 def graphSetupPage(){
-    def fontEnum = [["1":"1"], ["2":"2"], ["3":"3"], ["4":"4"], ["5":"5"], ["6":"6"], ["7":"7"], ["8":"8"], ["9":"9"], ["10":"10"], 
-                    ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]];  
-    
-    def colorEnum = [["#800000":"Maroon"], ["#FF0000":"Red"], ["#FFA500":"Orange"], ["#FFFF00":"Yellow"], ["#808000":"Olive"], ["#008000":"Green"],
-                    ["#800080":"Purple"], ["#FF00FF":"Fuchsia"], ["#00FF00":"Lime"], ["#008080":"Teal"], ["#00FFFF":"Aqua"], ["#0000FF":"Blue"], ["#000080":"Navy"],
-                    ["#000000":"Black"], ["#C0C0C0":"Gray"], ["#C0C0C0":"Silver"], ["#FFFFFF":"White"], ["transparent":"Transparent"]];
     
     dynamicPage(name: "graphSetupPage") {
-        
-        section(getTitle("General Options"))
-        {   
-            input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: true, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
-            input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: true, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
-            colorSelector("graph_background", "Background", "#FFFFFF", false);
-            
-            input( type: "bool", name: "graph_smoothing", title: "Smooth Graph Points", defaultValue: true);
-            input( type: "enum", name: "graph_type", title: "Graph Type", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"] )
-            input( type: "bool", name: "graph_y_orientation", title: "Flip Graph to Vertical (Rotate 90 degrees)", defaultValue: false);
-            input( type: "bool", name: "graph_z_orientation", title: "Reverse Data Order? (Flip Data left to Right)", defaultValue: false);
-            input (type: "number", name: "graph_max_points", title: "Maximum number of Data Points? (Zero for ALL)", defaultValue: 0);
-            paragraph "</blockquote>"
-            
-            
-            //Title   
-            paragraph getTitle("Title");
-            input( type: "bool", name: "graph_show_title", title: "Show Title on Graph", defaultValue: false, submitOnChange: true);
-            if (graph_show_title==true) {
-                input( type: "text", name: "graph_title", title: "Input Graph Title", default: "Graph Title");
-                fontSizeSelector("graph_title", "Title", 9, 2, 20);
-                colorSelector("graph_title", "Title", "#000000", false);
-                input( type: "bool", name: "graph_title_inside", title: "Put Title Inside Graph", defaultValue: false);
-            }
+        section(){
+            paragraph getTitle("General Options");
+            input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: false, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
+            input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: false, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")     
+            colorSelector("graph_background", "Background", "White", false);
             
             //Size
             paragraph getTitle("Graph Size");
@@ -226,126 +332,49 @@ def graphSetupPage(){
             }
             
             //Axis
-            paragraph getTitle("Horizontal Axis");
-            fontSizeSelector("graph_haxis", "Horizonal Axis", 9, 2, 20);
-            colorSelector("graph_hh", "Horizonal Header", "#C0C0C0", false);
-            colorSelector("graph_ha", "Horizonal Axis", "#C0C0C0", false);
-            input( type: "number", name: "graph_h_num_grid", title: "Num Horizontal Gridlines (blank for auto)", defaultValue: "", range: "0..100");
-            
-            input( type: "bool", name: "dummy", title: "Show String Formatting Help", defaultValue: false, submitOnChange: true);
-            if (dummy == true){
-                paragraph_ = "<table>"
-                paragraph_ += getTableRow("<b>Name", "<b>Format" ,"<b>Result</b>", "");
-                paragraph_ += getTableRow("Year", "Y", "2020", "");
-                paragraph_ += getTableRow("Month Number", "M", "12", "");
-                paragraph_ += getTableRow("Month Name ", "MMM", "Feb", "");
-                paragraph_ += getTableRow("Month Full Name", "MMMM", "February", "");
-                paragraph_ += getTableRow("Day of Month", "d", "February", "");
-                paragraph_ += getTableRow("Day of Week", "EEE", "Mon", "");
-                paragraph_ += getTableRow("Day of Week", "EEEE", "Monday", "");
-                paragraph_ += getTableRow("Period", "a", "AM or PM", "");
-                paragraph_ += getTableRow("Hour (12)", "h", "1..12", "");
-                paragraph_ += getTableRow("Hour (12)", "hh", "01..12", "");
-                paragraph_ += getTableRow("Hour (24)", "H", "1..23", "");
-                paragraph_ += getTableRow("Hour (24)", "HH", "01..23", "");
-                paragraph_ += getTableRow("Minute", "m", "1..59", "");
-                paragraph_ += getTableRow("Minute", "mm", "01..59", "");
-                paragraph_ += getTableRow("Seconds", "s", "1..59", "");
-                paragraph_ += getTableRow("Seconds", "ss", "01..59", "");
-                paragraph_ += "</table>"
-                paragraph paragraph_
-                paragraph_ = /<b>Example: "EEEE, MMM d, Y hh:mm:ss a" = "Monday, June 2, 2020 08:21:33 AM"/
-                paragraph_ += "</b>"
-                paragraph paragraph_
-            }
-            input( type: "string", name: "graph_h_format", title: "Horizontal Axis Format", defaultValue: "", submitOnChange: true);
-            if (graph_h_format){
-                today = new Date();
-                paragraph "Horizontal Axis Sample: ${today.format(graph_h_format)}"
-            }
-            
-            paragraph getTitle("Vertical Axis");
-            fontSizeSelector("graph_vaxis", "Title", 9, 2, 20);
-            colorSelector("graph_vh", "Vertical Header", "#000000", false);
-            colorSelector("graph_va", "Vertical Header", "#C0C0C0", false);
-
-            
-            
-            paragraph getTitle("Left Axis");
-            input( type: "decimal", name: "graph_vaxis_1_min", title: "Minimum for left axis (blank for auto)", defaultValue: "");
-            input( type: "decimal", name: "graph_vaxis_1_max", title: "Maximum for left axis (blank for auto)", defaultValue: "");
-            input( type: "number", name: "graph_vaxis_1_num_lines", title: "Num gridlines (blank for auto)", defaultValue: "", range: "0..100");
-            input( type: "bool", name: "graph_show_left_label", title: "Show Left Axis Label on Graph", defaultValue: false, submitOnChange: true);
-            if (graph_show_left_label==true){
-                input( type: "text", name: "graph_left_label", title: "Input Left Axis Label", default: "Left Axis Label");
-                fontSizeSelector("graph_left", "Left Axis", 9, 2, 20);
-                colorSelector("graph_left", "Left Axis", "#FFFFFF", false);
-            }
-            
-            paragraph getTitle("Right Axis");
-            input( type: "decimal", name: "graph_vaxis_2_min", title: "Minimum for right axis (blank for auto)", defaultValue: "", range: "");
-            input( type: "decimal", name: "graph_vaxis_2_max", title: "Maximum for right axis (blank for auto)", defaultValue: "", range: "");
-            input( type: "number", name: "graph_vaxis_2_num_lines", title: "Num gridlines (blank for auto) -- Must be greater than num tics to be effective", defaultValue: "", range: "0..100");
-            input( type: "bool", name: "graph_show_right_label", title: "Show Right Axis Label on Graph", defaultValue: false, submitOnChange: true);
-            if (graph_show_right_label==true){
-                input( type: "text", name: "graph_right_label", title: "Input Right Axis Label", default: "Right Axis Label");
-                fontSizeSelector("graph_right", "Right Axis", 9, 2, 20);
-                colorSelector("graph_right", "Right Axis", "#FFFFFF", false);
-             }
-            
-            //Legend
-            def legendPosition = [["top": "Top"], ["bottom":"Bottom"], ["in": "Inside Top"]];
-            def insidePosition = [["start": "Left"], ["center": "Center"], ["end": "Right"]];
-            paragraph getTitle("Legend");
-            input( type: "bool", name: "graph_show_legend", title: "Show Legend on Graph", defaultValue: false, submitOnChange: true);
-            if (graph_show_legend==true){
-                fontSizeSelector("graph_legend", "Legend Font", 9, 2, 20);
-                colorSelector("graph_legend", "Legend", "#000000", false);
-                input( type: "enum", name: "graph_legend_position", title: "Legend Position", defaultValue: "Bottom", options: legendPosition);
-                input( type: "enum", name: "graph_legend_inside_position", title: "Legend Justification", defaultValue: "center", options: insidePosition);
-                
-            }
-            
-            paragraph getTitle("Devices -- Attributes");
-            //Get the total number of devices
-            state.num_devices = 0;
-            sensors.each { sensor ->
-                settings["attributes_${sensor.id}"].each { attribute ->
-                    state.num_devices++;
-                }
-            }
-            def availableAxis = [["0" : "Left Axis"], ["1": "Right Axis"]];
-            if (state.num_devices == 1) {
-                    availableAxis = [["0" : "Left Axis"], ["1": "Right Axis"], ["2": "Both Axes"]]; 
-            }
-            
-            
-            //Line
-            cnt = 1;
-            sensors.each { sensor ->        
-                settings["attributes_${sensor.id}"].each { attribute ->
-                    paragraph getSubTitle("${sensor.displayName}: ${attribute}");
-                    input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "Graph Axis Number", defaultValue: "0", options: availableAxis);
-                    colorSelector("graph_line_${sensor.id}_${attribute}", "${sensor}: ${attribute} Line", getColorCode(cnt), false);
-                    input( type: "enum", name:   "graph_line_thickness_${sensor.id}_${attribute}", title: "Line Thickness", defaultValue: "2", options: fontEnum); 
-                    input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "Override Device Name -- use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE", defaultValue: "%deviceName%: %attributeName%");
-                    cnt += 1;
-                }
-            }
+            paragraph getTitle("Axes");
+            fontSizeSelector("graph_axis", "Vertical Axis", 9, 2, 20);
+            colorSelector("graph_axis", "Axis", "Black", false);
         }
     }
 }
 
+def loadPreview(){
+  if (!state.count_) state.count_ = 5;
+  def html = ""
+    
+    html+= 
+        """
+        <iframe id="preview" style="width: 100%; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"></iframe>
+        <script>
+            function resize() {
+                const box = jQuery('#formApp')[0].getBoundingClientRect();
+                const h = 35 * ${state.count_.floatValue()} + 30;
+                jQuery('#preview').css('height', h);
+            }
 
+            resize();
+
+            jQuery(window).on('resize', () => {
+                resize();
+            });
+        </script>
+    """
+}
 
 def disableAPIPage() {
     dynamicPage(name: "disableAPIPage") {
         section() {
             if (state.endpoint) {
-                revokeAccessToken();
+                try {
+                   revokeAccessToken();
+                }
+                catch (e) {
+                    log.debug "Unable to revoke access token: $e"
+                }
                 state.endpoint = null
             }
-            paragraph "Token revoked. Click done to continue."
+            paragraph "It has been done. Your token has been REVOKED. Tap Done to continue."
         }
     }
 }
@@ -354,89 +383,19 @@ def enableAPIPage() {
     dynamicPage(name: "enableAPIPage", title: "") {
         section() {
             if(!state.endpoint) initializeAppEndpoint();
-            paragraph "Token created. Click done to continue."
+            if (!state.endpoint){
+                paragraph "Endpoint creation failed"
+            } else {
+                paragraph "It has been done. Your token has been CREATED. Tap Done to continue."
+            }
         }
     }
 }
 
-def getTimeString(string_){
-    switch (string_.toInteger()){
-        case -1: return "Never";
-        case 0: return "Real Time"; 
-        case 1000:return "1 Second"; 
-        case 5000:return "5 Seconds"; 
-        case 60000:return "1 Minute"; 
-        case 300000:return "5 Minutes"; 
-        case 600000:return "10 Minutes"; 
-        case 1800000:return "Half Hour";
-        case 3600000:return "1 Hour";
-    }
-    logDebug("NOT FOUND");
-}
-
-def getTimsSpanString(string_){
-    switch (string_.toInteger()){
-        case -1: return "Never";
-        case 0: return "Real Time"; 
-        case 1000:return "1 Second"; 
-        case 5000:return "5 Seconds"; 
-        case 60000:return "1 Minute"; 
-        case 3600000:return "1 Hour";
-        case 43200000: return "12 Hours";
-        case 86400000: return "1 Day";
-        case 259200000: return "3 Days";
-        case 604800000: return "1 Week";
-    }
-    logDebug("NOT FOUND");
-}
-
-def getColorString(string_){
-    switch (string_){
-        case "#800000": return "Maroon";
-        case "#FF0000": return "Red";
-        case "#FF0000": return "Orange";
-        case "#FFFF00": return "Yellow";
-        case "#808000": return "Olive";
-        case "#008000": return "Green";
-        case "#800080": return "Purple";
-        case "#FF00FF": return "Fuchsia";
-        case "#00FF00": return "Lime";
-        case "#008080": return "Teal";
-        case "#00FFFF": return "Aqua";
-        case "#0000FF": return "Blue";
-        case "#000080": return "Navy";
-        case "#000000": return "Black";
-        case "#C0C0C0": return "Gray";
-        case "#C0C0C0": return "Silver";
-        case "#FFFFFF": return "White";
-        case "rgba(255, 255, 255, 0)": return "Transparent";   
-        
-    }
-    
-}
-
-def loadPreview(){
-  def html = ""
-    
-    html+= """
-<iframe id="preview" style="width: 100%; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"></iframe>
-<script>
-function resize() {
-    const box = jQuery('#formApp')[0].getBoundingClientRect();
-    const h = box.width * 0.75;
-    jQuery('#preview').css('height', h);
-}
-
-resize();
-
-jQuery(window).on('resize', () => {
-    resize();
-});
-</script>
-"""
-}
-
 def mainPage() {
+    def timeEnum = [["0":"Never"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], 
+                    ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]]
+    
     dynamicPage(name: "mainPage") {        
         section(){
             if (!state.endpoint) {
@@ -444,49 +403,24 @@ def mainPage() {
                 href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
             } else {
                 paragraph getTitle("Graph Options");
-                href name: "deviceSelectionPage", title: "Select Device/Data", description: "", page: "deviceSelectionPage" 
+                href name: "deviceSelectionPage", title: "Select Device/Data", description: "", page: "deviceSelectionPage"
                 href name: "graphSetupPage", title: "Configure Graph", description: "", page: "graphSetupPage"
                 paragraph getTitle("Local URL for Graph");
                 paragraph "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
                 
-                if (sensors){
-                    def paragraph_ = /${getLine()}/
-                    paragraph_ +=  "<table>"
-                    paragraph_ +=   "${getTableRow2("<b><u>DEVICE</b></u>", "<b><u>ATTRIBUTES</b></u>", "<b><u>LINE COLOR</b></u>", "<b><u>LINE WIDTH</b></u>", "<b><u>AXIS</b></u>")}"
-                    sensors.each { sensor ->
-                        settings["attributes_${sensor.id}"].each { attribute_ ->
-                            text_color = settings["graph_line_${sensor.id}_${attribute_}_color"];
-                            line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute_}"];
-                            switch (settings["graph_axis_number_${sensor.id}_${attribute_}"]){
-                                case "0": axis_num = "LEFT"; break;
-                                case "1": axis_num = "RIGHT"; break;
-                                case "2": axis_num = "BOTH"; break; 
-                            }
-                            paragraph_ += /${getTableRow2("$sensor", "$attribute_", "${getColorString(text_color)}", "$line_thickness", "$axis_num")}/
-                           
-                        }
-                      
-                    }
-                    paragraph_ += "</table>"
-                    paragraph_ += /${getLine()}/
-                    paragraph paragraph_ 
-                    
-                    if (graph_update_rate){
-                         paragraph getTitle("Preview");
-                         paragraph loadPreview()   
-           
-                    }
-                }
                 
-                               
-            }
+                if (graph_timespan){
+                    paragraph getTitle("Preview");
+                    paragraph loadPreview();
+                   
+                } //graph_timespan
+            }//else
         }
-        
         section(){
             paragraph getTitle("Hubigraph Tile Installation");
             input( type: "bool", name: "install_device", title: "Install Hubigraph Tile Device for Dashboard Display", defaultValue: false, submitOnChange: true);
             if (install_device==true){   
-                 input( type: "text", name: "device_name", title: "<b>Name for HubiGraph Tile Device</b>", default: "Hubigraph LineGraph Tile" ); 
+                 input( type: "text", name: "device_name", title: "<b>Name for HubiGraph Tile Device</b>", default: "Hubigraph Tile" ); 
             }
         }
         section(){
@@ -496,18 +430,11 @@ def mainPage() {
                 paragraph getTitle("Disable Oauth Authorization");
                 href "disableAPIPage", title: "Disable API", description: ""
             }
-        }
+        }    
         section(){
            paragraph getTitle("Hubigraph Debugging");
            input( type: "bool", name: "debug", title: "Enable Debug Logging?", defaultValue: false); 
         }    
-        
-    }
-}
-
-def logDebug(str){
-    if (debug==true){
-        log.debug(str);   
     }
 }
 
@@ -515,11 +442,11 @@ def createHubiGraphTile() {
 	log.info "Creating HubiGraph Child Device"
     
     def childDevice = getChildDevice("HUBIGRAPH_${app.id}");     
-    logDebug(childDevice);
+    
    
     if (!childDevice) {
         if (!device_name) device_name="Dummy Device";
-        logDebug("Creating Device $device_name");
+        log.debug("Creating Device $device_name");
     	childDevice = addChildDevice("tchoward", "Hubigraph Tile Device", "HUBIGRAPH_${app.id}", null,[completedSetup: true, label: device_name]) 
         log.info "Created HTTP Switch [${childDevice}]"
         
@@ -539,6 +466,7 @@ def createHubiGraphTile() {
 
 }
 
+
 def getLine(){	  
 	def html = "<hr style='background-color:#1A77C9; height: 1px; border: 0;'>"
     html
@@ -549,8 +477,8 @@ def getTableRow(col1, col2, col3, col4){
      html
 }
 
-def getTableRow2(col1, col2, col3, col4, col5){
-     def html = "<tr><td width='30%'>$col1</td><td width='30%'>$col2</td><td width='20%'>$col3</td><td width='20%'>$col4</td><td width='20%'>$col5</td></tr>"  
+def getTableRow3(col1, col2, col3){
+     def html = "<tr><td width='30%'>$col1</td><td width='30%'>$col2</td><td width='40%'>$col3</td></tr>"  
      html
 }
 
@@ -566,10 +494,9 @@ def getSubTitle(myText=""){
     html
 }
 
-
 def installed() {
-    logDebug "Installed with settings: ${settings}"
-    initialize()
+    log.debug "Installed with settings: ${settings}"
+    updated();
 }
 
 def uninstalled() {
@@ -589,175 +516,101 @@ private removeChildDevices(delete) {
 	delete.each {deleteChildDevice(it.deviceNetworkId)}
 }
 
+
 def updated() {
     app.updateLabel(app_name);
+    state.dataName = attribute;
     
-    if (install_device == true){
+     if (install_device == true){
         createHubiGraphTile();
     }
-    
 }
 
-def initialize() {
-   updated();
-}
-
-private buildData() {
+def buildData() {
     def resp = [:]
-    def today = new Date();
+    def now = new Date();
     def then = new Date();
     
     use (groovy.time.TimeCategory) {
            then -= Integer.parseInt(graph_timespan).milliseconds;
     }
     
-    logDebug("Initializing:: Device = $sensor  Attribute = $attribute from $then to $today");
-    
     if(sensors) {
-        sensors.each { sensor ->
-            resp[sensor.id] = [:];
-            settings["attributes_${sensor.id}"].each { attribute ->
-                def respEvents = [];    
-                
-                logDebug("Checking:: $sensor.displayName: $attribute id:$sensor.id");
-                def reg = ~/[a-z,A-Z]+/;
-            
-                respEvents << sensor.statesSince(attribute, then, [max: 50000]).collect{[ date: it.date.getTime(), value: Float.parseFloat(it.value - reg ) ]}
-                respEvents = respEvents.flatten();
-                respEvents = respEvents.reverse();
-                
-                //graph_max_ponts
-                if (graph_max_points > 0) {
-                    reduction = (int) Math.ceil((float)respEvents.size() / graph_max_points);
-                    respEvents = respEvents.collate(reduction).collect{ group -> 
-                        group.inject([ date: 0, value: 0.0f ]){ col, it -> 
-                            col.date += it.date / group.size();
-                            col.value += + it.value / group.size();
-                            return col;
-                        } 
-                    };                             
-                }                    
-                
-                resp[sensor.id][attribute] = respEvents;
-            }
-        }
-    }
-    logDebug("Done");  
-    
-    return resp;
+      sensors.each {sensor ->
+          def attributes = settings["attributes_${sensor.id}"];
+          resp[sensor.id] = [:];
+          attributes.each { attribute ->
+              temp = sensor.statesSince(attribute, then, [max: 50000]).collect{[ date: it.date, value: it.value ]}
+              //temp = sensor?.eventsBetween(then, now, [max: 500000])?.findAll{it.name == attribute}?.collect{[date: it.date, value: it.value]}
+              temp = temp.sort{ it.date };
+              temp = temp.collect{ [date: it.date.getTime(), value: it.value] }
+              
+              resp[sensor.id][attribute] = temp;
+          }
+      }
+      
+   }
+   return resp
 }
 
 def getChartOptions(){
     
+    colors = [];
+    sensors.each {sensor->
+        def attributes = settings["attributes_${sensor.id}"];
+        attributes.each {attribute->
+            attrib_string = "attribute_${sensor.id}_${attribute}_color"
+            transparent_attrib_string = "attribute_${sensor.id}_${attribute}_color_transparent"
+            log.debug ("${settings[attrib_string]} ${settings[transparent_attrib_string]}");
+            colors << (settings[transparent_attrib_string] ? "transparent" : settings[attrib_string]);
+           
+        }
+    }
+    
+    log.debug colors
+    
     def options = [
-        "graphReduction": graph_max_points,
         "graphTimespan": Integer.parseInt(graph_timespan),
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
         "graphOptions": [
             "width": graph_static_size ? graph_h_size : "100%",
             "height": graph_static_size ? graph_v_size: "100%",
-            "chartArea": [ "width": graph_static_size ? graph_h_size : "80%", "height": graph_static_size ? graph_v_size: "80%"],
-            "hAxis": ["textStyle": ["fontSize": graph_haxis_font, 
-                                    "color": graph_hh_color_transparent ? "transparent" : graph_hh_color ], 
-                      "gridlines": ["color": graph_ha_color_transparent ? "transparent" : graph_ha_color, 
-                                    "count": graph_h_num_grid != "" ? graph_h_num_grid : null
-                                   ],
-                      "format":     graph_h_format==""?"":graph_h_format                          
-                     ],
-            "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, 
-                                    "color": graph_vh_color_transparent ? "transparent" : graph_vh_color], 
-                      "gridLines": ["color": graph_va_color_transparent ? "transparent" : graph_va_color],
-                     ],
-            "vAxes": [
-                0: ["title" : graph_show_left_label ? graph_left_label: null,  
-                    "titleTextStyle": ["color": graph_left_color_transparent ? "transparent" : graph_left_color, "fontSize": graph_left_font],
-                    "viewWindow": ["min": graph_vaxis_1_min != "" ?  graph_vaxis_1_min : null, 
-                                   "max":  graph_vaxis_1_max != "" ?  graph_vaxis_1_max : null],
-                    "gridlines": ["count" : graph_vaxis_1_num_tics != "" ? graph_vaxis_1_num_tics : null ],
-                    "minorGridlines": ["count" : 0]
-                   ],
-                
-                1: ["title": graph_show_right_label ? graph_right_label : null,
-                    "titleTextStyle": ["color": graph_right_color_transparent ? "transparent" : graph_right_color, "fontSize": graph_right_font],
-                    "viewWindow": ["min": graph_vaxis_2_min != "" ?  graph_vaxis_2_min : null, 
-                                   "max":  graph_vaxis_2_max != "" ?  graph_vaxis_2_max : null],
-                    "gridlines": ["count" : graph_vaxis_2_num_tics != "" ? graph_vaxis_2_num_tics : null ],
-                    "minorGridlines": ["count" : 0]
-                    ]
-                
+            "timeline": [
+                "rowLabelStyle": ["fontSize": graph_axis_font, "color": graph_axis_color_transparent ? "transparent" : graph_axis_color],
+                "barLabelStyle": ["fontSize": graph_axis_font]
             ],
-            "legend": !graph_show_legend ? ["position": "none"] : ["position": graph_legend_position,  
-                                                                   "alignment": graph_legend_inside_position, 
-                                                                   "textStyle": ["fontSize": graph_legend_font, 
-                                                                                 "color": graph_legend_color_transparent ? "transparent" : graph_legend_color]],
             "backgroundColor": graph_background_color_transparent ? "transparent" : graph_background_color,
-            "curveType": !graph_smoothing ? "" : "function",
-            "title": !graph_show_title ? "" : graph_title,
-            "titleTextStyle": !graph_show_title ? "" : ["fontSize": graph_title_font, "color": graph_title_color_transparent ? "transparent" : graph_title_color],
-            "titlePosition" :  graph_title_inside ? "in" : "out",
-            "interpolateNulls": true, //for null vals on our chart
-            "orientation" : graph_y_orientation == true ? "vertical" : "horizontal",
-            "reverseCategories" : graph_x_orientation,
-            "series": [],
-            
-        ]
-    ];
-    
-    //add colors and thicknesses
-    sensors.each { sensor ->
-        settings["attributes_${sensor.id}"].each { attribute ->
-            def axis = Integer.parseInt(settings["graph_axis_number_${sensor.id}_${attribute}"]);
-            def text_color = settings["graph_line_${sensor.id}_${attribute}_color"];
-            def text_color_transparent = settings["graph_line_${sensor.id}_${attribute}_color_transparent"];
-            def line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute}"];
-            
-            def annotations = [
-                "targetAxisIndex": axis, 
-                "color": text_color_transparent ? "transparent" : text_color,
-                "lineWidth": line_thickness
-            ];
-            
-            options.graphOptions.series << annotations;  
-        }
-    }    
+            "colors" : colors
+        ],
+        
+        
+    ]
     
     return options;
 }
         
-def getDrawType(){
-    switch (graph_type){
-        case "Line Graph": return "google.visualization.LineChart";
-        case "Area Graph": return "google.visualization.AreaChart";
-        case "Scatter Plot": return "google.visualization.ScatterChart";
-    }
-}
-
 void removeLastChar(str) {
     str.subSequence(0, str.length() - 1)
-    str
 }
 
-def getLineGraph() {
+def getTimeLine() {
     def fullSizeStyle = "margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden";
     
     def html = """
     <html style="${fullSizeStyle}">
-    <link rel='icon' href='https://www.shareicon.net/data/256x256/2015/09/07/97252_barometer_512x512.png' type='image/x-icon'/> 
-    <link rel="apple-touch-icon" href="https://www.shareicon.net/data/256x256/2015/09/07/97252_barometer_512x512.png">
-    <head>
-      <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/3.0.16/svg.min.js" integrity="sha256-MCvBrhCuX8GNt0gmv06kZ4jGIi1R2QNaSkadjRzinFs=" crossorigin="anonymous"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.0/moment.min.js" integrity="sha256-imB/oMaNA0YvIkDkF5mINRWpuFPEGVCEkHy6rm2lAzA=" crossorigin="anonymous"></script>
-      <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-      <script type="text/javascript">
-google.charts.load('current', {'packages':['corechart']});
-
+        <head>
+            <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.0/moment.min.js" integrity="sha256-imB/oMaNA0YvIkDkF5mINRWpuFPEGVCEkHy6rm2lAzA=" crossorigin="anonymous"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/he/1.2.0/he.min.js" integrity="sha256-awnFgdmMV/qmPoT6Fya+g8h/E4m0Z+UFwEHZck/HRcc=" crossorigin="anonymous"></script>
+            <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+            <script type="text/javascript">
+google.charts.load('current', {'packages':['timeline']});
+google.charts.setOnLoadCallback(onLoad);
+            
 let options = [];
 let subscriptions = {};
 let graphData = {};
-
-//stack for accumulating points to average
-let stack = {};
+let unparsedData = {};
 
 let websocket;
 
@@ -786,9 +639,9 @@ class Loader {
 
 function getOptions() {
     return jQuery.get("${state.localEndpointURL}getOptions/?access_token=${state.endpointSecret}", (data) => {
-        options = data;
         console.log("Got Options");
-        console.log(options);
+        console.log(data);                        
+        options = data;
     });
 }
 
@@ -805,29 +658,30 @@ function getGraphData() {
     return jQuery.get("${state.localEndpointURL}getData/?access_token=${state.endpointSecret}", (data) => {
         console.log("Got Graph Data");
         console.log(data);
-        graphData = data;
+        unparsedData = data;
+        
     });
 }
 
 function parseEvent(event) {
     const now = new Date().getTime();
+
     let deviceId = event.deviceId;
+    let attribute = event.name;
 
     //only accept relevent events
-    if(subscriptions.ids.includes(deviceId) && subscriptions.attributes[deviceId].includes(event.name)) {
-        let value = event.value;
-        let attribute = event.name;
+    if(Object.keys(subscriptions.sensors).includes("" + deviceId) && Object.keys(subscriptions.definitions[deviceId]).includes(attribute)) {
+        const pastEvents = graphData[deviceId][attribute];
+        if(pastEvents.length > 0) {
+            const start_event = subscriptions.definitions[deviceId][attribute].start;
+            const end_event = subscriptions.definitions[deviceId][attribute].end;
+            const is_start = evalTest(start_event, event.value);
+            const is_end = evalTest(end_event, event.value);
 
-        stack[deviceId][attribute].push({ date: now, value });
-        
-        //check the stack
-        const graphEvents = graphData[deviceId][attribute];
-        const stackEvents = stack[deviceId][attribute];
-        const span = graphEvents[1].date - graphEvents[0].date;
-        if(stackEvents[stackEvents.length - 1].date - graphEvents[graphEvents.length - 1].date >= span || (stackEvents.length > 1 && stackEvents[stackEvents.length - 1].date - stackEvents[0].date >= span)) {
-            //push the stack
-            graphData[deviceId][attribute].push(stack[deviceId][attribute].reduce((accum, it) =>  accum = { date: accum.date + it.date / stackEvents.length, value: accum.value + it.value / stackEvents.length }, { date: 0, value: 0.0 }));
-            stack[deviceId][attribute] = [];
+            if(is_end && !pastEvents[pastEvents.length - 1].end) pastEvents[pastEvents.length - 1].end = now;
+            else if(is_start && pastEvents[pastEvents.length - 1].end) pastEvents.push({ start: now });
+        } else {
+            pastEvents.push({ start: now });
         }
 
         //update if we are realtime
@@ -835,20 +689,66 @@ function parseEvent(event) {
     }
 }
 
-function update(callback) {
-    //boot old data
-    let min = new Date().getTime();
+function evalTest(evalStrPre, value) {
+    const evalStr = he.decode(evalStrPre);
+    const operatorMatch = evalStr.replace(' ', '').match(/(<=)|(>=)|<|>|(==)|(!=)/g);
+
+    if(operatorMatch) {
+        const operator = operatorMatch[0];
+        const rest = parseFloat(evalStr.replace(operator, ''));
+        const floatValue = parseFloat(value);
+
+        switch (operator) {
+            case '<':
+                return floatValue < rest;
+            case '>':
+                return floatValue > rest;
+            case '==':
+                return floatValue == rest;
+            case '!=':
+                return floatValue != rest;
+            case '<=':
+                return floatValue <= rest;
+            case '>=':
+                return floatValue >= rest;
+            default:
+                
+        }
+    } else {
+        return value == evalStr;
+    }   
+}
+
+async function update(callback) {
+    let now = new Date().getTime();
+    let min = now;
     min -= options.graphTimespan;
 
-    Object.entries(graphData).forEach(([deviceId, attributes]) => {
-        Object.entries(attributes).forEach(([attribute, events]) => {
-            //filter old events
-            graphData[deviceId][attribute] = events.filter(it => it.date > min);
+    //parse data
+
+    //boot old data
+    Object.entries(graphData).forEach(([id, allEvents]) => {
+        Object.entries(allEvents).forEach(([attribute, events]) => {
+        //shift left points and mark for deletion if applicable
+            let newArr = events.map(it => {
+                let ret = { ...it }
+
+                if(it.end && it.end < min) {
+                    ret = {};
+                }
+                else if(it.start && it.start < min) ret.start = min;
+
+                return ret;
+            });
+
+            //delete non-existant nodes
+            newArr = newArr.filter(it => it.start || it.end);
+
+            graphData[id][attribute] = newArr;
         });
     });
 
-    
-    drawChart(callback);   
+    drawChart(now, min, callback);
 }
 
 async function onLoad() {
@@ -943,14 +843,42 @@ async function onLoad() {
 
     loader.setText('Drawing chart (4/4)');
 
-    //create stack
-    Object.entries(graphData).forEach(([deviceId, attrs]) => {
-        stack[deviceId] = {};
-        Object.keys(attrs).forEach(attr => {
-            stack[deviceId][attr] = [];
-        });
-    })
+    let now = new Date().getTime();
+    let min = now;
+    min -= options.graphTimespan;
 
+    //parse data
+    Object.entries(unparsedData).forEach(([id, allEvents]) => {
+        graphData[id] = {};
+        Object.entries(allEvents).forEach(([attribute, events]) => {
+            graphData[id][attribute] = [];
+            const start_event = subscriptions.definitions[id][attribute].start;
+            const end_event = subscriptions.definitions[id][attribute].end;
+
+            const  thisOut = graphData[id][attribute];
+            if(events.length > 0) {
+                //if our first event is an end event, start at 1
+                thisOut.push(evalTest(start_event, events[0].value) ? { start: events[0].date } : { end: events[0].date });
+                for(let i = 1; i < events.length; i++) {
+                    const is_start = evalTest(start_event, events[i].value);
+                    const is_end = evalTest(end_event, events[i].value);
+                    
+                    //always add the first event
+                    if(is_end && !thisOut[thisOut.length - 1].end) thisOut[thisOut.length - 1].end = events[i].date;
+                    else if(is_start && thisOut[thisOut.length - 1].end) thisOut.push({ start: events[i].date });
+                }
+            }
+            //if it's already on, add an event
+            else if(evalTest(start_event, subscriptions.sensors[id].currentStates.find((it) => it.name == attribute).value)) {
+                thisOut.push({ start: min });
+            }
+        });
+    });
+
+    console.log("Parsed Data");
+    console.log(Object.assign({}, graphData));
+
+    //update data
     update(() => {
         //destroy loader when we are done with it
         loader.remove();
@@ -976,101 +904,73 @@ async function onLoad() {
 
     //attach resize listener
     window.addEventListener("resize", () => {
-        drawChart();
+        let now = new Date().getTime();
+        let min = now;
+        min -= options.graphTimespan;
+
+        drawChart(now, min);
     });
 }
 
-function onBeforeUnload() {
-    if(websocket) websocket.close();
-}
-
-function drawChart(callback) {
-    let now = new Date().getTime();
-    let min = now - options.graphTimespan;
-
+function drawChart(now, min, callback) {
     let dataTable = new google.visualization.DataTable();
-    dataTable.addColumn({ label: 'Date', type: 'datetime' });
+    dataTable.addColumn({ type: 'string', id: 'Device' });
+    dataTable.addColumn({ type: 'date', id: 'Start' });
+    dataTable.addColumn({ type: 'date', id: 'End' });
 
-    let colNums = {};
+    subscriptions.order.forEach(id => {
+        Object.entries(graphData[id]).forEach(([attribute, events]) => {
+            let newArr = [...events];
 
-    let i = 0;
-    subscriptions.ids.forEach((deviceId) => {
-        colNums[deviceId] = {};
-        subscriptions.attributes[deviceId].forEach((attr) => {
-            dataTable.addColumn({ label: subscriptions.labels[deviceId][attr].replace('%deviceName%', subscriptions.sensors[deviceId].displayName).replace('%attributeName%', attr), type: 'number' });
-            colNums[deviceId][attr] = i++;
-        });
-    });
-
-    const totalCols = i;
-
-    let parsedGraphData = [];
-    //map the graph data
-    Object.entries(graphData).forEach(([deviceIndex, attributes]) => {
-        Object.entries(attributes).forEach(([attribute, events]) => {
-            events.forEach((event) => {
-                //try to find an already existing date
-                //let index = parsedGraphData.findIndex((val) => val[0] === event.date);
-                //if(index !== -1) parsedGraphData[index][colNums[deviceIndex][attribute] + 1] = event.value;
-                //else {
-                    //else make a new entry
-                    let newEntry = Array.apply(null, new Array(totalCols + 1));
-                    newEntry[0] = event.date;
-                    newEntry[colNums[deviceIndex][attribute] + 1] = event.value;
-                    parsedGraphData.push(newEntry);
-                //}
+            //add endpoints for orphans
+            newArr = newArr.map((it) => {
+                if(!it.start) {
+                    return {...it, start: min }
+                }
+                else if(!it.end) return {...it, end: now}
+                return it;
             });
-            
-        });
-    });
 
-    //map the stack
-    Object.entries(stack).forEach(([deviceIndex, attributes]) => {
-        Object.entries(attributes).forEach(([attribute, events]) => {
-            if(events.length > 0) {
-                const event = events.reduce((accum, it) =>  accum = { date: accum.date, value: accum.value + it.value / events.length }, { date: now, value: 0.0 });
-
-                let newEntry = Array.apply(null, new Array(totalCols + 1));
-                newEntry[0] = event.date;
-                newEntry[colNums[deviceIndex][attribute] + 1] = event.value;
-                parsedGraphData.push(newEntry);
+            //add endpoint buffers
+            if(newArr.length == 0) {
+                newArr.push({ start: min, end: min });
+                newArr.push({ start: now, end: now });
+            } else {
+                if(newArr[0].start != min) newArr.push({ start: min, end: min });
+                if(newArr[newArr.length - 1].end != now) newArr.push({ start: now, end: now });
             }
+
+            let name = subscriptions.sensors[id].displayName;
+
+            dataTable.addRows(newArr.map((parsed) => [subscriptions.labels[id][attribute].replace('%deviceName%', name).replace('%attributeName%', attribute), moment(parsed.start).toDate(), moment(parsed.end).toDate()]));
         });
     });
 
-    parsedGraphData = parsedGraphData.map((it) => [ moment(it[0]).toDate(), ...it.slice(1).map((it) => parseFloat(it)) ]);
-
-    parsedGraphData.forEach(it => {
-        dataTable.addRow(it);
-    });
-
-    
-    
-    let graphOptions = Object.assign({}, options.graphOptions);
-
-    graphOptions.hAxis = Object.assign(graphOptions.hAxis, { viewWindow: { min: moment(min).toDate(), max: moment(now).toDate() } });
-
-    let chart = new ${drawType}(document.getElementById("timeline"));
+    let chart = new google.visualization.Timeline(document.getElementById("timeline"));
 
     //if we have a callback
     if(callback) google.visualization.events.addListener(chart, 'ready', callback);
 
-    chart.draw(dataTable, graphOptions);
+    chart.draw(dataTable, options.graphOptions);
 }
-
-google.charts.setOnLoadCallback(onLoad);
-window.onBeforeUnload = onBeforeUnload;
-
         </script>
       </head>
       <body style="${fullSizeStyle}">
-        <div id="timeline" style="${fullSizeStyle}" align="center"></div>
+          <div id="timeline" style="${fullSizeStyle}" align="center"></div>
       </body>
-       
     </html>
     """
     
-    return html;
+return html;
+}
+
+// Create a formatted date object string for Google Charts Timeline
+def getDateString(date) {
+    def dateObj = Date.parse("yyyy-MM-dd HH:mm:ss.SSS", date.toString())
+    //def dateObj = date
+    def year = dateObj.getYear() + 1900
+    def dateString = "new Date(${year}, ${dateObj.getMonth()}, ${dateObj.getDate()}, ${dateObj.getHours()}, ${dateObj.getMinutes()}, ${dateObj.getSeconds()})"
+    dateString
 }
 
 // Events come in Date format
@@ -1098,63 +998,11 @@ def initializeAppEndpoint() {
             }
         }
         catch(e) {
+            log.debug("Error: $e");
             state.endpoint = null
         }
     }
     return state.endpoint
-}
-
-//oauth endpoints
-def getGraph() {
-    render(contentType: "text/html", data: getLineGraph());      
-}
-
-def getDataMetrics() {
-    def data;
-    def then = new Date().getTime();
-    data = getData();
-    def now = new Date().getTime();
-    logDebug("Command Time (ms): ${now - then}");
-    return data;
-}
-
-def getData() {
-    def timeline = buildData();
-    return render(contentType: "text/json", data: JsonOutput.toJson(timeline));
-}
-
-def getOptions() {
-    render(contentType: "text/json", data: JsonOutput.toJson(getChartOptions()));
-}
-
-def getSubscriptions() {
-    def ids = [];
-    def sensors_ = [:];
-    def attributes = [:];
-    def labels = [:];
-    sensors.each {sensor->
-        ids << sensor.idAsLong;
-        
-        //only take what we need
-        sensors_[sensor.id] = [ id: sensor.id, idAsLong: sensor.idAsLong, displayName: sensor.displayName ];        
-        attributes[sensor.id] = settings["attributes_${sensor.id}"];
-        
-        labels[sensor.id] = [:];
-        settings["attributes_${sensor.id}"].each { attr ->
-            labels[sensor.id][attr] = settings["graph_name_override_${sensor.id}_${attr}"];
-        }
-    }
-    
-    def obj = [
-        ids: ids,
-        sensors: sensors_,
-        attributes: attributes, 
-        labels : labels
-    ]
-    
-    def subscriptions = obj;
-    
-    return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
 }
 
 def getColorCode(code){
@@ -1178,3 +1026,59 @@ def getColorCode(code){
     return ret;
 }
 
+//oauth endpoints
+def getGraph() {
+    return render(contentType: "text/html", data: getTimeLine());      
+}
+
+def getData() {
+    def timeline = buildData();
+    
+    /*def formatEvents = [:];
+    
+    timeline.each{device->
+        formatEvents[device.id_] = [];
+        device.events_.each{event->
+            formatEvents[device.id_] << ["start": event.start, "end": event.end];
+        }
+    }*/
+        
+    return render(contentType: "text/json", data: JsonOutput.toJson(timeline));
+}
+
+def getOptions() {
+    return render(contentType: "text/json", data: JsonOutput.toJson(getChartOptions()));
+}
+
+def getSubscriptions() {
+    def definitions = [:];
+    def labels = [:];
+    sensors.each { sensor ->
+        definitions[sensor.id] = [:];
+        labels[sensor.id] = [:];
+        def attributes = settings["attributes_${sensor.id}"];
+        attributes.each { attribute ->
+            definitions[sensor.id][attribute] = ["start": settings["attribute_${sensor.id}_${attribute}_start"], "end": settings["attribute_${sensor.id}_${attribute}_end"]];
+            labels[sensor.id][attribute] = settings["graph_name_override_${sensor.id}_${attribute}"];
+        }
+    }
+                                                                                    
+    def sensors_fmt = [:];
+    sensors.each { it ->
+        sensors_fmt[it.id] = [ "id": it.id, "displayName": it.displayName, "currentStates": it.currentStates ];
+    }
+    
+    def order = [sensors.size()];
+    sensors.each {sensor ->
+        order[Integer.parseInt(settings["displayOrder_${sensor.id}"]) - 1] = sensor.idAsLong;
+    }
+    
+    def subscriptions = [
+        "sensors": sensors_fmt,
+        "definitions": definitions,
+        "labels": labels,
+        "order": order
+    ];
+    
+    return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
+}
