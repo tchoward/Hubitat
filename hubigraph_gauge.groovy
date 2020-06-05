@@ -1,5 +1,5 @@
 /**
- *  Hubigraph Gauge Child App
+ *  Hubigraph Timeline Child App
  *
  *  Copyright 2020, but let's behonest, you'll copy it
  *
@@ -179,7 +179,28 @@ def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
         </div>
         ${!isTransparent ? """
             <div style="flex-grow: 1; flex-basis: 1px; padding-right: 8px;">
-                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]">
+                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]" list="presetColors">
+                  <datalist id="presetColors">
+                    <option>#800000</option>
+                    <option>#FF0000</option>
+                    <option>#FFA500</option>
+                    <option>#FFFF00</option>
+
+                    <option>#808000</option>
+                    <option>#008000</option>
+                    <option>#00FF00</option>
+                    
+                    <option>#800080</option>
+                    <option>#FF00FF</option>
+                    
+                    <option>#000080</option>
+                    <option>#0000FF</option>
+                    <option>#00FFFF</option>
+
+                    <option>#FFFFFF</option>
+                    <option>#C0C0C0</option>
+                    <option>#000000</option>
+                  </datalist>
             </div>
         """ : ""}
         <div class="submitOnChange">
