@@ -1,5 +1,5 @@
 /**
- *  Hubigraph Timeline Child App
+ *  Hubigraph Gauge Child App
  *
  *  Copyright 2020, but let's behonest, you'll copy it
  *
@@ -118,8 +118,8 @@ def deviceSelectionPage() {
                             currentValue = state_.value;
                             paragraph getTitle("Please input the min/max and threshold values")
                             paragraph "Current Value = $currentValue"                          
-                            input( type: "number", name: "minValue_", title: "Minimum Value for Gauge", required: true, multiple: false);
-                            input( type: "number", name: "maxValue_", title: "Maximum Value for Gauge", required: true, multiple: false);
+                            input( type: "decimal", name: "minValue_", title: "Minimum Value for Gauge", required: true, multiple: false);
+                            input( type: "decimal", name: "maxValue_", title: "Maximum Value for Gauge", required: true, multiple: false);
                         } else {
                              paragraph "<b>No recent valid events</b> Please select a different Attribute"   
                         }
@@ -130,15 +130,78 @@ def deviceSelectionPage() {
     }
 }
 
+def fontSizeSelector(varname, label, defaultSize, min, max){
+    
+    def fontSize;
+    def varFontSize = "${varname}_font"
+    
+    settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : defaultSize;
+    
+    def html = "";
+    
+    html += 
+    """
+    <table style="width:100%">
+    <tr><td><label for="settings[${varFontSize}]" class="control-label">${label} Font Size</td>
+        <td style="text-align:right; font-size:${settings[varFontSize]}px">Font Size: ${settings[varFontSize]}</td>
+        </label>
+    </tr>
+    </table>
+    <input type="range" min = "$min" max = "$max" name="settings[${varFontSize}]" class="mdl-textfield__input submitOnChange " value="${settings[varFontSize]}" placeholder="Click to set" id="settings[${varFontSize}]">
+    <div class="form-group">
+        <input type="hidden" name="${varFontSize}.type" value="number">
+        <input type="hidden" name="${varFontSize}.multiple" value="false">
+    </div>
+    """.replace('\t', '').replace('\n', '').replace('  ', '');
+    
+    paragraph html 
+}
+
+def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
+    def html = ""
+    def varnameColor = "${varname}_color";
+    def varnameTransparent = "${varname}_color_transparent"
+    def colorTitle = "${label} Color"
+    def notTransparentTitle = "Transparent";
+    def transparentTitle = "${label}: Transparent"
+    
+    settings[varnameColor] = settings[varnameColor] ? settings[varnameColor]: defaultColorValue;
+    settings[varnameTransparent] = settings[varnameTransparent] ? settings[varnameTransparent]: defaultTransparentValue;
+    
+    def isTransparent = settings[varnameTransparent];
+    
+    html += 
+    """
+    <div style="display: flex; flex-flow: row wrap;">
+        <div style="display: flex; flex-flow: row nowrap; flex-basis: 100%;">
+            ${!isTransparent ? """<label for="settings[${varnameColor}]" class="control-label" style="flex-grow: 1">${colorTitle}</label>""" : """"""}
+            <label for="settings[${varnameTransparent}]" class="control-label" style="width: auto;">${isTransparent ? transparentTitle: notTransparentTitle}</label>
+        </div>
+        ${!isTransparent ? """
+            <div style="flex-grow: 1; flex-basis: 1px; padding-right: 8px;">
+                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]">
+            </div>
+        """ : ""}
+        <div class="submitOnChange">
+            <input name="checkbox[${varnameTransparent}]" id="settings[${varnameTransparent}]" style="width: 27.6px; height: 27.6px;" type="checkbox" onmousedown="((e) => { jQuery('#${varnameTransparent}').val('${!isTransparent}'); })()" ${isTransparent ? 'checked' : ''} />
+            <input id="${varnameTransparent}" name="settings[${varnameTransparent}]" type="hidden" value="${isTransparent}" />
+        </div>
+        <div class="form-group">
+            <input type="hidden" name="${varnameColor}.type" value="color">
+            <input type="hidden" name="${varnameColor}.multiple" value="false">
+
+            <input type="hidden" name="${varnameTransparent}.type" value="bool">
+            <input type="hidden" name="${varnameTransparent}.multiple" value="false">
+        </div>
+    </div>
+    """.replace('\t', '').replace('\n', '').replace('  ', '');
+    paragraph html    
+}
+
+
 def graphSetupPage(){
     def fontEnum = [["1":"1"], ["2":"2"], ["3":"3"], ["4":"4"], ["5":"5"], ["6":"6"], ["7":"7"], ["8":"8"], ["9":"9"], ["10":"10"], 
                     ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]];  
-    
-    
-    
-    def colorEnum = [["#800000":"Maroon"], ["#FF0000":"Red"], ["#FFA500":"Orange"], ["#FFFF00":"Yellow"], ["#808000":"Olive"], ["#008000":"Green"],
-                    ["#800080":"Purple"], ["#FF00FF":"Fuchsia"], ["#00FF00":"Lime"], ["#008080":"Teal"], ["#00FFFF":"Aqua"], ["#0000FF":"Blue"], ["#000080":"Navy"],
-                    ["#000000":"Black"], ["#C0C0C0":"Gray"], ["#C0C0C0":"Silver"], ["#FFFFFF":"White"], ["rgba(255, 255, 255, 0)":"Transparent"]];
     
     def highlightEnum = [[0:"0"], [1:"1"], [2:"2"], [3:"3"]];
     
@@ -148,6 +211,8 @@ def graphSetupPage(){
             input( type: "string", name: "gauge_title", title: "Select Gauge Title", multiple: false, required: false, defaultValue: "Gauge Title")
             input( type: "string", name: "gauge_units", title: "Select Gauge Number Units", multiple: false, required: false, defaultValue: "")
             input( type: "string", name: "gauge_number_format", title: "Select Number Formatting (Example #.## = 1.23, #.# = 1.2, # = 1)", multiple: false, required: false, defaultValue: "#")
+            //colorSelector("graph_background", "Gauge Background", "#FFFFFF" , false);
+            
             paragraph getLine();
             if (!num_highlights){
                    num_highlights = 0;
@@ -158,9 +223,14 @@ def graphSetupPage(){
                 
                 logDebug("Looping over $num_highlights");
                 for (i=0; i<num_; i+=1){
-                    logDebug("i: $i num_: $num_")   
-                    input (type: "enum", name: "highlight_color${i}", title: "Select Highlight Color Region #${i}", multiple: false, options:colorEnum);
-                    input (type: "number", name: "highlight_start${i}", title: "Select Highlight Start Region Value #${i}");
+                    switch (i) {
+                        case 0 : color_ = "#00FF00"; break;
+                        case 1 : color_ = "#a9a67e"; break;
+                        case 2 : color_ = "#FF0000"; break;
+                    }
+                    
+                    colorSelector("highlight${i}", "Highlight #$i", color_ , false);
+                    input (type: "decimal", name: "highlight${i}_start", title: "Select Highlight Start Region Value #${i}");
                 }
                 input (type: "number", name: "highlight_end", title: "Select Highlight End Region Value #${i-1}");
             }
@@ -378,36 +448,36 @@ def getChartOptions(){
     switch (num_highlights.toInteger()){
            
         case 3: 
-        redColor = highlight_color2;
-        redFrom  = highlight_start2;
+        redColor = highlight2_color_transparent ? "transparent" : highlight2_color;
+        redFrom  = highlight2_start;
         redTo    = highlight_end;
         
-        yellowColor  = highlight_color1;
-        yellowFrom   = highlight_start1;
-        yellowTo     = highlight_start2;
+        yellowColor  = highlight1_color_transparent ? "transparent" : highlight1_color;
+        yellowFrom   = highlight1_start;
+        yellowTo     = highlight2_start;
         
-        greenColor  = highlight_color0;
-        greenFrom   = highlight_start0;
-        greenTo     = highlight_start1;
+        greenColor  = highlight0_color_transparent ? "transparent" : highlight0_color;
+        greenFrom   = highlight0_start;
+        greenTo     = highlight1_start;
             
         break;
             
         case 2:
 
-        yellowColor  = highlight_color1;
-        yellowFrom   = highlight_start1;
+        yellowColor  = highlight1_color_transparent ? "transparent" : highlight1_color;
+        yellowFrom   = highlight1_start;
         yellowTo     = highlight_end;
         
-        greenColor  = highlight_color0;
-        greenFrom   = highlight_start0;
-        greenTo     = highlight_start1;
+        greenColor  = highlight0_color_transparent ? "transparent" : highlight0_color;
+        greenFrom   = highlight0_start;
+        greenTo     = highlight1_start;
         
         break;
         
         case 1: 
 
-        greenColor  = highlight_color0;
-        greenFrom   = highlight_start0;
+        greenColor  =  highlight0_color_transparent ? "transparent" : highlight0_color;
+        greenFrom   = highlight0_start;
         greenTo     = highlight_end
         
         break;
@@ -427,7 +497,7 @@ def getChartOptions(){
             "redFrom": redFrom,
             "redTo": redTo,
             "redColor": redColor, 
-            "backgroundColor": getColorCode(graph_background_color),
+            "backgroundColor": graph_background_color_transparency ? "transparent": graph_background_color,
             "majorTicks" : default_major_ticks == true ? tic_labels : "",
             "minorTicks" : gauge_minor_tics
         ]
