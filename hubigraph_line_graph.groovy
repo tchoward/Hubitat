@@ -55,7 +55,7 @@ definition(
 
 preferences {
     section ("test"){
-       page(name: "mainPage", title: "Main Page", install: true, uninstall: true)
+       page(name: "mainPage", install: true, uninstall: true)
        page(name: "deviceSelectionPage")
        page(name: "graphSetupPage")
        page(name: "enableAPIPage")
@@ -90,24 +90,398 @@ preferences {
     }
 }
 
+/********************************************************************************************************************************
+*********************************************************************************************************************************
+****************************************** PAGES ********************************************************************************
+*********************************************************************************************************************************
+*********************************************************************************************************************************/
+
+def graphSetupPage(){
+    def fontEnum = [["1":"1"], ["2":"2"], ["3":"3"], ["4":"4"], ["5":"5"], ["6":"6"], ["7":"7"], ["8":"8"], ["9":"9"], ["10":"10"], 
+                    ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]];  
+    
+    dynamicPage(name: "graphSetupPage") {
+        
+        specialSection("General Options")
+        {            
+            input( type: "enum", name: "graph_update_rate", title: "<b>Select graph update rate</b>", multiple: false, required: true, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
+            input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: true, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
+            colorSelector("graph_background", "Background", "#FFFFFF", false);
+            
+            input( type: "bool", name: "graph_smoothing", title: "<b>Smooth Graph Points</b>", defaultValue: true);
+            input( type: "enum", name: "graph_type", title: "<b>Graph Type</b>", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"] )
+            input( type: "bool", name: "graph_y_orientation", title: "<b>Flip Graph to Vertical (Rotate 90 degrees)</b>", defaultValue: false);
+            input( type: "bool", name: "graph_z_orientation", title: "<b>Reverse Data Order? (Flip Data left to Right)</b>", defaultValue: false);
+            input (type: "number", name: "graph_max_points", title: "<b>Maximum number of Data Points? (Zero for ALL)</b>", defaultValue: 0);       
+        }
+             
+        specialSection("Graph Title")
+        {    
+            input( type: "bool", name: "graph_show_title", title: "<b>Show Title on Graph</b>", defaultValue: false, submitOnChange: true);
+            if (graph_show_title==true) {
+                input( type: "text", name: "graph_title", title: "<b>Input Graph Title</b>", default: "Graph Title");
+                fontSizeSelector("graph_title", "Title", 9, 2, 20);
+                colorSelector("graph_title", "Title", "#000000", false);
+                input( type: "bool", name: "graph_title_inside", title: "<b>Put Title Inside Graph</b>", defaultValue: false);
+            }
+        }
+            
+         specialSection("Graph Size")
+         {    
+            input( type: "bool", name: "graph_static_size", title: "<b>Set size of Graph? (False = Fill Window)</b>", defaultValue: false, submitOnChange: true);
+            if (graph_static_size==true){
+                input( type: "number", name: "graph_h_size", title: "<b>Horizontal dimension of the graph</b>", defaultValue: "800", range: "100..3000");
+                input( type: "number", name: "graph_v_size", title: "<b>Vertical dimension of the graph</b>", defaultValue: "600", range: "100..3000");
+            }
+         }
+        
+          specialSection("Horizontal Axis")
+         { 
+            //Axis
+            fontSizeSelector("graph_haxis", "Horizonal Axis", 9, 2, 20);
+            colorSelector("graph_hh", "Horizonal Header", "#C0C0C0", false);
+            colorSelector("graph_ha", "Horizonal Axis", "#C0C0C0", false);
+            input( type: "number", name: "graph_h_num_grid", title: "<b>Num Horizontal Gridlines (blank for auto)</b>", defaultValue: "", range: "0..100");
+            
+            input( type: "bool", name: "dummy", title: "Show String Formatting Help", defaultValue: false, submitOnChange: true);
+            if (dummy == true){
+                paragraph_ = "<table>"
+                paragraph_ += getTableRow("<b>Name", "<b>Format" ,"<b>Result</b>", "");
+                paragraph_ += getTableRow("Year", "Y", "2020", "");
+                paragraph_ += getTableRow("Month Number", "M", "12", "");
+                paragraph_ += getTableRow("Month Name ", "MMM", "Feb", "");
+                paragraph_ += getTableRow("Month Full Name", "MMMM", "February", "");
+                paragraph_ += getTableRow("Day of Month", "d", "February", "");
+                paragraph_ += getTableRow("Day of Week", "EEE", "Mon", "");
+                paragraph_ += getTableRow("Day of Week", "EEEE", "Monday", "");
+                paragraph_ += getTableRow("Period", "a", "AM or PM", "");
+                paragraph_ += getTableRow("Hour (12)", "h", "1..12", "");
+                paragraph_ += getTableRow("Hour (12)", "hh", "01..12", "");
+                paragraph_ += getTableRow("Hour (24)", "H", "1..23", "");
+                paragraph_ += getTableRow("Hour (24)", "HH", "01..23", "");
+                paragraph_ += getTableRow("Minute", "m", "1..59", "");
+                paragraph_ += getTableRow("Minute", "mm", "01..59", "");
+                paragraph_ += getTableRow("Seconds", "s", "1..59", "");
+                paragraph_ += getTableRow("Seconds", "ss", "01..59", "");
+                paragraph_ += "</table>"
+                paragraph paragraph_
+                paragraph_ = /<b>Example: "EEEE, MMM d, Y hh:mm:ss a" = "Monday, June 2, 2020 08:21:33 AM"/
+                paragraph_ += "</b>"
+                paragraph paragraph_
+            }
+            input( type: "string", name: "graph_h_format", title: "<b>Horizontal Axis Format</b>", defaultValue: "", submitOnChange: true);
+            if (graph_h_format){
+                today = new Date();
+                paragraph "<i><small><b>Horizontal Axis Sample:</b> ${today.format(graph_h_format)}</small></i>"
+            }
+         }
+            
+         specialSection("Vertical Axis")
+         { 
+            fontSizeSelector("graph_vaxis", "Title", 9, 2, 20);
+            colorSelector("graph_vh", "Vertical Header", "#000000", false);
+            colorSelector("graph_va", "Vertical Axis", "#C0C0C0", false);
+         }
+            
+        specialSection("Left Axis"){  
+            input( type: "decimal", name: "graph_vaxis_1_min", title: "<b>Minimum for left axis (blank for auto)</b>", defaultValue: "");
+            input( type: "decimal", name: "graph_vaxis_1_max", title: "<b>Maximum for left axis (blank for auto)</b>", defaultValue: "");
+            input( type: "number", name: "graph_vaxis_1_num_lines", title: "<b>Num gridlines (blank for auto)</b>", defaultValue: "", range: "0..100");
+            input( type: "bool", name: "graph_show_left_label", title: "<b>Show Left Axis Label on Graph</b>", defaultValue: false, submitOnChange: true);
+            if (graph_show_left_label==true){
+                input( type: "text", name: "graph_left_label", title: "<b>Input Left Axis Label</b>", default: "Left Axis Label");
+                fontSizeSelector("graph_left", "Left Axis", 9, 2, 20);
+                colorSelector("graph_left", "Left Axis", "#FFFFFF", false);
+            }
+        }
+           
+        specialSection("Right Axis"){
+            input( type: "decimal", name: "graph_vaxis_2_min", title: "<b>Minimum for right axis (blank for auto)</b>", defaultValue: "", range: "");
+            input( type: "decimal", name: "graph_vaxis_2_max", title: "<b>Maximum for right axis (blank for auto)</b>", defaultValue: "", range: "");
+            input( type: "number", name: "graph_vaxis_2_num_lines", title: "<b>Num gridlines (blank for auto)<br></b><small><i>Must be greater than num tics to be effective</i></small>", defaultValue: "", range: "0..100");
+            input( type: "bool", name: "graph_show_right_label", title: "<b>Show Right Axis Label on Graph</b>", defaultValue: false, submitOnChange: true);
+            if (graph_show_right_label==true){
+                input( type: "text", name: "graph_right_label", title: "<b>Input Right Axis Label</b>", default: "Right Axis Label");
+                fontSizeSelector("graph_right", "Right Axis", 9, 2, 20);
+                colorSelector("graph_right", "Right Axis", "#FFFFFF", false);
+             }
+        }  
+            //Legend
+        specialSection("Legend"){
+            def legendPosition = [["top": "Top"], ["bottom":"Bottom"], ["in": "Inside Top"]];
+            def insidePosition = [["start": "Left"], ["center": "Center"], ["end": "Right"]];
+            input( type: "bool", name: "graph_show_legend", title: "<b>Show Legend on Graph</b>", defaultValue: false, submitOnChange: true);
+            if (graph_show_legend==true){
+                fontSizeSelector("graph_legend", "Legend Font", 9, 2, 20);
+                colorSelector("graph_legend", "Legend", "#000000", false);
+                input( type: "enum", name: "graph_legend_position", title: "<b>Legend Position</b>", defaultValue: "Bottom", options: legendPosition);
+                input( type: "enum", name: "graph_legend_inside_position", title: "<b>Legend Justification</b>", defaultValue: "center", options: insidePosition);
+                
+            }
+        }
+        
+        specialSection("Lines"){
+
+            //Get the total number of devices
+            state.num_devices = 0;
+            sensors.each { sensor ->
+                settings["attributes_${sensor.id}"].each { attribute ->
+                    state.num_devices++;
+                }
+            }
+            def availableAxis = [["0" : "Left Axis"], ["1": "Right Axis"]];
+            if (state.num_devices == 1) {
+                    availableAxis = [["0" : "Left Axis"], ["1": "Right Axis"], ["2": "Both Axes"]]; 
+            }
+            
+            
+            //Line
+            cnt = 1;
+            sensors.each { sensor ->        
+                settings["attributes_${sensor.id}"].each { attribute ->
+                        paragraph getSubTitle("${sensor.displayName}: ${attribute}");
+                        input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "<b>Graph Axis Side</b>", defaultValue: "0", options: availableAxis);
+                        colorSelector("graph_line_${sensor.id}_${attribute}", "Line", getColorCode(cnt), false);
+                        input( type: "enum", name:   "graph_line_thickness_${sensor.id}_${attribute}", title: "<b>Line Thickness</b>", defaultValue: "2", options: fontEnum); 
+                        input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "<b>Override Device Name</b><br><small><i>Use <blue>%deviceName%</blue> for DEVICE & %attributeName% for ATTRIBUTE</i><br></small>", defaultValue: "%deviceName%: %attributeName%");
+                        cnt += 1;
+                    }
+                }
+            
+        }
+    }
+}
+
 def deviceSelectionPage() {
     def supported_attrs;
         
     dynamicPage(name: "deviceSelectionPage") {
-        section() { 
-	    
+        specialSection("Device Selection"){
             input "sensors", "capability.*", title: "Sensors", multiple: true, required: true, submitOnChange: true
         
             if (sensors){
                 sensors.each {
                     sensor_events = it.events([max:250]).name;
                     supported_attrs = sensor_events.unique(false);           
-                    paragraph(it.displayName);
+                    paragraph getSubTitle(it.displayName);
                     input( type: "enum", name: "attributes_${it.id}", title: "Attributes to graph", required: true, multiple: true, options: supported_attrs, defaultValue: "1")
                 }
             }
         }
     }
+}
+
+def disableAPIPage() {
+    dynamicPage(name: "disableAPIPage") {
+        section() {
+            if (state.endpoint) {
+                revokeAccessToken();
+                state.endpoint = null
+            }
+            paragraph "Token revoked. Click done to continue."
+        }
+    }
+}
+
+def enableAPIPage() {
+    dynamicPage(name: "enableAPIPage", title: "") {
+        section() {
+            if(!state.endpoint) initializeAppEndpoint();
+            paragraph "Token created. Click done to continue."
+        }
+    }
+}
+
+def mainPage() {
+    dynamicPage(name: "mainPage") {        
+         if (!state.endpoint) {
+             specialSection("Please set up OAuth API"){
+                href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
+             }
+            } else {
+                specialSection("Graph Options"){
+                    objects = [];
+                    objects << specialPageButton("Select Device/Data", "deviceSelectionPage", "100%", "vibration");
+                    objects << specialPageButton("Configure Graph", "graphSetupPage", "100%", "poll");
+                    addContainer(objects, 1);
+                }
+                specialSection("Local Graph URL"){
+                    addContainer(["${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"], 1);
+                }
+             
+                if (sensors){
+                    specialSection("Sensors"){
+                            rows = [];
+                            rows << addText("<b><u>DEVICE</b></u>");
+                            rows << addText("<b><u>ATTRIBUTES</b></u>");            
+                            sensors.each { sensor ->
+                                settings["attributes_${sensor.id}"].each { attribute_ ->                                        
+                                    rows << addText("$sensor")
+                                    rows << addText("$attribute_");
+                                }
+                            }
+                            addContainer(rows, 2);                        
+                    }
+                    
+                    if (graph_update_rate){
+                        specialSection("Preview"){
+                             paragraph graphPreview()
+                        }
+                    } //if (graph_update_rate)
+                
+                    specialSection("Hubigraph Tile Installation"){
+                        objects = [];
+                        objects << specialSwitch("Install Hubigraph Tile Device?", "install_device", false, true);
+                        if (install_device==true){ 
+                             objects << specialTextInput("Name for HubiGraph Tile Device", "device_name", "false");
+                        }
+                        addContainer(objects, 1);
+                    }
+                } // if sensors 
+             
+                
+               if (state.endpoint){
+                   specialSection("Hubigraph Application"){
+            
+                        paragraph getSubTitle("Application Name");
+                        addContainer([specialTextInput("Rename the Application?", "app_name", "false")], 1);
+                        paragraph getSubTitle("Debugging");
+                        addContainer([specialSwitch("Enable Debug Logging?", "debug", false, false)], 1);
+                
+                        paragraph getSubTitle("Disable Oauth Authorization");
+                        addContainer([specialPageButton("Disable API", "disableAPIPage", "100%", "cancel")], 1);  
+                    }
+               }
+       
+            } //else 
+        
+    } //dynamicPage
+}
+
+def addContainer(containers, numPerRow){
+    
+    def html_ = """
+            <div class = "mdl-grid" style="margin: 0; padding: 0;"> 
+    """
+    containers.each{container->
+        html_ += """<div class="mdl-cell mdl-cell--${12/numPerRow}-col-desktop mdl-cell--${8/numPerRow}-col-tablet mdl-cell--${4/numPerRow}-col-phone">"""
+        html_ += container;
+        html_ += """</div>"""
+    }
+    html_ += """</div>"""
+         
+    paragraph (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
+    
+}
+
+def addText(text){
+    
+    def html_ = "$text";
+    
+    return html_
+}
+
+def specialPageButton(title, page, width, icon){
+    def html_ = """
+        <button type="button" name="_action_href_${page}|${page}|1" class="btn btn-default btn-lg btn-block hrefElem  mdl-button--raised mdl-shadow--2dp mdl-button__icon" style="text-align:left;width:${width}; margin: 0;">
+            <span style="text-align:left;white-space:pre-wrap">
+                ${title}
+            </span>
+            <ul class="nav nav-pills pull-right">
+                <li><i class="material-icons">${icon}</i></li>
+            </ul>
+            <br>
+            <span class="state-incomplete-text " style="text-align: left; white-space:pre-wrap"></span>
+       </button>
+    """.replace('\t', '').replace('\n', '').replace('  ', '');
+    
+    return html_;
+}
+
+def specialSection(String name, Closure code) {
+    def id = name.replace(' ', '_');
+    
+    def titleHTML = """
+        <div class="mdl-layout__header" style="display: block; background:#033673; margin: 0 -16px; width: calc(100% + 32px);">
+            <div class="mdl-layout__header-row">
+                <span class="mdl-layout__title" style="margin-left: -32px; font-size: 20px; width: auto;">
+                    ${name}
+                </span>
+            </div>
+        </div>
+    """;
+    
+    def modContent = """
+    <div id=${id} style="display: none;"></div>
+    <script>
+        var sectionElem = jQuery('#${id}').parent();
+        
+        /*hide default header*/
+        sectionElem.css('display', 'none');
+
+        var elem = sectionElem.parent().parent();
+        elem.addClass('mdl-card mdl-card-wide mdl-shadow--8dp');
+        elem.css('width', '100%');
+        elem.css('padding', '0 16px');
+        elem.css('display', 'block');
+        elem.css('min-height', 0);
+        elem.prepend('${titleHTML}');
+    </script>
+    """;
+    
+    modContent = modContent.replace('\t', '').replace('\n', '').replace('  ', '');
+    
+    section(modContent) {
+        code.call();
+    }
+}
+
+def specialSwitch(title, var, defaultVal, submitOnChange){
+   
+    def actualVal = settings[var] != null ? settings[var] : defaultVal;
+    
+   def html_ = """      
+                    <div class="form-group">
+                        <input type="hidden" name="${var}.type" value="bool">
+                        <input type="hidden" name="${var}.multiple" value="false">
+                    </div>
+                    <label for="settings[${var}]"
+                        class="mdl-switch mdl-js-switch mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events is-upgraded ${actualVal ? "is-checked" : ""}  
+                            data-upgraded=",MaterialSwitch,MaterialRipple">
+                            <input name="checkbox[${var}]" id="settings[${var}]" class="mdl-switch__input 
+                                ${submitOnChange ? "submitOnChange" : ""} "
+                                    type="checkbox" 
+                                ${actualVal ? "checked" : ""}>                
+                            <div class="mdl-switch__label">${title}</div>    
+                            <div class="mdl-switch__track"></div>
+                            <div class="mdl-switch__thumb">
+                                <span class="mdl-switch__focus-helper">
+                                </span>
+                            </div>
+                            <span class="mdl-switch__ripple-container mdl-js-ripple-effect mdl-ripple--center" data-upgraded=",MaterialRipple">
+                                <span class="mdl-ripple">
+                                </span>
+                            </span>
+                    </label>
+                    <input name="settings[${var}]" type="hidden" value="${actualVal}">
+    """
+    return html_.replace('\t', '').replace('\n', '').replace('  ', '');;
+ }
+
+def specialTextInput(title, var, submitOnChange){
+     def html_ = """
+        <div class="form-group">
+            <input type="hidden" name="${var}.type" value="text">
+            <input type="hidden" name="${var}.multiple" value="false">
+        </div>
+        <label for="settings[${var}]" class="control-label">
+            <b>${title}</b>
+        </label>
+            <input type="text" name="settings[${var}]" 
+                   class="mdl-textfield__input ${submitOnChange == "true" ? "submitOnChange" : ""} " 
+                   value="${settings[var]}" placeholder="Click to set" id="settings[${var}]">
+        """
+     return html_.replace('\t', '').replace('\n', '').replace('  ', '');
 }
 
 def fontSizeSelector(varname, label, defaultSize, min, max){
@@ -122,12 +496,12 @@ def fontSizeSelector(varname, label, defaultSize, min, max){
     html += 
     """
     <table style="width:100%">
-    <tr><td><label for="settings[${varFontSize}]" class="control-label">${label} Font Size</td>
+    <tr><td><label for="settings[${varFontSize}]" class="control-label"><b>${label} Font Size</b></td>
         <td style="text-align:right; font-size:${settings[varFontSize]}px">Font Size: ${settings[varFontSize]}</td>
         </label>
     </tr>
     </table>
-    <input type="range" min = "$min" max = "$max" name="settings[${varFontSize}]" class="mdl-textfield__input submitOnChange " value="${settings[varFontSize]}" placeholder="Click to set" id="settings[${varFontSize}]">
+    <input type="range" min = "$min" max = "$max" name="settings[${varFontSize}]" class="mdl-slider submitOnChange " value="${settings[varFontSize]}" id="settings[${varFontSize}]">
     <div class="form-group">
         <input type="hidden" name="${varFontSize}.type" value="number">
         <input type="hidden" name="${varFontSize}.multiple" value="false">
@@ -144,7 +518,7 @@ def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
     def html = ""
     def varnameColor = "${varname}_color";
     def varnameTransparent = "${varname}_color_transparent"
-    def colorTitle = "${label} Color"
+    def colorTitle = "<b>${label} Color</b>"
     def notTransparentTitle = "Transparent";
     def transparentTitle = "${label}: Transparent"
     
@@ -199,253 +573,22 @@ def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
         </div>
     </div>
     """.replace('\t', '').replace('\n', '').replace('  ', '');
-    paragraph html    
-}
-
-
-
-def graphSetupPage(){
-    def fontEnum = [["1":"1"], ["2":"2"], ["3":"3"], ["4":"4"], ["5":"5"], ["6":"6"], ["7":"7"], ["8":"8"], ["9":"9"], ["10":"10"], 
-                    ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]];  
     
-    def colorEnum = [["#800000":"Maroon"], ["#FF0000":"Red"], ["#FFA500":"Orange"], ["#FFFF00":"Yellow"], ["#808000":"Olive"], ["#008000":"Green"],
-                    ["#800080":"Purple"], ["#FF00FF":"Fuchsia"], ["#00FF00":"Lime"], ["#008080":"Teal"], ["#00FFFF":"Aqua"], ["#0000FF":"Blue"], ["#000080":"Navy"],
-                    ["#000000":"Black"], ["#C0C0C0":"Gray"], ["#C0C0C0":"Silver"], ["#FFFFFF":"White"], ["transparent":"Transparent"]];
-    
-    dynamicPage(name: "graphSetupPage") {
-        
-        section(getTitle("General Options"))
-        {   
-            input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: true, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
-            input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: true, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
-            colorSelector("graph_background", "Background", "#FFFFFF", false);
-            
-            input( type: "bool", name: "graph_smoothing", title: "Smooth Graph Points", defaultValue: true);
-            input( type: "enum", name: "graph_type", title: "Graph Type", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"] )
-            input( type: "bool", name: "graph_y_orientation", title: "Flip Graph to Vertical (Rotate 90 degrees)", defaultValue: false);
-            input( type: "bool", name: "graph_z_orientation", title: "Reverse Data Order? (Flip Data left to Right)", defaultValue: false);
-            input (type: "number", name: "graph_max_points", title: "Maximum number of Data Points? (Zero for ALL)", defaultValue: 0);
-            paragraph "</blockquote>"
-            
-            
-            //Title   
-            paragraph getTitle("Title");
-            input( type: "bool", name: "graph_show_title", title: "Show Title on Graph", defaultValue: false, submitOnChange: true);
-            if (graph_show_title==true) {
-                input( type: "text", name: "graph_title", title: "Input Graph Title", default: "Graph Title");
-                fontSizeSelector("graph_title", "Title", 9, 2, 20);
-                colorSelector("graph_title", "Title", "#000000", false);
-                input( type: "bool", name: "graph_title_inside", title: "Put Title Inside Graph", defaultValue: false);
-            }
-            
-            //Size
-            paragraph getTitle("Graph Size");
-            input( type: "bool", name: "graph_static_size", title: "Set size of Graph? (False = Fill Window)", defaultValue: false, submitOnChange: true);
-            if (graph_static_size==true){
-                input( type: "number", name: "graph_h_size", title: "Horizontal dimension of the graph", defaultValue: "800", range: "100..3000");
-                input( type: "number", name: "graph_v_size", title: "Vertical dimension of the graph", defaultValue: "600", range: "100..3000");
-            }
-            
-            //Axis
-            paragraph getTitle("Horizontal Axis");
-            fontSizeSelector("graph_haxis", "Horizonal Axis", 9, 2, 20);
-            colorSelector("graph_hh", "Horizonal Header", "#C0C0C0", false);
-            colorSelector("graph_ha", "Horizonal Axis", "#C0C0C0", false);
-            input( type: "number", name: "graph_h_num_grid", title: "Num Horizontal Gridlines (blank for auto)", defaultValue: "", range: "0..100");
-            
-            input( type: "bool", name: "dummy", title: "Show String Formatting Help", defaultValue: false, submitOnChange: true);
-            if (dummy == true){
-                paragraph_ = "<table>"
-                paragraph_ += getTableRow("<b>Name", "<b>Format" ,"<b>Result</b>", "");
-                paragraph_ += getTableRow("Year", "Y", "2020", "");
-                paragraph_ += getTableRow("Month Number", "M", "12", "");
-                paragraph_ += getTableRow("Month Name ", "MMM", "Feb", "");
-                paragraph_ += getTableRow("Month Full Name", "MMMM", "February", "");
-                paragraph_ += getTableRow("Day of Month", "d", "February", "");
-                paragraph_ += getTableRow("Day of Week", "EEE", "Mon", "");
-                paragraph_ += getTableRow("Day of Week", "EEEE", "Monday", "");
-                paragraph_ += getTableRow("Period", "a", "AM or PM", "");
-                paragraph_ += getTableRow("Hour (12)", "h", "1..12", "");
-                paragraph_ += getTableRow("Hour (12)", "hh", "01..12", "");
-                paragraph_ += getTableRow("Hour (24)", "H", "1..23", "");
-                paragraph_ += getTableRow("Hour (24)", "HH", "01..23", "");
-                paragraph_ += getTableRow("Minute", "m", "1..59", "");
-                paragraph_ += getTableRow("Minute", "mm", "01..59", "");
-                paragraph_ += getTableRow("Seconds", "s", "1..59", "");
-                paragraph_ += getTableRow("Seconds", "ss", "01..59", "");
-                paragraph_ += "</table>"
-                paragraph paragraph_
-                paragraph_ = /<b>Example: "EEEE, MMM d, Y hh:mm:ss a" = "Monday, June 2, 2020 08:21:33 AM"/
-                paragraph_ += "</b>"
-                paragraph paragraph_
-            }
-            input( type: "string", name: "graph_h_format", title: "Horizontal Axis Format", defaultValue: "", submitOnChange: true);
-            if (graph_h_format){
-                today = new Date();
-                paragraph "Horizontal Axis Sample: ${today.format(graph_h_format)}"
-            }
-            
-            paragraph getTitle("Vertical Axis");
-            fontSizeSelector("graph_vaxis", "Title", 9, 2, 20);
-            colorSelector("graph_vh", "Vertical Header", "#000000", false);
-            colorSelector("graph_va", "Vertical Header", "#C0C0C0", false);
-
-            
-            
-            paragraph getTitle("Left Axis");
-            input( type: "decimal", name: "graph_vaxis_1_min", title: "Minimum for left axis (blank for auto)", defaultValue: "");
-            input( type: "decimal", name: "graph_vaxis_1_max", title: "Maximum for left axis (blank for auto)", defaultValue: "");
-            input( type: "number", name: "graph_vaxis_1_num_lines", title: "Num gridlines (blank for auto)", defaultValue: "", range: "0..100");
-            input( type: "bool", name: "graph_show_left_label", title: "Show Left Axis Label on Graph", defaultValue: false, submitOnChange: true);
-            if (graph_show_left_label==true){
-                input( type: "text", name: "graph_left_label", title: "Input Left Axis Label", default: "Left Axis Label");
-                fontSizeSelector("graph_left", "Left Axis", 9, 2, 20);
-                colorSelector("graph_left", "Left Axis", "#FFFFFF", false);
-            }
-            
-            paragraph getTitle("Right Axis");
-            input( type: "decimal", name: "graph_vaxis_2_min", title: "Minimum for right axis (blank for auto)", defaultValue: "", range: "");
-            input( type: "decimal", name: "graph_vaxis_2_max", title: "Maximum for right axis (blank for auto)", defaultValue: "", range: "");
-            input( type: "number", name: "graph_vaxis_2_num_lines", title: "Num gridlines (blank for auto) -- Must be greater than num tics to be effective", defaultValue: "", range: "0..100");
-            input( type: "bool", name: "graph_show_right_label", title: "Show Right Axis Label on Graph", defaultValue: false, submitOnChange: true);
-            if (graph_show_right_label==true){
-                input( type: "text", name: "graph_right_label", title: "Input Right Axis Label", default: "Right Axis Label");
-                fontSizeSelector("graph_right", "Right Axis", 9, 2, 20);
-                colorSelector("graph_right", "Right Axis", "#FFFFFF", false);
-             }
-            
-            //Legend
-            def legendPosition = [["top": "Top"], ["bottom":"Bottom"], ["in": "Inside Top"]];
-            def insidePosition = [["start": "Left"], ["center": "Center"], ["end": "Right"]];
-            paragraph getTitle("Legend");
-            input( type: "bool", name: "graph_show_legend", title: "Show Legend on Graph", defaultValue: false, submitOnChange: true);
-            if (graph_show_legend==true){
-                fontSizeSelector("graph_legend", "Legend Font", 9, 2, 20);
-                colorSelector("graph_legend", "Legend", "#000000", false);
-                input( type: "enum", name: "graph_legend_position", title: "Legend Position", defaultValue: "Bottom", options: legendPosition);
-                input( type: "enum", name: "graph_legend_inside_position", title: "Legend Justification", defaultValue: "center", options: insidePosition);
-                
-            }
-            
-            paragraph getTitle("Devices -- Attributes");
-            //Get the total number of devices
-            state.num_devices = 0;
-            sensors.each { sensor ->
-                settings["attributes_${sensor.id}"].each { attribute ->
-                    state.num_devices++;
-                }
-            }
-            def availableAxis = [["0" : "Left Axis"], ["1": "Right Axis"]];
-            if (state.num_devices == 1) {
-                    availableAxis = [["0" : "Left Axis"], ["1": "Right Axis"], ["2": "Both Axes"]]; 
-            }
-            
-            
-            //Line
-            cnt = 1;
-            sensors.each { sensor ->        
-                settings["attributes_${sensor.id}"].each { attribute ->
-                    paragraph getSubTitle("${sensor.displayName}: ${attribute}");
-                    input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "Graph Axis Number", defaultValue: "0", options: availableAxis);
-                    colorSelector("graph_line_${sensor.id}_${attribute}", "${sensor}: ${attribute} Line", getColorCode(cnt), false);
-                    input( type: "enum", name:   "graph_line_thickness_${sensor.id}_${attribute}", title: "Line Thickness", defaultValue: "2", options: fontEnum); 
-                    input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "Override Device Name -- use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE", defaultValue: "%deviceName%: %attributeName%");
-                    cnt += 1;
-                }
-            }
-        }
-    }
+    paragraph html;
 }
 
-
-
-def disableAPIPage() {
-    dynamicPage(name: "disableAPIPage") {
-        section() {
-            if (state.endpoint) {
-                revokeAccessToken();
-                state.endpoint = null
-            }
-            paragraph "Token revoked. Click done to continue."
-        }
-    }
-}
-
-def enableAPIPage() {
-    dynamicPage(name: "enableAPIPage", title: "") {
-        section() {
-            if(!state.endpoint) initializeAppEndpoint();
-            paragraph "Token created. Click done to continue."
-        }
-    }
-}
-
-def getTimeString(string_){
-    switch (string_.toInteger()){
-        case -1: return "Never";
-        case 0: return "Real Time"; 
-        case 1000:return "1 Second"; 
-        case 5000:return "5 Seconds"; 
-        case 60000:return "1 Minute"; 
-        case 300000:return "5 Minutes"; 
-        case 600000:return "10 Minutes"; 
-        case 1800000:return "Half Hour";
-        case 3600000:return "1 Hour";
-    }
-    logDebug("NOT FOUND");
-}
-
-def getTimsSpanString(string_){
-    switch (string_.toInteger()){
-        case -1: return "Never";
-        case 0: return "Real Time"; 
-        case 1000:return "1 Second"; 
-        case 5000:return "5 Seconds"; 
-        case 60000:return "1 Minute"; 
-        case 3600000:return "1 Hour";
-        case 43200000: return "12 Hours";
-        case 86400000: return "1 Day";
-        case 259200000: return "3 Days";
-        case 604800000: return "1 Week";
-    }
-    logDebug("NOT FOUND");
-}
-
-def getColorString(string_){
-    switch (string_){
-        case "#800000": return "Maroon";
-        case "#FF0000": return "Red";
-        case "#FF0000": return "Orange";
-        case "#FFFF00": return "Yellow";
-        case "#808000": return "Olive";
-        case "#008000": return "Green";
-        case "#800080": return "Purple";
-        case "#FF00FF": return "Fuchsia";
-        case "#00FF00": return "Lime";
-        case "#008080": return "Teal";
-        case "#00FFFF": return "Aqua";
-        case "#0000FF": return "Blue";
-        case "#000080": return "Navy";
-        case "#000000": return "Black";
-        case "#C0C0C0": return "Gray";
-        case "#C0C0C0": return "Silver";
-        case "#FFFFFF": return "White";
-        case "rgba(255, 255, 255, 0)": return "Transparent";   
-        
-    }
-    
-}
-
-def loadPreview(){
+def graphPreview(){
   def html = ""
     
     html+= """
 <iframe id="preview" style="width: 100%; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"></iframe>
 <script>
 function resize() {
-    const box = jQuery('#formApp')[0].getBoundingClientRect();
+    const box = jQuery('#preview').parent()[0].getBoundingClientRect();
     const h = box.width * 0.75;
+    const w = box.width * 1.00;
     jQuery('#preview').css('height', h);
+    jQuery('#preview').css('width', w);
 }
 
 resize();
@@ -457,74 +600,20 @@ jQuery(window).on('resize', () => {
 """
 }
 
-def mainPage() {
-    dynamicPage(name: "mainPage") {        
-        section(){
-            if (!state.endpoint) {
-                paragraph getTitle("API has not been setup. Tap below to enable it.");
-                href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
-            } else {
-                paragraph getTitle("Graph Options");
-                href name: "deviceSelectionPage", title: "Select Device/Data", description: "", page: "deviceSelectionPage" 
-                href name: "graphSetupPage", title: "Configure Graph", description: "", page: "graphSetupPage"
-                paragraph getTitle("Local URL for Graph");
-                paragraph "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
+def getSubTitle(myText=""){
+    def html = """
+        <div class="mdl-layout__header" style="display: block; min-height: 0;">
+        <div class="mdl-layout__header-row" style="height: 48px;">
+        <span class="mdl-layout__title" style="margin-left: -32px; font-size: 9px; width: auto;">
+                   <h5 style="font-size: 16px;">${myText}</h5>
+        </span>
+        </div>
+        </div>
+    """.replace('\t', '').replace('\n', '').replace('  ', '');
                 
-                if (sensors){
-                    def paragraph_ = /${getLine()}/
-                    paragraph_ +=  "<table>"
-                    paragraph_ +=   "${getTableRow2("<b><u>DEVICE</b></u>", "<b><u>ATTRIBUTES</b></u>", "<b><u>LINE COLOR</b></u>", "<b><u>LINE WIDTH</b></u>", "<b><u>AXIS</b></u>")}"
-                    sensors.each { sensor ->
-                        settings["attributes_${sensor.id}"].each { attribute_ ->
-                            text_color = settings["graph_line_${sensor.id}_${attribute_}_color"];
-                            line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute_}"];
-                            switch (settings["graph_axis_number_${sensor.id}_${attribute_}"]){
-                                case "0": axis_num = "LEFT"; break;
-                                case "1": axis_num = "RIGHT"; break;
-                                case "2": axis_num = "BOTH"; break; 
-                            }
-                            paragraph_ += /${getTableRow2("$sensor", "$attribute_", "${getColorString(text_color)}", "$line_thickness", "$axis_num")}/
-                           
-                        }
-                      
-                    }
-                    paragraph_ += "</table>"
-                    paragraph_ += /${getLine()}/
-                    paragraph paragraph_ 
-                    
-                    if (graph_update_rate){
-                         paragraph getTitle("Preview");
-                         paragraph loadPreview()   
-           
-                    }
-                }
-                
-                               
-            }
-        }
-        
-        section(){
-            paragraph getTitle("Hubigraph Tile Installation");
-            input( type: "bool", name: "install_device", title: "Install Hubigraph Tile Device for Dashboard Display", defaultValue: false, submitOnChange: true);
-            if (install_device==true){   
-                 input( type: "text", name: "device_name", title: "<b>Name for HubiGraph Tile Device</b>", default: "Hubigraph LineGraph Tile" ); 
-            }
-        }
-        section(){
-            if (state.endpoint){
-                paragraph getTitle("Hubigraph Application Name");
-                input( type: "text", name: "app_name", title: "<b>Rename the Application?</b>", default: "Hubigraph Line Graph", submitOnChange: true ) 
-                paragraph getTitle("Disable Oauth Authorization");
-                href "disableAPIPage", title: "Disable API", description: ""
-            }
-        }
-        section(){
-           paragraph getTitle("Hubigraph Debugging");
-           input( type: "bool", name: "debug", title: "Enable Debug Logging?", defaultValue: false); 
-        }    
-        
-    }
+    return html
 }
+
 
 def logDebug(str){
     if (debug==true){
@@ -570,19 +659,8 @@ def getTableRow(col1, col2, col3, col4){
      html
 }
 
-def getTableRow2(col1, col2, col3, col4, col5){
-     def html = "<tr><td width='30%'>$col1</td><td width='30%'>$col2</td><td width='20%'>$col3</td><td width='20%'>$col4</td><td width='20%'>$col5</td></tr>"  
-     html
-}
-
 def getTitle(myText=""){
     def html = "<div class='row-full' style='background-color:#1A77C9;color:white;font-weight: bold; text-align: center; font-size: 20px '>"
-    html += "${myText}</div>"
-    html
-}
-
-def getSubTitle(myText=""){
-    def html = "<div class='row-full' style='background-color:#8CC9CB;color:white'>"
     html += "${myText}</div>"
     html
 }
