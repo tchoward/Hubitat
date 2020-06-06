@@ -55,7 +55,7 @@ definition(
 
 preferences {
     section ("test"){
-       page(name: "mainPage", title: "Main Page", install: true, uninstall: true)
+       page(name: "mainPage", install: true, uninstall: true)
        page(name: "deviceSelectionPage")
        page(name: "graphSetupPage")
        page(name: "enableAPIPage")
@@ -90,19 +90,142 @@ preferences {
     }
 }
 
+
+def addContainer(containers, numPerRow){
+    
+    def html_ = """
+            <div class = "mdl-grid "> 
+    """
+    containers.each{container->
+        html_ += """<div class="mdl-cell mdl-cell--${12/numPerRow}-col-desktop mdl-cell--${8/numPerRow}-col-tablet mdl-cell--${4/numPerRow}-col-phone mdl-textfield mdl-js-textfield" style="" data-upgraded=",MaterialTextfield">"""
+        html_ += container;
+        html_ += """</div>"""
+    }
+    html_ += """</div>"""
+         
+    paragraph (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
+    
+}
+
+def addText(text){
+    
+    def html_ = "$text";
+    
+    return html_
+}
+
+def specialPageButton(title, page, width, icon){
+    def html_ = """
+        <button type="button" name="_action_href_${page}|${page}|1" class="btn btn-default btn-lg btn-block hrefElem  mdl-button--raised mdl-shadow--2dp mdl-button__icon" style="text-align:left;width:${width}">
+            <span style="text-align:left;white-space:pre-wrap">
+                ${title}
+            </span>
+            <ul class="nav nav-pills pull-right">
+                <li><i class="material-icons">${icon}</i></li>
+            </ul>
+            <br>
+            <span class="state-incomplete-text " style="text-align: left; white-space:pre-wrap"></span>
+       </button>
+    """.replace('\t', '').replace('\n', '').replace('  ', '');
+    
+    return html_;
+}
+
+def specialSection(String name, Closure code) {
+    def id = name.replace(' ', '_');
+    
+    def titleHTML = """
+        <div class="mdl-layout__header" style="display: block !important;">
+            <div class="mdl-layout__header-row">
+                <span class="mdl-layout__title" style="margin-left: -32px; font-size: 20px;">
+                    ${name}
+                </span>
+            </div>
+        </div>
+    """;
+    
+    def modContent = """
+    <div id=${id} style="display: none;"></div>
+    <script>
+        var sectionElem = jQuery('#${id}').parent().parent();
+        
+        /*hide default header*/
+        sectionElem.css('display', 'none');
+
+        var elem = sectionElem.parent();
+        elem.addClass('mdl-card mdl-card-wide mdl-shadow--8dp');
+        elem.css('width', '100%');
+        elem.prepend('${titleHTML}');
+    </script>
+    """;
+    
+    modContent = modContent.replace('\t', '').replace('\n', '').replace('  ', '');
+    
+    section(modContent) {
+        code.call();
+    }
+}
+
+def specialSwitch(title, var, defaultVal, submitOnChange){
+   
+    def actualVal = settings[var] != null ? settings[var] : defaultVal;
+    
+   def html_ = """      
+                    <div class="form-group">
+                        <input type="hidden" name="${var}.type" value="bool">
+                        <input type="hidden" name="${var}.multiple" value="false">
+                    </div>
+                    <label for="settings[${var}]"
+                        class="mdl-switch mdl-js-switch mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events is-upgraded ${actualVal ? "is-checked" : ""}  
+                            data-upgraded=",MaterialSwitch,MaterialRipple">
+                            <input name="checkbox[${var}]" id="settings[${var}]" class="mdl-switch__input 
+                                ${submitOnChange ? "submitOnChange" : ""} "
+                                    type="checkbox" 
+                                ${actualVal ? "checked" : ""}>                
+                            <div class="mdl-switch__label">${title}</div>    
+                            <div class="mdl-switch__track"></div>
+                            <div class="mdl-switch__thumb">
+                                <span class="mdl-switch__focus-helper">
+                                </span>
+                            </div>
+                            <span class="mdl-switch__ripple-container mdl-js-ripple-effect mdl-ripple--center" data-upgraded=",MaterialRipple">
+                                <span class="mdl-ripple">
+                                </span>
+                            </span>
+                    </label>
+                    <input name="settings[${var}]" type="hidden" value="${actualVal}">
+    """
+    return html_.replace('\t', '').replace('\n', '').replace('  ', '');;
+ }
+
+def specialTextInput(title, var, submitOnChange){
+     def html_ = """
+        <div class="form-group">
+            <input type="hidden" name="${var}.type" value="text">
+            <input type="hidden" name="${var}.multiple" value="false">
+        </div>
+        <label for="settings[${var}]" class="control-label">
+            <b>${title}</b>
+        </label>
+            <input type="text" name="settings[${var}]" 
+                   class="mdl-textfield__input ${submitOnChange == "true" ? "submitOnChange" : ""} " 
+                   value="${settings[var]}" placeholder="Click to set" id="settings[${var}]">
+        """
+     return html_.replace('\t', '').replace('\n', '').replace('  ', '');
+}
+
 def deviceSelectionPage() {
     def supported_attrs;
         
     dynamicPage(name: "deviceSelectionPage") {
-        section() { 
-	    
+        specialSection("Device Selection"){
             input "sensors", "capability.*", title: "Sensors", multiple: true, required: true, submitOnChange: true
         
             if (sensors){
                 sensors.each {
                     sensor_events = it.events([max:250]).name;
                     supported_attrs = sensor_events.unique(false);           
-                    paragraph(it.displayName);
+                    paragraph getSubTitle(it.displayName);
                     input( type: "enum", name: "attributes_${it.id}", title: "Attributes to graph", required: true, multiple: true, options: supported_attrs, defaultValue: "1")
                 }
             }
@@ -113,7 +236,7 @@ def deviceSelectionPage() {
 def fontSizeSelector(varname, label, defaultSize, min, max){
     
     def fontSize;
-    def varFontSize = "${varname}"
+    def varFontSize = "${varname}_font"
     
     settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : defaultSize;
     
@@ -122,12 +245,12 @@ def fontSizeSelector(varname, label, defaultSize, min, max){
     html += 
     """
     <table style="width:100%">
-    <tr><td><label for="settings[${varFontSize}]" class="control-label">${label}</td>
+    <tr><td><label for="settings[${varFontSize}]" class="control-label">${label} Font Size</td>
         <td style="text-align:right; font-size:${settings[varFontSize]}px">Font Size: ${settings[varFontSize]}</td>
         </label>
     </tr>
     </table>
-    <input type="range" min = "$min" max = "$max" name="settings[${varFontSize}]" class="mdl-textfield__input submitOnChange " value="${settings[varFontSize]}" placeholder="Click to set" id="settings[${varFontSize}]">
+    <input type="range" min = "$min" max = "$max" name="settings[${varFontSize}]" class="mdl-slider submitOnChange " value="${settings[varFontSize]}" id="settings[${varFontSize}]">
     <div class="form-group">
         <input type="hidden" name="${varFontSize}.type" value="number">
         <input type="hidden" name="${varFontSize}.multiple" value="false">
@@ -162,7 +285,28 @@ def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
         </div>
         ${!isTransparent ? """
             <div style="flex-grow: 1; flex-basis: 1px; padding-right: 8px;">
-                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]">
+                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]" list="presetColors">
+                  <datalist id="presetColors">
+                    <option>#800000</option>
+                    <option>#FF0000</option>
+                    <option>#FFA500</option>
+                    <option>#FFFF00</option>
+
+                    <option>#808000</option>
+                    <option>#008000</option>
+                    <option>#00FF00</option>
+                    
+                    <option>#800080</option>
+                    <option>#FF00FF</option>
+                    
+                    <option>#000080</option>
+                    <option>#0000FF</option>
+                    <option>#00FFFF</option>
+
+                    <option>#FFFFFF</option>
+                    <option>#C0C0C0</option>
+                    <option>#000000</option>
+                  </datalist>
             </div>
         """ : ""}
         <div class="submitOnChange">
@@ -178,10 +322,10 @@ def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
         </div>
     </div>
     """.replace('\t', '').replace('\n', '').replace('  ', '');
-    paragraph html    
+    
+    //paragraph html;
+    return html;
 }
-
-
 
 def graphSetupPage(){
     def fontEnum = [["1":"1"], ["2":"2"], ["3":"3"], ["4":"4"], ["5":"5"], ["6":"6"], ["7":"7"], ["8":"8"], ["9":"9"], ["10":"10"], 
@@ -190,50 +334,53 @@ def graphSetupPage(){
     def colorEnum = [["#800000":"Maroon"], ["#FF0000":"Red"], ["#FFA500":"Orange"], ["#FFFF00":"Yellow"], ["#808000":"Olive"], ["#008000":"Green"],
                     ["#800080":"Purple"], ["#FF00FF":"Fuchsia"], ["#00FF00":"Lime"], ["#008080":"Teal"], ["#00FFFF":"Aqua"], ["#0000FF":"Blue"], ["#000080":"Navy"],
                     ["#000000":"Black"], ["#C0C0C0":"Gray"], ["#C0C0C0":"Silver"], ["#FFFFFF":"White"], ["transparent":"Transparent"]];
-    
     dynamicPage(name: "graphSetupPage") {
-        section(getTitle("General Options"))
-        {        
+        specialSection("General Options")
+        {
+            test = [];
+            colorSelector("graph_background2", "Background", "#FFFFFF", false);
+            
             input( type: "enum", name: "graph_update_rate", title: "Select graph update rate", multiple: false, required: true, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
             input( type: "enum", name: "graph_timespan", title: "Select Timespan to Graph", multiple: false, required: true, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
-            //input( type: "color", name: "graph_background_color", title: "Background Color", defaultValue: "White");
-            colorSelector("graph_background", "Background", "White", false);
+            colorSelector("graph_background", "Background", "#FFFFFF", false);
             
             input( type: "bool", name: "graph_smoothing", title: "Smooth Graph Points", defaultValue: true);
             input( type: "enum", name: "graph_type", title: "Graph Type", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"] )
             input( type: "bool", name: "graph_y_orientation", title: "Flip Graph to Vertical (Rotate 90 degrees)", defaultValue: false);
             input( type: "bool", name: "graph_z_orientation", title: "Reverse Data Order? (Flip Data left to Right)", defaultValue: false);
             input (type: "number", name: "graph_max_points", title: "Maximum number of Data Points? (Zero for ALL)", defaultValue: 0);
-            fontSizeSelector("test", "TEST", 9, 2, 20);
             
             
-            //Title
            
-            paragraph getTitle("Title");
+        }
+        
+        
+        specialSection("Graph Title")
+        {    
             input( type: "bool", name: "graph_show_title", title: "Show Title on Graph", defaultValue: false, submitOnChange: true);
             if (graph_show_title==true) {
                 input( type: "text", name: "graph_title", title: "Input Graph Title", default: "Graph Title");
-                input( type: "enum", name: "graph_title_font", title: "Graph Title Font", defaultValue: "9", options: fontEnum); 
-                input( type: "color", name: "graph_title_color", title: "Graph Title Color", defaultValue: "Black"); 
-                colorSelector("graph_title", "Title", "Black", false);
+                fontSizeSelector("graph_title", "Title", 9, 2, 20);
+                colorSelector("graph_title", "Title", "#000000", false);
                 input( type: "bool", name: "graph_title_inside", title: "Put Title Inside Graph", defaultValue: false);
             }
+        }
             
-            //Size
-            paragraph getTitle("Graph Size");
+         specialSection("Graph Size")
+         {    
             input( type: "bool", name: "graph_static_size", title: "Set size of Graph? (False = Fill Window)", defaultValue: false, submitOnChange: true);
             if (graph_static_size==true){
                 input( type: "number", name: "graph_h_size", title: "Horizontal dimension of the graph", defaultValue: "800", range: "100..3000");
                 input( type: "number", name: "graph_v_size", title: "Vertical dimension of the graph", defaultValue: "600", range: "100..3000");
             }
-            
+         }
+        
+          specialSection("Horizontal Axis")
+         { 
             //Axis
-            paragraph getTitle("Horizontal Axis");
-            input( type: "enum", name: "graph_haxis_font", title: "Horizonal Axis Font Size", defaultValue: "9", options: fontEnum); 
-            //input( type: "color", name: "graph_hh_color", title: "Horizonal Header Color", defaultValue: "Black", options: colorEnum);
-            //input( type: "color", name: "graph_ha_color", title: "Horizonal Axis Color", defaultValue: "Gray", options: colorEnum);
-            colorSelector("graph_hh", "Horizonal Header", "Gray", false);
-            colorSelector("graph_ha", "Horizonal Axis", "Gray", false);
+            fontSizeSelector("graph_haxis", "Horizonal Axis", 9, 2, 20);
+            colorSelector("graph_hh", "Horizonal Header", "#C0C0C0", false);
+            colorSelector("graph_ha", "Horizonal Axis", "#C0C0C0", false);
             input( type: "number", name: "graph_h_num_grid", title: "Num Horizontal Gridlines (blank for auto)", defaultValue: "", range: "0..100");
             
             input( type: "bool", name: "dummy", title: "Show String Formatting Help", defaultValue: false, submitOnChange: true);
@@ -267,52 +414,54 @@ def graphSetupPage(){
                 today = new Date();
                 paragraph "Horizontal Axis Sample: ${today.format(graph_h_format)}"
             }
+         }
             
-            paragraph getTitle("Vertical Axis");
-            input( type: "enum", name: "graph_vaxis_font", title: "Vertical Font Size", defaultValue: "9", options: fontEnum); 
-            //input( type: "color", name: "graph_vh_color", title: "Vertical Header Color", defaultValue: "Black", options: colorEnum);
-            //input( type: "color", name: "graph_va_color", title: "Vertical Axis Color", defaultValue: "Gray", options: colorEnum);
-            colorSelector("graph_vh", "Vertical Header", "Black", false);
-            colorSelector("graph_vh", "Vertical Header", "Gray", false);
-
+         specialSection("Vertical Axis")
+         { 
+            fontSizeSelector("graph_vaxis", "Title", 9, 2, 20);
+            colorSelector("graph_vh", "Vertical Header", "#000000", false);
+            colorSelector("graph_va", "Vertical Axis", "#C0C0C0", false);
+         }
             
-            
-            paragraph getTitle("Left Axis");
+        specialSection("Left Axis"){  
             input( type: "decimal", name: "graph_vaxis_1_min", title: "Minimum for left axis (blank for auto)", defaultValue: "");
             input( type: "decimal", name: "graph_vaxis_1_max", title: "Maximum for left axis (blank for auto)", defaultValue: "");
             input( type: "number", name: "graph_vaxis_1_num_lines", title: "Num gridlines (blank for auto)", defaultValue: "", range: "0..100");
             input( type: "bool", name: "graph_show_left_label", title: "Show Left Axis Label on Graph", defaultValue: false, submitOnChange: true);
             if (graph_show_left_label==true){
                 input( type: "text", name: "graph_left_label", title: "Input Left Axis Label", default: "Left Axis Label");
-                input( type: "enum", name: "graph_left_font", title: "Left Axis Font Size", defaultValue: "9", options: fontEnum); 
-                input( type: "color", name: "graph_left_color", title: "Left Axis Color", defaultValue: "White", options: colorEnum);
+                fontSizeSelector("graph_left", "Left Axis", 9, 2, 20);
+                colorSelector("graph_left", "Left Axis", "#FFFFFF", false);
             }
-            
-            paragraph getTitle("Right Axis");
+        }
+           
+        specialSection("Right Axis"){
             input( type: "decimal", name: "graph_vaxis_2_min", title: "Minimum for right axis (blank for auto)", defaultValue: "", range: "");
             input( type: "decimal", name: "graph_vaxis_2_max", title: "Maximum for right axis (blank for auto)", defaultValue: "", range: "");
             input( type: "number", name: "graph_vaxis_2_num_lines", title: "Num gridlines (blank for auto) -- Must be greater than num tics to be effective", defaultValue: "", range: "0..100");
             input( type: "bool", name: "graph_show_right_label", title: "Show Right Axis Label on Graph", defaultValue: false, submitOnChange: true);
             if (graph_show_right_label==true){
                 input( type: "text", name: "graph_right_label", title: "Input Right Axis Label", default: "Right Axis Label");
-                input( type: "enum", name: "graph_right_font", title: "Right Axis Font Size", defaultValue: "9", options: fontEnum); 
-                input( type: "color", name: "graph_right_color", title: "Right Axis Color", defaultValue: "White", options: colorEnum);
+                fontSizeSelector("graph_right", "Right Axis", 9, 2, 20);
+                colorSelector("graph_right", "Right Axis", "#FFFFFF", false);
              }
-            
+        }  
             //Legend
+        specialSection("Legend"){
             def legendPosition = [["top": "Top"], ["bottom":"Bottom"], ["in": "Inside Top"]];
             def insidePosition = [["start": "Left"], ["center": "Center"], ["end": "Right"]];
-            paragraph getTitle("Legend");
             input( type: "bool", name: "graph_show_legend", title: "Show Legend on Graph", defaultValue: false, submitOnChange: true);
             if (graph_show_legend==true){
-                input( type: "enum", name: "graph_legend_font", title: "Legend Font Size", defaultValue: "9", options: fontEnum); 
-                input( type: "color", name: "graph_legend_color", title: "Legends Color", defaultValue: "Black", options: colorEnum);
+                fontSizeSelector("graph_legend", "Legend Font", 9, 2, 20);
+                colorSelector("graph_legend", "Legend", "#000000", false);
                 input( type: "enum", name: "graph_legend_position", title: "Legend Position", defaultValue: "Bottom", options: legendPosition);
                 input( type: "enum", name: "graph_legend_inside_position", title: "Legend Justification", defaultValue: "center", options: insidePosition);
                 
             }
-            
-            paragraph getTitle("Devices -- Attributes");
+        }
+        
+        specialSection("Lines"){
+
             //Get the total number of devices
             state.num_devices = 0;
             sensors.each { sensor ->
@@ -327,15 +476,18 @@ def graphSetupPage(){
             
             
             //Line
+            cnt = 1;
             sensors.each { sensor ->        
                 settings["attributes_${sensor.id}"].each { attribute ->
-                    paragraph getTitle("${sensor.displayName}: ${attribute}");
-                    input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "Graph Axis Number", defaultValue: "0", options: availableAxis);
-                    input( type: "color", name:   "graph_line_color_${sensor.id}_${attribute}", title: "Line Color", defaultValue: "Blue", options: colorEnum); 
-                    input( type: "enum", name:   "graph_line_thickness_${sensor.id}_${attribute}", title: "Line Thickness", defaultValue: "2", options: fontEnum); 
-                    input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "Override Device Name -- use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE", defaultValue: "%deviceName%: %attributeName%");
+                        paragraph getSubTitle("${sensor.displayName}: ${attribute}");
+                        input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "Graph Axis Number", defaultValue: "0", options: availableAxis);
+                        colorSelector("graph_line_${sensor.id}_${attribute}", "${sensor}: ${attribute} Line", getColorCode(cnt), false);
+                        input( type: "enum", name:   "graph_line_thickness_${sensor.id}_${attribute}", title: "Line Thickness", defaultValue: "2", options: fontEnum); 
+                        input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "Override Device Name -- use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE", defaultValue: "%deviceName%: %attributeName%");
+                        cnt += 1;
+                    }
                 }
-            }
+            
         }
     }
 }
@@ -426,7 +578,9 @@ def loadPreview(){
 function resize() {
     const box = jQuery('#formApp')[0].getBoundingClientRect();
     const h = box.width * 0.75;
+    const w = box.width * 0.95;   
     jQuery('#preview').css('height', h);
+    jQuery('#preview').css('width', w);
 }
 
 resize();
@@ -440,68 +594,64 @@ jQuery(window).on('resize', () => {
 
 def mainPage() {
     dynamicPage(name: "mainPage") {        
-        section(){
-            if (!state.endpoint) {
-                paragraph getTitle("API has not been setup. Tap below to enable it.");
+         if (!state.endpoint) {
+             specialSection("Please set up OAuth API"){
                 href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
+             }
             } else {
-                paragraph getTitle("Graph Options");
-                href name: "deviceSelectionPage", title: "Select Device/Data", description: "", page: "deviceSelectionPage" 
-                href name: "graphSetupPage", title: "Configure Graph", description: "", page: "graphSetupPage"
-                 paragraph getTitle("Local URL for Graph");
-                paragraph "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
+                specialSection("Graph Options"){
+                    objects = [];
+                    objects << specialPageButton("Select Device/Data", "deviceSelectionPage", "100%", "vibration");
+                    objects << specialPageButton("Configure Graph", "graphSetupPage", "100%", "poll");
+                    addContainer(objects, 1);
+                }
+                specialSection("Local Graph URL"){
+                    addContainer(["${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"], 1);
+                }
+             
                 if (sensors){
-                    def paragraph_ = /${getLine()}/
-                    paragraph_ +=  "<table>"
-                    paragraph_ +=   "${getTableRow2("<b><u>DEVICE</b></u>", "<b><u>ATTRIBUTES</b></u>", "<b><u>LINE COLOR</b></u>", "<b><u>LINE WIDTH</b></u>", "<b><u>AXIS</b></u>")}"
-                    sensors.each { sensor ->
-                        settings["attributes_${sensor.id}"].each { attribute_ ->
-                            text_color = settings["graph_line_color_${sensor.id}_${attribute_}"];
-                            line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute_}"];
-                            switch (settings["graph_axis_number_${sensor.id}_${attribute_}"]){
-                                case "0": axis_num = "LEFT"; break;
-                                case "1": axis_num = "RIGHT"; break;
-                                case "2": axis_num = "BOTH"; break; 
+                    specialSection("Sensors"){
+                            rows = [];
+                            rows << addText("<b><u>DEVICE</b></u>");
+                            rows << addText("<b><u>ATTRIBUTES</b></u>");            
+                            sensors.each { sensor ->
+                                settings["attributes_${sensor.id}"].each { attribute_ ->                                        
+                                    rows << addText("$sensor")
+                                    rows << addText("$attribute_");
+                                }
                             }
-                            paragraph_ += /${getTableRow2("$sensor", "$attribute_", "${getColorString(text_color)}", "$line_thickness", "$axis_num")}/
-                           
-                        }
-                      
+                            addContainer(rows, 2);                        
                     }
-                    paragraph_ += "</table>"
-                    paragraph_ += /${getLine()}/
-                    paragraph paragraph_ 
                     
                     if (graph_update_rate){
-                         paragraph getTitle("Preview");
-                         paragraph loadPreview()   
-           
-                    }
-                }
-                
-                               
-            }
-        }
+                        specialSection("Preview"){
+                             paragraph loadPreview()
+                        }
+                    } //if (graph_update_rate)
+                } // if sensors                            
+            } //else
         
-        section(){
-            paragraph getTitle("Hubigraph Tile Installation");
-            input( type: "bool", name: "install_device", title: "Install Hubigraph Tile Device for Dashboard Display", defaultValue: false, submitOnChange: true);
-            if (install_device==true){   
-                 input( type: "text", name: "device_name", title: "<b>Name for HubiGraph Tile Device</b>", default: "Hubigraph LineGraph Tile" ); 
+        specialSection("Hubigraph Tile Installation"){
+            objects = [];
+            objects << specialSwitch("Install Hubigraph Tile Device?", "install_device", false, true);
+            if (install_device==true){ 
+                 objects << specialTextInput("Name for HubiGraph Tile Device", "device_name", "false");
             }
+            addContainer(objects, 1);
         }
-        section(){
+        specialSection("Hubigraph Application"){
             if (state.endpoint){
-                paragraph getTitle("Hubigraph Application Name");
-                input( type: "text", name: "app_name", title: "<b>Rename the Application?</b>", default: "Hubigraph Line Graph", submitOnChange: true ) 
-                paragraph getTitle("Disable Oauth Authorization");
-                href "disableAPIPage", title: "Disable API", description: ""
+                paragraph getSubTitle("Application Name");
+                addContainer([specialTextInput("Rename the Application?", "app_name", "false")], 1);
+                paragraph getSubTitle("Debugging");
+                addContainer([specialSwitch("Enable Debug Logging?", "debug", false, false)], 1);
+                
+                paragraph getSubTitle("Disable Oauth Authorization");
+                addContainer([specialPageButton("Disable API", "disableAPIPage", "100%", "cancel")], 1);
+                //href "disableAPIPage", title: "Disable API", description: ""
             }
         }
-        section(){
-           paragraph getTitle("Hubigraph Debugging");
-           input( type: "bool", name: "debug", title: "Enable Debug Logging?", defaultValue: false); 
-        }    
+       
         
     }
 }
@@ -550,15 +700,24 @@ def getTableRow(col1, col2, col3, col4){
      html
 }
 
-def getTableRow2(col1, col2, col3, col4, col5){
-     def html = "<tr><td width='30%'>$col1</td><td width='30%'>$col2</td><td width='20%'>$col3</td><td width='20%'>$col4</td><td width='20%'>$col5</td></tr>"  
-     html
-}
-
 def getTitle(myText=""){
-    def html = "<div class='row-full' style='background-color:#1A77C9;color:white;font-weight: bold'>"
+    def html = "<div class='row-full' style='background-color:#1A77C9;color:white;font-weight: bold; text-align: center; font-size: 20px '>"
     html += "${myText}</div>"
     html
+}
+
+def getSubTitle(myText=""){
+    def html = """
+        <div class="mdl-layout__header" style="display: block !important;">
+        <div class="mdl-layout__header-row">
+        <span class="mdl-layout__title" style="margin-left: -32px; font-size: 9px;">
+                   <h3>${myText}</h3>
+        </span>
+        </div>
+        </div>
+    """.replace('\t', '').replace('\n', '').replace('  ', '');
+                
+    return html
 }
 
 def installed() {
@@ -651,19 +810,20 @@ def getChartOptions(){
             "width": graph_static_size ? graph_h_size : "100%",
             "height": graph_static_size ? graph_v_size: "100%",
             "chartArea": [ "width": graph_static_size ? graph_h_size : "80%", "height": graph_static_size ? graph_v_size: "80%"],
-            "hAxis": ["textStyle": ["fontSize": graph_haxis_font, "color": graph_hh_color], 
-                      "gridlines": ["color": graph_ha_color, 
+            "hAxis": ["textStyle": ["fontSize": graph_haxis_font, 
+                                    "color": graph_hh_color_transparent ? "transparent" : graph_hh_color ], 
+                      "gridlines": ["color": graph_ha_color_transparent ? "transparent" : graph_ha_color, 
                                     "count": graph_h_num_grid != "" ? graph_h_num_grid : null
                                    ],
                       "format":     graph_h_format==""?"":graph_h_format                          
                      ],
             "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, 
-                                    "color": graph_vh_color], 
-                      "gridLines": ["color": graph_va_color],
+                                    "color": graph_vh_color_transparent ? "transparent" : graph_vh_color], 
+                      "gridLines": ["color": graph_va_color_transparent ? "transparent" : graph_va_color],
                      ],
             "vAxes": [
                 0: ["title" : graph_show_left_label ? graph_left_label: null,  
-                    "titleTextStyle": ["color": graph_left_color, "fontSize": graph_left_font],
+                    "titleTextStyle": ["color": graph_left_color_transparent ? "transparent" : graph_left_color, "fontSize": graph_left_font],
                     "viewWindow": ["min": graph_vaxis_1_min != "" ?  graph_vaxis_1_min : null, 
                                    "max":  graph_vaxis_1_max != "" ?  graph_vaxis_1_max : null],
                     "gridlines": ["count" : graph_vaxis_1_num_tics != "" ? graph_vaxis_1_num_tics : null ],
@@ -671,7 +831,7 @@ def getChartOptions(){
                    ],
                 
                 1: ["title": graph_show_right_label ? graph_right_label : null,
-                    "titleTextStyle": ["color": graph_right_color, "fontSize": graph_right_font],
+                    "titleTextStyle": ["color": graph_right_color_transparent ? "transparent" : graph_right_color, "fontSize": graph_right_font],
                     "viewWindow": ["min": graph_vaxis_2_min != "" ?  graph_vaxis_2_min : null, 
                                    "max":  graph_vaxis_2_max != "" ?  graph_vaxis_2_max : null],
                     "gridlines": ["count" : graph_vaxis_2_num_tics != "" ? graph_vaxis_2_num_tics : null ],
@@ -682,11 +842,11 @@ def getChartOptions(){
             "legend": !graph_show_legend ? ["position": "none"] : ["position": graph_legend_position,  
                                                                    "alignment": graph_legend_inside_position, 
                                                                    "textStyle": ["fontSize": graph_legend_font, 
-                                                                                 "color": graph_legend_color]],
+                                                                                 "color": graph_legend_color_transparent ? "transparent" : graph_legend_color]],
             "backgroundColor": graph_background_color_transparent ? "transparent" : graph_background_color,
             "curveType": !graph_smoothing ? "" : "function",
             "title": !graph_show_title ? "" : graph_title,
-            "titleTextStyle": !graph_show_title ? "" : ["fontSize": graph_title_font, "color": graph_title_color],
+            "titleTextStyle": !graph_show_title ? "" : ["fontSize": graph_title_font, "color": graph_title_color_transparent ? "transparent" : graph_title_color],
             "titlePosition" :  graph_title_inside ? "in" : "out",
             "interpolateNulls": true, //for null vals on our chart
             "orientation" : graph_y_orientation == true ? "vertical" : "horizontal",
@@ -700,12 +860,13 @@ def getChartOptions(){
     sensors.each { sensor ->
         settings["attributes_${sensor.id}"].each { attribute ->
             def axis = Integer.parseInt(settings["graph_axis_number_${sensor.id}_${attribute}"]);
-            def text_color = settings["graph_line_color_${sensor.id}_${attribute}"];
+            def text_color = settings["graph_line_${sensor.id}_${attribute}_color"];
+            def text_color_transparent = settings["graph_line_${sensor.id}_${attribute}_color_transparent"];
             def line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute}"];
             
             def annotations = [
                 "targetAxisIndex": axis, 
-                "color": text_color,
+                "color": text_color_transparent ? "transparent" : text_color,
                 "lineWidth": line_thickness
             ];
             
@@ -1148,3 +1309,25 @@ def getSubscriptions() {
     
     return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
 }
+
+def getColorCode(code){
+    
+    ret = "#FFFFFF"
+    switch (code){
+        case 7:  ret = "#800000"; break;
+        case 1:	    ret = "#FF0000"; break;
+        case 6:	ret = "#FFA500"; break;	
+        case 8:	ret = "#FFFF00"; break;	
+        case 9:	ret = "#808000"; break;	
+        case 2:	ret = "#008000"; break;	
+        case 5:	ret = "#800080"; break;	
+        case 4:	ret = "#FF00FF"; break;	
+        case 10: ret = "#00FF00"; break;	
+        case 11: ret = "#008080"; break;	
+        case 12: ret = "#00FFFF"; break;	
+        case 3:	ret = "#0000FF"; break;	
+        case 13: ret = "#000080"; break;	
+    }
+    return ret;
+}
+
