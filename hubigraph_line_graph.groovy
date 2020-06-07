@@ -31,7 +31,7 @@ import groovy.json.*;
 // v0.3 Added waiting screen for initial graph loading & sped up load times
 // v0.32 Bug Fixes
 // V 1.0 Released (not Beta) Cleanup and Preview Enabled
-
+// v 1.2 Complete UI Refactor
     
 // Credit to Alden Howard for optimizing the code.
  
@@ -102,7 +102,7 @@ def graphSetupPage(){
     
     dynamicPage(name: "graphSetupPage") {
         
-        specialSection("General Options")
+        specialSection("General Options", 1)
         {            
             input( type: "enum", name: "graph_update_rate", title: "<b>Select graph update rate</b>", multiple: false, required: true, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
             input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: true, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
@@ -115,7 +115,7 @@ def graphSetupPage(){
             input (type: "number", name: "graph_max_points", title: "<b>Maximum number of Data Points? (Zero for ALL)</b>", defaultValue: 0);       
         }
              
-        specialSection("Graph Title")
+        specialSection("Graph Title", 1)
         {    
             input( type: "bool", name: "graph_show_title", title: "<b>Show Title on Graph</b>", defaultValue: false, submitOnChange: true);
             if (graph_show_title==true) {
@@ -126,7 +126,7 @@ def graphSetupPage(){
             }
         }
             
-         specialSection("Graph Size")
+         specialSection("Graph Size", 1)
          {    
             input( type: "bool", name: "graph_static_size", title: "<b>Set size of Graph? (False = Fill Window)</b>", defaultValue: false, submitOnChange: true);
             if (graph_static_size==true){
@@ -135,7 +135,7 @@ def graphSetupPage(){
             }
          }
         
-          specialSection("Horizontal Axis")
+          specialSection("Horizontal Axis", 1)
          { 
             //Axis
             fontSizeSelector("graph_haxis", "Horizonal Axis", 9, 2, 20);
@@ -176,14 +176,14 @@ def graphSetupPage(){
             }
          }
             
-         specialSection("Vertical Axis")
+         specialSection("Vertical Axis", 1)
          { 
             fontSizeSelector("graph_vaxis", "Title", 9, 2, 20);
             colorSelector("graph_vh", "Vertical Header", "#000000", false);
             colorSelector("graph_va", "Vertical Axis", "#C0C0C0", false);
          }
             
-        specialSection("Left Axis"){  
+        specialSection("Left Axis", 1){  
             input( type: "decimal", name: "graph_vaxis_1_min", title: "<b>Minimum for left axis (blank for auto)</b>", defaultValue: "");
             input( type: "decimal", name: "graph_vaxis_1_max", title: "<b>Maximum for left axis (blank for auto)</b>", defaultValue: "");
             input( type: "number", name: "graph_vaxis_1_num_lines", title: "<b>Num gridlines (blank for auto)</b>", defaultValue: "", range: "0..100");
@@ -195,7 +195,7 @@ def graphSetupPage(){
             }
         }
            
-        specialSection("Right Axis"){
+        specialSection("Right Axis", 1){
             input( type: "decimal", name: "graph_vaxis_2_min", title: "<b>Minimum for right axis (blank for auto)</b>", defaultValue: "", range: "");
             input( type: "decimal", name: "graph_vaxis_2_max", title: "<b>Maximum for right axis (blank for auto)</b>", defaultValue: "", range: "");
             input( type: "number", name: "graph_vaxis_2_num_lines", title: "<b>Num gridlines (blank for auto)<br></b><small><i>Must be greater than num tics to be effective</i></small>", defaultValue: "", range: "0..100");
@@ -207,7 +207,7 @@ def graphSetupPage(){
              }
         }  
             //Legend
-        specialSection("Legend"){
+        specialSection("Legend", 1){
             def legendPosition = [["top": "Top"], ["bottom":"Bottom"], ["in": "Inside Top"]];
             def insidePosition = [["start": "Left"], ["center": "Center"], ["end": "Right"]];
             input( type: "bool", name: "graph_show_legend", title: "<b>Show Legend on Graph</b>", defaultValue: false, submitOnChange: true);
@@ -220,7 +220,7 @@ def graphSetupPage(){
             }
         }
         
-        specialSection("Lines"){
+        specialSection("Lines", 1){
 
             //Get the total number of devices
             state.num_devices = 0;
@@ -256,7 +256,7 @@ def deviceSelectionPage() {
     def supported_attrs;
         
     dynamicPage(name: "deviceSelectionPage") {
-        specialSection("Device Selection"){
+        specialSection("Device Selection", 1){
             input "sensors", "capability.*", title: "Sensors", multiple: true, required: true, submitOnChange: true
         
             if (sensors){
@@ -295,22 +295,22 @@ def enableAPIPage() {
 def mainPage() {
     dynamicPage(name: "mainPage") {        
          if (!state.endpoint) {
-             specialSection("Please set up OAuth API"){
+             specialSection("Please set up OAuth API", 1){
                 href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
              }
             } else {
-                specialSection("Graph Options"){
+                specialSection("Graph Options", 1){
                     objects = [];
                     objects << specialPageButton("Select Device/Data", "deviceSelectionPage", "100%", "vibration");
                     objects << specialPageButton("Configure Graph", "graphSetupPage", "100%", "poll");
                     addContainer(objects, 1);
                 }
-                specialSection("Local Graph URL"){
+                specialSection("Local Graph URL", 1){
                     addContainer(["${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"], 1);
                 }
              
                 if (sensors){
-                    specialSection("Sensors"){
+                    specialSection("Sensors", 1){
                             rows = [];
                             rows << addText("<b><u>DEVICE</b></u>");
                             rows << addText("<b><u>ATTRIBUTES</b></u>");            
@@ -324,12 +324,12 @@ def mainPage() {
                     }
                     
                     if (graph_update_rate){
-                        specialSection("Preview"){
+                        specialSection("Preview", 2){
                              paragraph graphPreview()
                         }
                     } //if (graph_update_rate)
                 
-                    specialSection("Hubigraph Tile Installation"){
+                    specialSection("Hubigraph Tile Installation", 1){
                         objects = [];
                         objects << specialSwitch("Install Hubigraph Tile Device?", "install_device", false, true);
                         if (install_device==true){ 
@@ -341,7 +341,7 @@ def mainPage() {
              
                 
                if (state.endpoint){
-                   specialSection("Hubigraph Application"){
+                   specialSection("Hubigraph Application", 1){
             
                         paragraph getSubTitle("Application Name");
                         addContainer([specialTextInput("Rename the Application?", "app_name", "false")], 1);
@@ -357,6 +357,13 @@ def mainPage() {
         
     } //dynamicPage
 }
+
+/********************************************************************************************************************************
+*********************************************************************************************************************************
+****************************************** NEW FORM FUNCTIONS********************************************************************
+*********************************************************************************************************************************
+*********************************************************************************************************************************/
+
 
 def addContainer(containers, numPerRow){
     
@@ -398,7 +405,7 @@ def specialPageButton(title, page, width, icon){
     return html_;
 }
 
-def specialSection(String name, Closure code) {
+def specialSection(String name, pos, Closure code) {
     def id = name.replace(' ', '_');
     
     def titleHTML = """
@@ -425,6 +432,8 @@ def specialSection(String name, Closure code) {
         elem.css('padding', '0 16px');
         elem.css('display', 'block');
         elem.css('min-height', 0);
+        elem.css('position', 'relative');
+        elem.css('z-index', ${pos});
         elem.prepend('${titleHTML}');
     </script>
     """;
@@ -581,7 +590,24 @@ def graphPreview(){
   def html = ""
     
     html+= """
-<iframe id="preview" style="width: 100%; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"></iframe>
+<iframe id="preview" style="width: 100%; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}" data-fullscreen="false" onload="(() => {
+  this.handel = -1;
+  const thisFrame = this;
+  const thisParent = this.parent
+  const body = thisFrame.contentDocument.body;
+  const start = () => {
+      if(thisFrame.dataset.fullscreen == 'false') {
+        thisFrame.style = 'position:fixed !important; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999999; overflow:visible; opacity: 1.0; ';
+        thisFrame.dataset.fullscreen = 'true';
+      } else {
+        thisFrame.style = 'width: 100%; height: 100%;';
+        thisFrame.dataset.fullscreen = 'false';
+      }
+  }
+
+  body.addEventListener('dblclick', start);
+
+})()""></iframe>
 <script>
 function resize() {
     const box = jQuery('#preview').parent()[0].getBoundingClientRect();
