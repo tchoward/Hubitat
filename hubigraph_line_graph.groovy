@@ -32,8 +32,10 @@ import groovy.json.*;
 // v0.32 Bug Fixes
 // V 1.0 Released (not Beta) Cleanup and Preview Enabled
 // v 1.2 Complete UI Refactor
+// V 1.5 UI Redesign
     
 // Credit to Alden Howard for optimizing the code.
+
  
 def ignoredEvents() { return [ 'lastReceive' , 'reachable' , 
                          'buttonReleased' , 'buttonPressed', 'lastCheckinDate', 'lastCheckin', 'buttonHeld' ] }
@@ -98,21 +100,26 @@ preferences {
 
 def graphSetupPage(){
     def fontEnum = [["1":"1"], ["2":"2"], ["3":"3"], ["4":"4"], ["5":"5"], ["6":"6"], ["7":"7"], ["8":"8"], ["9":"9"], ["10":"10"], 
-                    ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]];  
+                    ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]]; 
+    
+    def updateEnum = [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"],
+                      ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]];
+    
+    def timespanEnum = [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]]
     
     dynamicPage(name: "graphSetupPage") {
         
         specialSection("General Options", 1)
         {            
-            input( type: "enum", name: "graph_update_rate", title: "<b>Select graph update rate</b>", multiple: false, required: true, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
-            input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: true, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")
+            input( type: "enum", name: "graph_update_rate", title: "<b>Select graph update rate</b>", multiple: false, required: true, options: updateEnum, defaultValue: "0")
+            input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: true, options: timespanEnum, defaultValue: "43200000")
             colorSelector("graph_background", "Background", "#FFFFFF", false);
             
             input( type: "bool", name: "graph_smoothing", title: "<b>Smooth Graph Points</b>", defaultValue: true);
             input( type: "enum", name: "graph_type", title: "<b>Graph Type</b>", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"] )
-            input( type: "bool", name: "graph_y_orientation", title: "<b>Flip Graph to Vertical (Rotate 90 degrees)</b>", defaultValue: false);
-            input( type: "bool", name: "graph_z_orientation", title: "<b>Reverse Data Order? (Flip Data left to Right)</b>", defaultValue: false);
-            input (type: "number", name: "graph_max_points", title: "<b>Maximum number of Data Points? (Zero for ALL)</b>", defaultValue: 0);       
+            input( type: "bool", name: "graph_y_orientation", title: "<b>Flip Graph to Vertical?</b><br><small>(Rotate 90 degrees)</small>", defaultValue: false);
+            input( type: "bool", name: "graph_z_orientation", title: "<b>Reverse Data Order?</b><br><small> (Flip data left to Right)</small>", defaultValue: false);
+            input (type: "number", name: "graph_max_points", title: "<b>Maximum number of Data Points?</b><br><small>(Zero for ALL)</small>", defaultValue: 0);       
         }
              
         specialSection("Graph Title", 1)
@@ -128,7 +135,7 @@ def graphSetupPage(){
             
          specialSection("Graph Size", 1)
          {    
-            input( type: "bool", name: "graph_static_size", title: "<b>Set size of Graph? (False = Fill Window)</b>", defaultValue: false, submitOnChange: true);
+            input( type: "bool", name: "graph_static_size", title: "<b>Set size of Graph?</b><br><small>(False = Fill Window)</small>", defaultValue: false, submitOnChange: true);
             if (graph_static_size==true){
                 input( type: "number", name: "graph_h_size", title: "<b>Horizontal dimension of the graph</b>", defaultValue: "800", range: "100..3000");
                 input( type: "number", name: "graph_v_size", title: "<b>Vertical dimension of the graph</b>", defaultValue: "600", range: "100..3000");
@@ -141,31 +148,31 @@ def graphSetupPage(){
             fontSizeSelector("graph_haxis", "Horizonal Axis", 9, 2, 20);
             colorSelector("graph_hh", "Horizonal Header", "#C0C0C0", false);
             colorSelector("graph_ha", "Horizonal Axis", "#C0C0C0", false);
-            input( type: "number", name: "graph_h_num_grid", title: "<b>Num Horizontal Gridlines (blank for auto)</b>", defaultValue: "", range: "0..100");
+            input( type: "number", name: "graph_h_num_grid", title: "<b>Num Horizontal Gridlines</b><br><small>(Blank for auto)</small>", defaultValue: "", range: "0..100");
             
             input( type: "bool", name: "dummy", title: "Show String Formatting Help", defaultValue: false, submitOnChange: true);
             if (dummy == true){
                 paragraph_ = "<table>"
-                paragraph_ += getTableRow("<b>Name", "<b>Format" ,"<b>Result</b>", "");
-                paragraph_ += getTableRow("Year", "Y", "2020", "");
-                paragraph_ += getTableRow("Month Number", "M", "12", "");
-                paragraph_ += getTableRow("Month Name ", "MMM", "Feb", "");
-                paragraph_ += getTableRow("Month Full Name", "MMMM", "February", "");
-                paragraph_ += getTableRow("Day of Month", "d", "February", "");
-                paragraph_ += getTableRow("Day of Week", "EEE", "Mon", "");
-                paragraph_ += getTableRow("Day of Week", "EEEE", "Monday", "");
-                paragraph_ += getTableRow("Period", "a", "AM or PM", "");
-                paragraph_ += getTableRow("Hour (12)", "h", "1..12", "");
-                paragraph_ += getTableRow("Hour (12)", "hh", "01..12", "");
-                paragraph_ += getTableRow("Hour (24)", "H", "1..23", "");
-                paragraph_ += getTableRow("Hour (24)", "HH", "01..23", "");
-                paragraph_ += getTableRow("Minute", "m", "1..59", "");
-                paragraph_ += getTableRow("Minute", "mm", "01..59", "");
-                paragraph_ += getTableRow("Seconds", "s", "1..59", "");
-                paragraph_ += getTableRow("Seconds", "ss", "01..59", "");
+                paragraph_ += getTableRow("<b>Name", "Format" ,"Result</b>", "");
+                paragraph_ += getTableRow("<small>Year", "<small>Y", "<small>2020", "");
+                paragraph_ += getTableRow("<small>Month Number", "<small>M", "<small>12", "");
+                paragraph_ += getTableRow("<small>Month Name ", "<small>MMM", "<small>Feb", "");
+                paragraph_ += getTableRow("<small>Month Full Name", "<small>MMMM", "<small>February", "");
+                paragraph_ += getTableRow("<small>Day of Month", "<small>d", "<small>February", "");
+                paragraph_ += getTableRow("<small>Day of Week", "<small>EEE", "<small>Mon", "");
+                paragraph_ += getTableRow("<small>Day of Week", "<small>EEEE", "<small>Monday", "");
+                paragraph_ += getTableRow("<small>Period", "<small>a", "<small>AM/PM", "");
+                paragraph_ += getTableRow("<small>Hour (12)", "<small>h", "<small>1..12", "");
+                paragraph_ += getTableRow("<small>Hour (12)", "<small>hh", "<small>01..12", "");
+                paragraph_ += getTableRow("<small>Hour (24)", "<small>H", "<small>1..23", "");
+                paragraph_ += getTableRow("<small>Hour (24)", "<small>HH", "<small>01..23", "");
+                paragraph_ += getTableRow("<small>Minute", "<small>m", "<small>1..59", "");
+                paragraph_ += getTableRow("<small>Minute", "<small>mm", "<small>01..59", "");
+                paragraph_ += getTableRow("<small>Seconds", "<small>s", "<small>1..59", "");
+                paragraph_ += getTableRow("<small>Seconds", "<small>ss", "<small>01..59 </small>", "");
                 paragraph_ += "</table>"
                 paragraph paragraph_
-                paragraph_ = /<b>Example: "EEEE, MMM d, Y hh:mm:ss a" = "Monday, June 2, 2020 08:21:33 AM"/
+                paragraph_ = """<b><small>Example: "EEEE, MMM d, Y hh:mm:ss a" <br>= "Monday, June 2, 2020 08:21:33 AM</small>"""
                 paragraph_ += "</b>"
                 paragraph paragraph_
             }
@@ -184,9 +191,9 @@ def graphSetupPage(){
          }
             
         specialSection("Left Axis", 1){  
-            input( type: "decimal", name: "graph_vaxis_1_min", title: "<b>Minimum for left axis (blank for auto)</b>", defaultValue: "");
-            input( type: "decimal", name: "graph_vaxis_1_max", title: "<b>Maximum for left axis (blank for auto)</b>", defaultValue: "");
-            input( type: "number", name: "graph_vaxis_1_num_lines", title: "<b>Num gridlines (blank for auto)</b>", defaultValue: "", range: "0..100");
+            input( type: "decimal", name: "graph_vaxis_1_min", title: "<b>Minimum for left axis</b><small>(Blank for auto)</small>", defaultValue: "");
+            input( type: "decimal", name: "graph_vaxis_1_max", title: "<b>Maximum for left axis</b><small>(Blank for auto)</small>", defaultValue: "");
+            input( type: "number", name: "graph_vaxis_1_num_lines", title: "<b>Num gridlines</b><small>(Blank for auto)</small>", defaultValue: "", range: "0..100");
             input( type: "bool", name: "graph_show_left_label", title: "<b>Show Left Axis Label on Graph</b>", defaultValue: false, submitOnChange: true);
             if (graph_show_left_label==true){
                 input( type: "text", name: "graph_left_label", title: "<b>Input Left Axis Label</b>", default: "Left Axis Label");
@@ -196,9 +203,9 @@ def graphSetupPage(){
         }
            
         specialSection("Right Axis", 1){
-            input( type: "decimal", name: "graph_vaxis_2_min", title: "<b>Minimum for right axis (blank for auto)</b>", defaultValue: "", range: "");
-            input( type: "decimal", name: "graph_vaxis_2_max", title: "<b>Maximum for right axis (blank for auto)</b>", defaultValue: "", range: "");
-            input( type: "number", name: "graph_vaxis_2_num_lines", title: "<b>Num gridlines (blank for auto)<br></b><small><i>Must be greater than num tics to be effective</i></small>", defaultValue: "", range: "0..100");
+            input( type: "decimal", name: "graph_vaxis_2_min", title: "<b>Minimum for right axis</b><small>(Blank for auto)</small>", defaultValue: "", range: "");
+            input( type: "decimal", name: "graph_vaxis_2_max", title: "<b>Maximum for right axis</b><small>(Blank for auto)</small>", defaultValue: "", range: "");
+            input( type: "number", name: "graph_vaxis_2_num_lines", title: "<b>Num gridlines</b><small>(Blank for auto)<br></b><small><i>Must be greater than num tics to be effective</i></small>", defaultValue: "", range: "0..100");
             input( type: "bool", name: "graph_show_right_label", title: "<b>Show Right Axis Label on Graph</b>", defaultValue: false, submitOnChange: true);
             if (graph_show_right_label==true){
                 input( type: "text", name: "graph_right_label", title: "<b>Input Right Axis Label</b>", default: "Right Axis Label");
@@ -254,7 +261,7 @@ def graphSetupPage(){
 
 def deviceSelectionPage() {
     def supported_attrs;
-        
+       
     dynamicPage(name: "deviceSelectionPage") {
         specialSection("Device Selection", 1){
             input "sensors", "capability.*", title: "Sensors", multiple: true, required: true, submitOnChange: true
@@ -293,24 +300,25 @@ def enableAPIPage() {
 }
 
 def mainPage() {
+    
     dynamicPage(name: "mainPage") {        
          if (!state.endpoint) {
-             specialSection("Please set up OAuth API", 1){
+             specialSection("Please set up OAuth API", 1, "report"){
                 href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
              }
             } else {
-                specialSection("Graph Options", 1){
+                specialSection("Graph Options", 1, "tune"){
                     objects = [];
                     objects << specialPageButton("Select Device/Data", "deviceSelectionPage", "100%", "vibration");
                     objects << specialPageButton("Configure Graph", "graphSetupPage", "100%", "poll");
                     addContainer(objects, 1);
                 }
-                specialSection("Local Graph URL", 1){
+                specialSection("Local Graph URL", 1, "link"){
                     addContainer(["${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"], 1);
                 }
              
                 if (sensors){
-                    specialSection("Sensors", 1){
+                    specialSection("Sensors", 1, "devices_other"){
                             rows = [];
                             rows << addText("<b><u>DEVICE</b></u>");
                             rows << addText("<b><u>ATTRIBUTES</b></u>");            
@@ -324,12 +332,12 @@ def mainPage() {
                     }
                     
                     if (graph_update_rate){
-                        specialSection("Preview", 2){
+                        specialSection("Preview", 10, "show_chart"){
                              paragraph graphPreview()
                         }
                     } //if (graph_update_rate)
                 
-                    specialSection("Hubigraph Tile Installation", 1){
+                    specialSection("Hubigraph Tile Installation", 2, "apps"){
                         objects = [];
                         objects << specialSwitch("Install Hubigraph Tile Device?", "install_device", false, true);
                         if (install_device==true){ 
@@ -341,7 +349,7 @@ def mainPage() {
              
                 
                if (state.endpoint){
-                   specialSection("Hubigraph Application", 1){
+                   specialSection("Hubigraph Application", 1, "settings"){
             
                         paragraph getSubTitle("Application Name");
                         addContainer([specialTextInput("Rename the Application?", "app_name", "false")], 1);
@@ -363,6 +371,8 @@ def mainPage() {
 ****************************************** NEW FORM FUNCTIONS********************************************************************
 *********************************************************************************************************************************
 *********************************************************************************************************************************/
+
+
 
 
 def addContainer(containers, numPerRow){
@@ -405,16 +415,21 @@ def specialPageButton(title, page, width, icon){
     return html_;
 }
 
-def specialSection(String name, pos, Closure code) {
+def specialSection(String name, pos, icon="", Closure code) {
     def id = name.replace(' ', '_');
+    //def icon = "vibration";
     
     def titleHTML = """
-        <div class="mdl-layout__header" style="display: block; background:#033673; margin: 0 -16px; width: calc(100% + 32px);">
+        <div class="mdl-layout__header" style="display: block; background:#033673; margin: 0 -16px; width: calc(100% + 32px); position: relative; z-index: ${pos}; overflow: visible;">          
             <div class="mdl-layout__header-row">
                 <span class="mdl-layout__title" style="margin-left: -32px; font-size: 20px; width: auto;">
-                    ${name}
+                        ${name}
                 </span>
-            </div>
+                <div class="mdl-layout-spacer"></div>
+                <ul class="nav nav-pills pull-right">
+                        <li> <i class="material-icons">${icon}</i></li>
+                </ul>
+             </div> 
         </div>
     """;
     
@@ -425,6 +440,7 @@ def specialSection(String name, pos, Closure code) {
         
         /*hide default header*/
         sectionElem.css('display', 'none');
+        sectionElem.css('z-index', ${pos});
 
         var elem = sectionElem.parent().parent();
         elem.addClass('mdl-card mdl-card-wide mdl-shadow--8dp');
@@ -434,6 +450,7 @@ def specialSection(String name, pos, Closure code) {
         elem.css('min-height', 0);
         elem.css('position', 'relative');
         elem.css('z-index', ${pos});
+        elem.css('overflow', 'visible');
         elem.prepend('${titleHTML}');
     </script>
     """;
@@ -589,41 +606,42 @@ def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
 def graphPreview(){
   def html = ""
     
-    html+= """
-<iframe id="preview" style="width: 100%; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}" data-fullscreen="false" onload="(() => {
-  this.handel = -1;
-  const thisFrame = this;
-  const thisParent = this.parent
-  const body = thisFrame.contentDocument.body;
-  const start = () => {
-      if(thisFrame.dataset.fullscreen == 'false') {
-        thisFrame.style = 'position:fixed !important; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999999; overflow:visible; opacity: 1.0; ';
-        thisFrame.dataset.fullscreen = 'true';
-      } else {
-        thisFrame.style = 'width: 100%; height: 100%;';
-        thisFrame.dataset.fullscreen = 'false';
-      }
-  }
-
-  body.addEventListener('dblclick', start);
-
-})()""></iframe>
-<script>
-function resize() {
-    const box = jQuery('#preview').parent()[0].getBoundingClientRect();
-    const h = box.width * 0.75;
-    const w = box.width * 1.00;
-    jQuery('#preview').css('height', h);
-    jQuery('#preview').css('width', w);
-}
-
-resize();
-
-jQuery(window).on('resize', () => {
+    html+= """<iframe id="preview" style="width: 100%; position: relative; z-index: 1; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}" data-fullscreen="false" onload="(() => {
+          this.handel = -1;
+          const thisFrame = this;
+          const body = thisFrame.contentDocument.body;
+          const start = () => {
+              if(thisFrame.dataset.fullscreen == 'false') {
+                thisFrame.style = 'position:fixed !important; z-index: 100; height: 100%; width: 100%; top: 60px; left: 0; overflow:visible;';
+                thisFrame.dataset.fullscreen = 'true';
+              } else {
+                thisFrame.style = 'position:relative; top: 0; z-index: 1; left: 0; overflow:hidden; opacity: 1.0;';
+                const box = jQuery('#preview').parent()[0].getBoundingClientRect();
+                const h = box.width * 0.75;
+                const w = box.width * 1.00;
+                jQuery('#preview').css('height', h);
+                jQuery('#preview').css('width', w);
+                thisFrame.dataset.fullscreen = 'false';
+              }
+          }
+          body.addEventListener('dblclick', start);
+    })()""></iframe>
+    <script>
+    function resize() {
+        const box = jQuery('#preview').parent()[0].getBoundingClientRect();
+        const h = box.width * 0.75;
+        const w = box.width * 1.00;
+        jQuery('#preview').css('height', h);
+        jQuery('#preview').css('width', w);
+    }
     resize();
-});
-</script>
+    jQuery(window).on('resize', () => {
+        resize();
+    });
+    </script><small> *Double-click to Toggle Full-Screen </small>
 """
+    
+return html;
 }
 
 def getSubTitle(myText=""){
@@ -639,7 +657,6 @@ def getSubTitle(myText=""){
                 
     return html
 }
-
 
 def logDebug(str){
     if (debug==true){
@@ -690,6 +707,12 @@ def getTitle(myText=""){
     html += "${myText}</div>"
     html
 }
+
+/********************************************************************************************************************************************
+*********************************************************************************************************************************************
+***************************************************  END HELPER FUNCTIONS  ******************************************************************
+*********************************************************************************************************************************************
+*********************************************************************************************************************************************/
 
 
 def installed() {
@@ -1302,4 +1325,3 @@ def getColorCode(code){
     }
     return ret;
 }
-
