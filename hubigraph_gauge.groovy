@@ -97,34 +97,37 @@ def deviceSelectionPage() {
                 input "sensor_", "capability.*", title: "Sensor", multiple: false, required: true, submitOnChange: true
                         
             
-                attributes_ = sensor_.getSupportedAttributes();
-                final_attrs = [];
-                attributes_.each{attribute_->
+              if (sensor_) {
+                  attributes_ = sensor_.getSupportedAttributes();
+                  final_attrs = [];
+                  attributes_.each{attribute_->
                      final_attrs += attribute_.getName();
-                }
-            }
-        specialSection("""${sensor_.getDisplayName()}""", 1){
-                if (final_attrs == []){
-                    paragraph "<b>No supported Numerical Attributes</b><br><small>Please select a different Sensor</small>"
-                } else {
-                    input( type: "enum", name: "attribute_", title: "Attribute for Gauge", required: true, multiple: false, options: final_attrs, defaultValue: "1", submitOnChange: true)
-                    if (attribute_){
-                        state_ =  sensor_.currentState(attribute_);
-                        if (state_ != null) {
-                            currentValue = state_.value;
-                            paragraph getSubTitle("Min & Max Value")
-                            paragraph "<b>Current Value = </b>$currentValue"                          
-                            input( type: "decimal", name: "minValue_", title: "<b>Minimum Value for Gauge</b>", required: true, multiple: false);
-                            input( type: "decimal", name: "maxValue_", title: "<b>Maximum Value for Gauge</b>", required: true, multiple: false);
-                        } else {
-                             paragraph "<b>No recent valid events</b><br><small>Please select a different Attribute</small>"   
+                  }
+                 
+            
+                specialSection("""${sensor_.getDisplayName()}""", 1){
+                    if (final_attrs == []){
+                        paragraph "<b>No supported Numerical Attributes</b><br><small>Please select a different Sensor</small>"
+                    } else {
+                        input( type: "enum", name: "attribute_", title: "Attribute for Gauge", required: true, multiple: false, options: final_attrs, defaultValue: "1", submitOnChange: true)
+                        if (attribute_){
+                            state_ =  sensor_.currentState(attribute_);
+                            if (state_ != null) {
+                                currentValue = state_.value;
+                                paragraph getSubTitle("Min & Max Value")
+                                paragraph "<b>Current Value = </b>$currentValue"                          
+                                input( type: "decimal", name: "minValue_", title: "<b>Minimum Value for Gauge</b>", required: true, multiple: false);
+                                input( type: "decimal", name: "maxValue_", title: "<b>Maximum Value for Gauge</b>", required: true, multiple: false);
+                            } else {
+                                 paragraph "<b>No recent valid events</b><br><small>Please select a different Attribute</small>"   
+                            }
                         }
                     }
                 }
-            }
-        }
+              }// if (sensor_)
+        }// specialSection
     }
-
+}
 
 
 
