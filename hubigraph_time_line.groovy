@@ -53,7 +53,7 @@ preferences {
     section ("test"){
        page(name: "mainPage", install: true, uninstall: true)
        page(name: "deviceSelectionPage", nextPage: "attributeConfigurationPage")
-       page(name: "attributeConfigurationPage", nextPage: "mainPage")
+       page(name: "attributeConfigurationPage", nextPage: "graphSetupPage")
        page(name: "graphSetupPage", nextPage: "mainPage")
        page(name: "enableAPIPage")
        page(name: "disableAPIPage")
