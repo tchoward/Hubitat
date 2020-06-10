@@ -58,8 +58,8 @@ definition(
 preferences {
     section ("test"){
        page(name: "mainPage", install: true, uninstall: true)
-       page(name: "deviceSelectionPage")
-       page(name: "graphSetupPage")
+       page(name: "deviceSelectionPage", nextPage: "graphSetupPage")
+       page(name: "graphSetupPage", nextPage: "mainPage")
        page(name: "enableAPIPage")
        page(name: "disableAPIPage")
 }
