@@ -4,22 +4,30 @@ google.charts.setOnLoadCallback(drawBasic);
 function drawBasic() {
 
       var data = google.visualization.arrayToDataTable([
-        ['Device', 'Min', { role: "style" }, 'Low', { role: "style" },'Value', { role: "style" }, {role: "annotation"}, 'High', { role: "style" }, 'Max', { role: "style" }],
-        ['Bedroom Temp', 72, 'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475', 
-        									6, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91',
-                          1, 'stroke-color: #527535; stroke-opacity: 0.8; stroke-width: 2; color: #8eb6d4', '72°', 
-                          1, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91', 
-                          20,'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475'],
-        ['Ouside', 				68, 'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475', 
-        									12, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91',
-                          1, 'stroke-color: #527535; stroke-opacity: 0.8; stroke-width: 2; color: #8eb6d4', '80°', 
-                          14, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91', 
-                          5,'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475'],
-        ['Freezer', 			28, 'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475', 
-        									2, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91',
-                          1, 'stroke-color: #527535; stroke-opacity: 0.8; stroke-width: 2; color: #8eb6d4', '30°', 
-                          3, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91', 
-                         66,'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475'],
+        ['Device', 'Min', 	{ role: "style" }, {role: "tooltip"}, {role: "annotation"}, 
+        					 'Low', 	{ role: "style" }, {role: "tooltip"}, {role: "annotation"}, 
+                   'Value', { role: "style" }, {role: "tooltip"}, {role: "annotation"}, 
+                   'High', 	{ role: "style" }, {role: "tooltip"}, {role: "annotation"},  
+                   'Max', 	{ role: "style" }, {role: "tooltip"}, {role: "annotation"}
+        ],
+        ['Bedroom Temp', 72, 'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475', '1',	'',
+        									6, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91', '2',	'',
+                          1, 'stroke-color: #527535; stroke-opacity: 0.8; stroke-width: 2; color: #8eb6d4', '3',	'3', 
+                          1, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91', '4',	'',
+                          20,'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475', '5',	'',
+        ],
+        ['Ouside', 				68, 'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475', 	'6',	'',
+        									12, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91',	'7',	'',
+                          1, 	'stroke-color: #527535; stroke-opacity: 0.8; stroke-width: 2; color: #8eb6d4', 	'8',	'8', 
+                          14, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91', 	'9',	'',
+                          5,	'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475',  '10',	'',
+        ],
+        ['Freezer', 			28, 'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475',	'11',	'', 
+        									2, 	'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91',	'12',	'',
+                          1, 	'stroke-color: #527535; stroke-opacity: 0.8; stroke-width: 2; color: #8eb6d4',	'13', '13', 
+                          3, 	'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91',	'14',	'',
+                         66,	'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475', 	'15',	'',
+        ]
       ]);
 
       var options = {
