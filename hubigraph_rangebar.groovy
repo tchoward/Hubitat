@@ -158,9 +158,9 @@ def attributeConfigurationPage() {
                         colorSelector("attribute_${sensor.id}_${attribute}_background", "Background Color", "#3e4475", false);
                         colorSelector("attribute_${sensor.id}_${attribute}_minmax", "Min/Max Color", "#607c91", false);
                         colorSelector("attribute_${sensor.id}_${attribute}_current", "Current Value Color", "#8eb6d4", false);
+                        colorSelector("attribute_${sensor.id}_${attribute}_current_border", "Current Value Border", "#FFFFFF", false);
                         input( type: "bool", name: "attribute_${sensor.id}_${attribute}_showAnnotation", title: "Show Current Value on Bar?", defaultValue: false,  submitOnChange: true);
                         if (settings["attribute_${sensor.id}_${attribute}_showAnnotation"]==true){
-                            fontSizeSelector("attribute_${sensor.id}_${attribute}_annotation", "Current Value", 16, 2, 30);
                             input( type: "string", name: "attribute_${sensor.id}_${attribute}_annotation_units", title: "Units", defaultValue: "");
                         }
                         
@@ -555,7 +555,7 @@ def graphPreview(){
               } else {
                 thisFrame.style = 'position:relative; top: 0; z-index: 1; left: 0; overflow:hidden; opacity: 1.0;';
                 const box = jQuery('#preview').parent()[0].getBoundingClientRect();
-                const h = 35 * ${state.count_.floatValue()} + 30;
+                const h = 100 * ${state.count_.floatValue()} + 30;
                 const w = box.width * 1.00;
                 jQuery('#preview').css('height', h);
                 jQuery('#preview').css('width', w);
@@ -583,11 +583,12 @@ return html;
 }
 
 def getSubTitle(myText=""){
+    def newText = myText.replaceAll( /'/, '' )
     def html = """
         <div class="mdl-layout__header" style="display: block; min-height: 0;">
         <div class="mdl-layout__header-row" style="height: 48px;">
         <span class="mdl-layout__title" style="margin-left: -32px; font-size: 9px; width: auto;">
-                   <h5 style="font-size: 16px;">${myText}</h5>
+                   <h5 style="font-size: 16px;">${newText}</h5>
         </span>
         </div>
         </div>
@@ -734,13 +735,12 @@ def buildData() {
           resp[sensor.id] = [:];
           attributes.each { attribute ->
               log.debug("$sensor $attribute");
-              temp = sensor.statesSince(attribute, then, [max: 50000]).collect{ it.getFloatValue() }
+              temp = sensor.statesSince(attribute, then, [max: 1000]).collect{ it.getFloatValue() }
               if (temp.size() == 0){
                  resp[sensor.id][attribute] = [current: sensor.currentState(attribute).getFloatValue(), min: sensor.currentState(attribute).getFloatValue(), max: sensor.currentState(attribute).getFloatValue()];
               } else {
                   resp[sensor.id][attribute] = [current: sensor.currentState(attribute).getFloatValue(), min: temp.min(), max: temp.max()];
               }
-              log.debug(resp[sensor.id][attribute]);
           }
       }
       
@@ -765,7 +765,8 @@ def getChartOptions(){
         "graphTimespan": Integer.parseInt(graph_timespan),
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
         "graphOptions": [
-            "bar" : [ "groupWidth" : "${graph_bar_percent}%" ],
+            "bar" : [ "groupWidth" : "${graph_bar_percent}%",
+                    ],
             "width": graph_static_size ? graph_h_size : "100%",
             "height": graph_static_size ? graph_v_size: "90%",
             "timeline": [
@@ -791,11 +792,13 @@ def getChartOptions(){
       					            "fontSize": annotation_font,
       					            "bold":     annotation_bold,
       					            "italic":   annotation_italic,
-      	         					"color":    annotation_color_tansparent ? "transparent" : annotation_color,
+      	         					"color":    annotation_color_transparent ? "transparent" : annotation_color,
       					            "auraColor":annotation_aura_color_transparent ? "transparent" : annotation_aura_color,
-				                 ]
+				                 ],
+                                 "stem": [ "color": annotation_stem_color_transparent ? "transparent" : annotation_stem_color ],
+                                 "highContrast": "false"
                              ],
-              "stem": [ "color": annotation_stem_color_transparent ? "transparent" : annotation_stem_color],
+              
         			 
          ],
         "graphLow": graph_min,
@@ -1125,20 +1128,24 @@ function drawChart(callback) {
         const e = options.graphHigh - max_;
         const a = (options.graphHigh - options.graphLow) - (b + c + d + e);
         var cur_String = '';
+        var units_ = ``;
 
         const name = subscriptions.labels[deviceId][attr].replace('%deviceName%', subscriptions.sensors[deviceId].displayName).replace('%attributeName%', attr);
         const colors = subscriptions.colors[deviceId][attr];
         console.log("showAnnotation ", colors.showAnnotation, cur_, colors.annotation_units);
         if (colors.showAnnotation == true){
             cur_String = `\${cur_.toFixed(1)}\${colors.annotation_units}`;
+            units_ = `\${colors.annotation_units}`;
             console.log("Current: ",cur_String) 
         }
 
-        dataTable.addRow([name,  a,     `color: \${colors.backgroundColor}`,                                                                        `\${name}`,     '',
-                                 b,     `color: \${colors.minMaxColor}`,                                                                            `\${name}`,     '',
-                                 c,     `{color: \${colors.currentValueColor}; stroke-color: #FFFFFF; stroke-opacity: 0.8; stroke-width: 1;}`,      `\${name}`,     cur_String,
-                                 d,     `color: \${colors.minMaxColor}`,                                                                            `\${name}`,     '',
-                                 e,     `color: \${colors.backgroundColor}`,                                                                        `\${name}`,     ''
+        var stats_ = `\${name}\nMin: \${event.min}\${units_}\nMax: \${event.max}\${units_}\nCurrent: \${event.current}\${units_}`
+
+        dataTable.addRow([name,  a,     `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     '',
+                                 b,     `color: \${colors.minMaxColor}`,                                                                                                        `\${stats_}`,     '',
+                                 c,     `{color: \${colors.currentValueColor}; stroke-color:  \${colors.currentValueBorderColor}; stroke-opacity: 1.0; stroke-width: 1;}`,      `\${stats_}`,     cur_String,
+                                 d,     `color: \${colors.minMaxColor}`,                                                                                                        `\${stats_}`,     '',
+                                 e,     `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     ''
         ]);
         //console.log("Current: %f, Min: %f, Max: %f A: %f B: %f C: %f D: %f E: %f", event.current, event.min, event.max, a, b, c, d, e);
       });
@@ -1257,12 +1264,13 @@ def getSubscriptions() {
         attributes.each { attribute ->
             _attributes[sensor.id] << attribute;
             labels[sensor.id][attribute] = settings["graph_name_override_${sensor.id}_${attribute}"];
-            colors[sensor.id][attribute] = ["backgroundColor":     settings["attribute_${sensor.id}_${attribute}_background_color"],
-                                            "minMaxColor":         settings["attribute_${sensor.id}_${attribute}_minmax_color"],
-                                            "currentValueColor":   settings["attribute_${sensor.id}_${attribute}_current_color"],
-                                            "showAnnotation":      settings["attribute_${sensor.id}_${attribute}_showAnnotation"],
-                                            "annotation_font":     settings["attribute_${sensor.id}_${attribute}_annotation_font"],
-                                            "annotation_units":    settings["attribute_${sensor.id}_${attribute}_annotation_units"],
+            colors[sensor.id][attribute] = ["backgroundColor":         settings["attribute_${sensor.id}_${attribute}_background_color"],
+                                            "minMaxColor":             settings["attribute_${sensor.id}_${attribute}_minmax_color"],
+                                            "currentValueColor":       settings["attribute_${sensor.id}_${attribute}_current_color"],
+                                            "currentValueBorderColor": settings["attribute_${sensor.id}_${attribute}_current_border_color"],
+                                            "showAnnotation":          settings["attribute_${sensor.id}_${attribute}_showAnnotation"],
+                                            "annotation_font":         settings["attribute_${sensor.id}_${attribute}_annotation_font"],
+                                            "annotation_units":        settings["attribute_${sensor.id}_${attribute}_annotation_units"],
                                            ];
         }
                                                
