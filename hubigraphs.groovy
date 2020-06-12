@@ -15,9 +15,12 @@ preferences {
     page(name: "mainPage", title: "Graph Creator", install: true, uninstall: true,submitOnChange: true) {
         section {
             app(name: "hubiGraphLine", appName: "Hubigraph Line Graph", namespace: "tchoward", title: "Create New Line Graph", multiple: true)
-	    app(name: "hubiGraphTime", appName: "Hubigraph Time Line", namespace: "tchoward", title: "Create New TimeLine", multiple: true)
+			app(name: "hubiRangeBar", appName: "Hubigraph Range Bar", namespace: "tchoward", title: "Create New Range Bar", multiple: true)
+            app(name: "hubiGraphTime", appName: "Hubigraph Time Line", namespace: "tchoward", title: "Create New Time Line", multiple: true)
             app(name: "hubiGauge", appName: "Hubigraph Gauge", namespace: "tchoward", title: "Create New Gauge", multiple: true)
+            
         }
+        
     }
 }
 
@@ -40,3 +43,4 @@ def initialize() {
         log.debug "child app: ${child.label}"
     }
 }
+
