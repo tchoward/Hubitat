@@ -180,6 +180,7 @@ def graphSetupPage(){
     
     dynamicPage(name: "graphSetupPage") {
         specialSection("General Options", 1){
+            input( type: "enum", name: "graph_type", title: "<b>Select graph type</b>", multiple: false, required: false, options: [["1": "Bar Chart"],["2": "Column Chart"]], defaultValue: "1");
             input( type: "enum", name: "graph_update_rate", title: "<b>Select graph update rate</b>", multiple: false, required: false, options: rateEnum, defaultValue: "0")
             input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph (i.e How Often to Reset Range)</b>", multiple: false, required: false, options: timespanEnum, defaultValue: "2", , submitOnChange: true)     
             colorSelector("graph_background", "Background", "White", false);
@@ -761,9 +762,18 @@ def getChartOptions(){
         }
     }
     
+    if (graph_type == "1"){
+        axis1 = "hAxis";
+        axis2 = "vAxis";
+    } else {
+        axis1 = "vAxis";
+        axis2 = "hAxis";
+    }
+    
     def options = [
         "graphTimespan": Integer.parseInt(graph_timespan),
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
+        "graphType": Integer.parseInt(graph_type),
         "graphOptions": [
             "bar" : [ "groupWidth" : "${graph_bar_percent}%",
                     ],
@@ -777,14 +787,14 @@ def getChartOptions(){
             "isStacked": true,
             "chartArea": [ "left": graph_v_buffer, "right" : 10, "top": 10, "bottom": 40 ],
             "legend" : [ "position" : "none" ],
-            "hAxis" : [ "viewWindow" : ["max" : graph_max, 
+             axis1: [ "viewWindow" : ["max" : graph_max, 
                                         "min" : graph_min], 
                          "minValue" : graph_min, 
                          "maxValue" : graph_max,
                         "textStyle" : ["color": haxis_color_transparent ? "transparent" : haxis_color,
                                        "fontSize": haxis_font]
                       ],
-            "vAxis" : [ "textStyle" : ["color": graph_axis_color_transparent ? "transparent" : graph_axis_color,
+            axis2: [ "textStyle" : ["color": graph_axis_color_transparent ? "transparent" : graph_axis_color,
                                        "fontSize": graph_axis_font]
                        ],
             "annotations" : [    "alwaysOutside": true,
@@ -811,84 +821,6 @@ def getChartOptions(){
         
 void removeLastChar(str) {
     str.subSequence(0, str.length() - 1)
-}
-
-void sampleCode(){
-    
-def html = """
- <html>
-  <head>
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-      google.charts.load("current", {packages:["corechart"]});
-      google.charts.setOnLoadCallback(drawChart);
-
-
-function drawChart(){
-      var data = google.visualization.arrayToDataTable([
-        ['Device',     'Min', 	{ role: "style" }, {role: "tooltip"}, {role: "annotation"}, 
-        			   'Low', 	{ role: "style" }, {role: "tooltip"}, {role: "annotation"}, 
-                       'Value', { role: "style" }, {role: "tooltip"}, {role: "annotation"}, 
-                       'High', 	{ role: "style" }, {role: "tooltip"}, {role: "annotation"},  
-                       'Max', 	{ role: "style" }, {role: "tooltip"}, {role: "annotation"}
-        ],
-        ['Bedroom Temp', 72, 'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475', '1',	'',
-        				  6, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91', '2',	'',
-                          1, 'stroke-color: #527535; stroke-opacity: 0.8; stroke-width: 2; color: #8eb6d4', '3',	'3', 
-                          1, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91', '4',	'',
-                          20,'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475', '5',	'',
-        ],
-        ['Ouside', 		68, 'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475', 	'6',	'',
-        				12, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91',	'7',	'',
-                        1, 	'stroke-color: #527535; stroke-opacity: 0.8; stroke-width: 2; color: #8eb6d4', 	'8',	'8', 
-                        14, 'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91', 	'9',	'',
-                        5,	'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475',  '10',	'',
-        ],
-        ['Freezer', 	28, 'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475',	'11',	'', 
-        				2, 	'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91',	'12',	'',
-                        1, 	'stroke-color: #527535; stroke-opacity: 0.8; stroke-width: 2; color: #8eb6d4',	'13', '13', 
-                        3, 	'stroke-color: #607c91; stroke-opacity: 0.8; stroke-width: 2; color: #607c91',	'14',	'',
-                        66,	'stroke-color: #505896; stroke-opacity: 0.8; stroke-width: 2; color: #3e4475', 	'15',	'',
-        ]
-      ]);
-
-      var options = {
-        title: 'Home Temperatures',
-        chartArea: {width: '50%'},
-        bar: {groupWidth: "95%"},
-        isStacked: true,
-        legend: { position: "none" },
-        annotations: { 
-        			alwaysOutside: true,
-        			textStyle: {
-      					fontSize: 18,
-      					bold: true,
-      					italic: true,
-      					// The color of the text.
-      					color: '#FFFFFF',
-      					// The color of the text outline.
-      					auraColor: 'transparent',
-				      // The transparency of the text.
-      					opacity: 1.8
-    					},
-              stem: {
-              	color: 'transparent'
-              },
-        			highContrast: false }
-      };
-
-      var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
-
-      chart.draw(data, options);
-      }
-      
-    </script>
-  </head>
-  <body>
-    <div id="chart_div" style="width: 900px; height: 500px;"></div>
-  </body>
-</html>
-"""
 }
 
 def getTimeLine() {
@@ -962,17 +894,18 @@ function getGraphData() {
 }
 
 function parseEvent(event) {
-    const now = new Date().getTime();
     let deviceId = event.deviceId;
 
     //only accept relevent events
     if(subscriptions.ids.includes(deviceId) && subscriptions.attributes[deviceId].includes(event.name)) {
         let value = event.value;
         let attribute = event.name;
+        
+        console.log("Got Name: ", attribute, "Value: ", value);
 
         graphData[deviceId][attribute].current = value;
-        if (value > max) graphData[deviceId][attribute].max = value;
-        else if (value < min) graphData[deviceId][attribute].min = value;
+        if (value > graphData[deviceId][attribute].max) graphData[deviceId][attribute].max = value;
+        else if (value < graphData[deviceId][attribute].min) graphData[deviceId][attribute].min = value;
         //update if we are realtime
         if(options.graphUpdateRate === 0) update();
     }
@@ -1071,7 +1004,6 @@ async function onLoad() {
     await getSubscriptions();
     loader.setText('Getting events (3/4)');
     await getGraphData();
-
     loader.setText('Drawing chart (4/4)');
 
     update(() => {
@@ -1121,7 +1053,7 @@ function drawChart(callback) {
       Object.entries(graphData[deviceId]).forEach(([attr, event]) => {
         const max_ = event.max > options.graphHigh ? options.graphHigh : event.max;
         const min_ = event.min < options.graphLow ? options.graphLow : event.min;
-        const cur_ = event.current;
+        const cur_ = parseFloat(event.current);
         const b = cur_ - min_;
         const c = 1;
         const d = max_ - cur_ ;
@@ -1132,11 +1064,9 @@ function drawChart(callback) {
 
         const name = subscriptions.labels[deviceId][attr].replace('%deviceName%', subscriptions.sensors[deviceId].displayName).replace('%attributeName%', attr);
         const colors = subscriptions.colors[deviceId][attr];
-        console.log("showAnnotation ", colors.showAnnotation, cur_, colors.annotation_units);
         if (colors.showAnnotation == true){
             cur_String = `\${cur_.toFixed(1)}\${colors.annotation_units}`;
             units_ = `\${colors.annotation_units}`;
-            console.log("Current: ",cur_String) 
         }
 
         var stats_ = `\${name}\nMin: \${event.min}\${units_}\nMax: \${event.max}\${units_}\nCurrent: \${event.current}\${units_}`
@@ -1147,13 +1077,17 @@ function drawChart(callback) {
                                  d,     `color: \${colors.minMaxColor}`,                                                                                                        `\${stats_}`,     '',
                                  e,     `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     ''
         ]);
-        //console.log("Current: %f, Min: %f, Max: %f A: %f B: %f C: %f D: %f E: %f", event.current, event.min, event.max, a, b, c, d, e);
       });
 
     });
 
-    let chart = new google.visualization.BarChart(document.getElementById("timeline"));
+    var chart;
 
+    if (options.graphType == 1) {
+        chart = new google.visualization.BarChart(document.getElementById("timeline"));
+    } else {
+        chart = new google.visualization.ColumnChart(document.getElementById("timeline"));
+    }
     //if we have a callback
     if(callback) google.visualization.events.addListener(chart, 'ready', callback);
 
@@ -1256,7 +1190,7 @@ def getSubscriptions() {
     def labels = [:];
     def colors = [:];
     sensors.each { sensor ->
-        _ids << sensor.id;
+        _ids << sensor.idAsLong;
         _attributes[sensor.id] = [];
         labels[sensor.id] = [:];
         colors[sensor.id] = [:];
