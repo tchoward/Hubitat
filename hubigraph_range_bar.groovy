@@ -48,6 +48,7 @@ preferences {
     }
    
 
+
 mappings {
     path("/graph/") {
             action: [
@@ -75,6 +76,12 @@ mappings {
     }
 }
 
+def call(Closure code) {
+    code.setResolveStrategy(Closure.DELEGATE_ONLY);
+    code.setDelegate(this);
+    code.call();
+}
+
 def getAttributeType(attrib, title){
     
     switch (attrib){
@@ -89,17 +96,21 @@ def getAttributeType(attrib, title){
 
 def deviceSelectionPage() {                  
     dynamicPage(name: "deviceSelectionPage") {
-        specialSection("Device Selection", 1){
+        parent.hubiForm_section(this, "Device Selection", 1)  {
             input (type: "capability.*", name: "sensors", title: "Choose Sensors", multiple: true, submitOnChange: true)
             if (sensors) {
                 def all = (1..sensors.size()).collect{ "" + it };
-                validateOrder(all);
+                parent.hubiTools_validate_order(this, all);
                 sensors.eachWithIndex {sensor, idx ->
                     id = sensor.id;
                     sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() };      
-                    paragraph getSubTitle(sensor.displayName);
+                    container = [];
+                    container <<  parent.hubiForm_sub_section(this,  "${sensor.displayName}");
+                    parent.hubiForm_container(this, container, 1);     
                     input( type: "enum", name: "attributes_${id}", title: "Attributes to graph", required: true, multiple: true, options: sensor_attributes, defaultValue: "1", submitOnChange: false )
                     input( type: "enum", name: "displayOrder_${id}", title: "Order to Display on Timeline", required: true, multiple:false, options: all, defaultValue: idx, submitOnChange: true);
+                                      
+
                 }
             }
         }
@@ -107,63 +118,36 @@ def deviceSelectionPage() {
 
 }
 
-def validateOrder(all) {
-    def order = [];
-    sensors.eachWithIndex {sensor, idx ->
-        order << settings["displayOrder_${sensor.id}"];
-    }
-    
-    //if we are initialized and need to check
-    if(state.lastOrder && state.lastOrder[0]) {
-        def remains = all.findAll { !order.contains(it) }
-    
-        def dupes = [];
-        
-        order.each {it ->
-            if(order.count(it) > 1) dupes << it;
-        }
-        
-        sensors.eachWithIndex {sensor, idx ->
-            if(state.lastOrder[idx] == order[idx] && dupes.contains(settings["displayOrder_${sensor.id}"])) {
-                settings["displayOrder_${sensor.id}"] = remains[0];
-                app.updateSetting("displayOrder_${sensor.id}", [value: remains[0], type: "enum"]);
-                remains.removeAt(0);
-            }
-        }
-    }
-    
-    //reconstruct order
-    order = [];
-    sensors.eachWithIndex {sensor, idx ->
-        order << settings["displayOrder_${sensor.id}"];
-    }
-    
-    state.lastOrder = order;
-}
-
 def attributeConfigurationPage() {
                            
     state.count_ = 0;     
     dynamicPage(name: "attributeConfigurationPage") {
-         specialSection("Directions", 1, "directions"){
-            paragraph """Choose Numeric Attributes Only."""
+          parent.hubiForm_section(this, "Directions", 1, "directions"){
+            container = [];
+            container << parent.hubiForm_text(this, "Choose Numeric Attributes Only");
+
+            parent.hubiForm_container(this, container, 1); 
+
          }
          cnt = 1;
          sensors.each { sensor ->
              def attributes = settings["attributes_${sensor.id}"];
              attributes.each { attribute ->
                  state.count_++;
-                 specialSection("${sensor.displayName} - ${attribute}", 1, "direction"){
-                        input( type: "string", name: "graph_name_override_${sensor.id}_${attribute}", title: "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>", defaultValue: "%deviceName%: %attributeName%");
-                        colorSelector("attribute_${sensor.id}_${attribute}_background", "Background Color", "#3e4475", false);
-                        colorSelector("attribute_${sensor.id}_${attribute}_minmax", "Min/Max Color", "#607c91", false);
-                        colorSelector("attribute_${sensor.id}_${attribute}_current", "Current Value Color", "#8eb6d4", false);
-                        colorSelector("attribute_${sensor.id}_${attribute}_current_border", "Current Value Border", "#FFFFFF", false);
-                        input( type: "bool", name: "attribute_${sensor.id}_${attribute}_showAnnotation", title: "Show Current Value on Bar?", defaultValue: false,  submitOnChange: true);
-                        if (settings["attribute_${sensor.id}_${attribute}_showAnnotation"]==true){
-                            input( type: "string", name: "attribute_${sensor.id}_${attribute}_annotation_units", title: "Units", defaultValue: "");
-                        }
-                        
+                 parent.hubiForm_section(this, "${sensor.displayName} - ${attribute}", 1, "direction"){
+                         container = [];
+                         container << parent.hubiForm_text_input(this,   "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
+                                                                        "graph_name_override_${sensor.id}_${attribute}",
+                                                                        "%deviceName%: %attributeName%", false); 
+                         container << parent.hubiForm_color      (this,  "Bar Background",        "attribute_${sensor.id}_${attribute}_background","#5b626e", false);
+                         container << parent.hubiForm_color      (this,  "Min/Max",               "attribute_${sensor.id}_${attribute}_minmax",  "#607c91", false);
+                         container << parent.hubiForm_color      (this,  "Current Value",         "attribute_${sensor.id}_${attribute}_current", "#8eb6d4", false);
+                         container << parent.hubiForm_color      (this,  "Current Value Border",  "attribute_${sensor.id}_${attribute}_current_border", "#FFFFFF", false);
+                         container << parent.hubiForm_switch     (this,  "Show Current Value on Bar?",    "attribute_${sensor.id}_${attribute}_show_value", false, true);
+                         if (settings["attribute_${sensor.id}_${attribute}_show_value"]==true){
+                             container << parent.hubiForm_text_input(this, "Units", "attribute_${sensor.id}_${attribute}_annotation_units", "", false)
+                         } 
+                         parent.hubiForm_container(this, container, 1);                            
                  }
                  cnt += 1;
                }
@@ -179,40 +163,54 @@ def graphSetupPage(){
     def timespanEnum = [[0:"Live"], [1:"Hourly"], [2:"Daily"], [3:"Every Three Days"], [4:"Weekly"]];
     
     dynamicPage(name: "graphSetupPage") {
-        specialSection("General Options", 1){
+        parent.hubiForm_section(this, "General Options", 1){
+            container = [];
             input( type: "enum", name: "graph_type", title: "<b>Select graph type</b>", multiple: false, required: false, options: [["1": "Bar Chart"],["2": "Column Chart"]], defaultValue: "1");
             input( type: "enum", name: "graph_update_rate", title: "<b>Select graph update rate</b>", multiple: false, required: false, options: rateEnum, defaultValue: "0")
-            input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph (i.e How Often to Reset Range)</b>", multiple: false, required: false, options: timespanEnum, defaultValue: "2", , submitOnChange: true)     
-            colorSelector("graph_background", "Background", "White", false);
-            
-            input( type: "number", name: "graph_bar_percent", title: "<b>Graph Bar Width (1-100)</b>", defaultValue: "90", range: "1..100");
-            input( type: "number", name: "graph_min", title: "<b>Graph Min</b>", defaultValue: "");
-            input( type: "number", name: "graph_max", title: "<b>Graph Max</b>", defaultValue: "");
+            input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph (i.e How Often to Reset Range)</b>", multiple: false, required: false, options: timespanEnum, defaultValue: "2", submitOnChange: true)     
+           
+            container << parent.hubiForm_color (this, "Graph Background", "graph_background", "#FFFFFF", false)
+            container << parent.hubiForm_slider (this, "Graph Bar Width (1%-100%)", "graph_bar_percent", 90, 1, 100, "%");
+            container << parent.hubiForm_text_input(this, "Graph Max", "graph_max", "100", false);
+            container << parent.hubiForm_text_input(this, "Graph Min", "graph_min", "0", false);   
+
+            parent.hubiForm_container(this, container, 1);   
         }
-        specialSection("Horizontal Axes", 1){
-            colorSelector("haxis", "Horizontal Axis", "White", false);
-            fontSizeSelector("haxis", "Horizontal Axis", 9, 2, 20);
+        parent.hubiForm_section(this, "Axes", 1){
+            container = [];
+            container << parent.hubiForm_color (this, "Axis", "haxis", "#000000", false);
+            container << parent.hubiForm_font_size (this, "Axis", "haxis", 9, 2, 20);
+            container << parent.hubiForm_slider (this, "Number of Pixels for Axis", "graph_h_buffer",  40, 10, 500, " pixels");
+            parent.hubiForm_container(this, container, 1);  
         }
-        specialSection("Device Axes", 1){
-            fontSizeSelector("graph_axis", "Device Name", 9, 2, 20);
-            colorSelector("graph_axis", "Device Name", "Black", false);
-            input( type: "number", name: "graph_v_buffer", title: "<b>Number of Pixels for Device Names</b>", defaultValue: "100", range: "10..500");
+        parent.hubiForm_section(this, "Device Names", 1){
+            container = [];
+            container << parent.hubiForm_font_size (this, "Device Name","graph_axis",  9, 2, 20);
+            container << parent.hubiForm_color (this, "Device Name","graph_axis",  "#000000", false);         
+            container << parent.hubiForm_slider (this, "Number of Pixels for Device Name Area", "graph_v_buffer",  100, 10, 500, " pixels");
+
+            parent.hubiForm_container(this, container, 1); 
         }
-        specialSection("Graph Size", 1){
-            //Size
+       parent.hubiForm_section(this, "Graph Size", 1){
+            container = [];
             input( type: "bool", name: "graph_static_size", title: "<b>Set size of Graph?</b><br><small>(False = Fill Window)</small>", defaultValue: false, submitOnChange: true);
-            if (graph_static_size==true){
-                input( type: "number", name: "graph_h_size", title: "<b>Horizontal dimension of the graph</b>", defaultValue: "800", range: "100..3000");
-                input( type: "number", name: "graph_v_size", title: "<b>Vertical dimension of the graph</b>", defaultValue: "600", range: "100..3000");
+            if (graph_static_size==true){      
+                container << parent.hubiForm_slider (this, "Horizontal dimension of the graph", "graph_h_size",  800, 100, 3000, " pixels");
+                container << parent.hubiForm_slider (this, "Vertical dimension of the graph", "graph_v_size",  600, 100, 3000, " pixels");   
             }
+
+            parent.hubiForm_container(this, container, 1); 
         }
-        specialSection("Annotations", 1){
-            fontSizeSelector("annotation", "Annotation", 16, 2, 40);
-            colorSelector("annotation", "Annotation", "#FFFFFF", false);
-            colorSelector("annotation_stem", "Annotation Stem", "#FFFFFF", false);
-            colorSelector("annotation_aura", "Annotation Aura", "#000000", false);
-            input( type: "bool", name: "annotation_bold", title: "<b>Bold Annotation</b>", defaultValue: false);
-            input( type: "bool", name: "annotation_italics", title: "<b><i>Italic</i> Annotation</b>", defaultValue: false);
+        parent.hubiForm_section(this, "Annotations", 1){
+            container = [];
+            container << parent.hubiForm_font_size (this, "Annotation", "annotation", 16, 2, 40);
+            container << parent.hubiForm_switch    (this, "Show Annotation Outside (true) or Inside (false) of Bars", "annotation_inside", false, false);
+            container << parent.hubiForm_color     (this, "Annotation", "annotation",  "#000000", false);
+            container << parent.hubiForm_color     (this, "Annotation Aura", "annotation_aura", "#FFFFFF", false);
+            container << parent.hubiForm_switch    (this, "Bold Annotation", "annotation_bold", false, false);
+            container << parent.hubiForm_switch    (this, "Italic Annotation", "annotation_bold", false, false);
+
+            parent.hubiForm_container(this, container, 1); 
         }    
         
             
@@ -251,51 +249,59 @@ def enableAPIPage() {
 }
 
 def mainPage() {
-   
-    
     dynamicPage(name: "mainPage") {        
        
+            def container = [];
             if (!state.endpoint) {
-                specialSection("Please set up OAuth API", 1, "report"){
+                parent.hubiForm_section(this, "Please set up OAuth API", 1, "report"){
                     href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
                  }    
             } else {
-               specialSection("Graph Options", 1, "tune"){
-                    objects = [];
-                    objects << specialPageButton("Select Device/Data", "deviceSelectionPage", "100%", "vibration");
-                    objects << specialPageButton("Configure Graph", "graphSetupPage", "100%", "poll");
-                    addContainer(objects, 1);
+               parent.hubiForm_section(this, "Graph Options", 1, "tune"){
+                    container = [];
+                    container << parent.hubiForm_page_button(this, "Select Device/Data", "deviceSelectionPage", "100%", "vibration");
+                    container << parent.hubiForm_page_button(this, "Configure Graph", "graphSetupPage", "100%", "poll");
+                    
+                    parent.hubiForm_container(this, container, 1); 
                 }
-                specialSection("Local Graph URL", 1, "link"){
-                    addContainer(["${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"], 1);
+                parent.hubiForm_section(this, "Local Graph URL", 1, "link"){
+                    container = [];
+                    container << parent.hubiForm_text(this, "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
+                    
+                    parent.hubiForm_container(this, container, 1); 
                 }
                 
                 if (graph_timespan){
-                     specialSection("Preview", 10, "show_chart"){
-                      paragraph graphPreview()
-                } //graph_timespan
+                     parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
+                         container = [];
+                         container << parent.hubiForm_graph_preview(this)
+                         
+                         parent.hubiForm_container(this, container, 1); 
+                     } //graph_timespan
             
-                    specialSection("Hubigraph Tile Installation", 2, "apps"){
-                        objects = [];
-                        objects << specialSwitch("Install Hubigraph Tile Device?", "install_device", false, true);
+                    parent.hubiForm_section(this, "Hubigraph Tile Installation", 2, "apps"){
+                        container = [];
+                             
+                        container << parent.hubiForm_switch(this, "Install Hubigraph Tile Device?", "install_device", false, true);
                         if (install_device==true){ 
-                             objects << specialTextInput("Name for HubiGraph Tile Device", "device_name", "false");
+                             container << parent.hubiForm_text_input(this, "Name for HubiGraph Tile Device", "device_name", "Hubigraph Tile", "false");
                         }
-                        addContainer(objects, 1);
+                        parent.hubiForm_container(this, container, 1); 
                     }
                 } 
              
-                
-               if (state.endpoint){
-                   specialSection("Hubigraph Application", 1, "settings"){
             
-                        paragraph getSubTitle("Application Name");
-                        addContainer([specialTextInput("Rename the Application?", "app_name", "false")], 1);
-                        paragraph getSubTitle("Debugging");
-                        addContainer([specialSwitch("Enable Debug Logging?", "debug", false, false)], 1);
-                
-                        paragraph getSubTitle("Disable Oauth Authorization");
-                        addContainer([specialPageButton("Disable API", "disableAPIPage", "100%", "cancel")], 1);  
+               if (state.endpoint){
+                   parent.hubiForm_section(this, "Hubigraph Application", 1, "settings"){
+                        container = [];
+                        container << parent.hubiForm_sub_section(this, "Application Name");
+                        container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Bar Graph", "false");
+                        container << parent.hubiForm_sub_section(this, "Debugging");
+                        container << parent.hubiForm_switch(this, "Enable Debug Logging?", "debug", false, false);
+                        container << parent.hubiForm_sub_section(this, "Disable Oauth Authorization");
+                        container << parent.hubiForm_page_button(this, "Disable API", "disableAPIPage", "100%", "cancel");  
+                       
+                        parent.hubiForm_container(this, container, 1); 
                     }
                }
        
@@ -304,355 +310,6 @@ def mainPage() {
     } //dynamicPage
 }
 
-
-/********************************************************************************************************************************
-*********************************************************************************************************************************
-****************************************** NEW FORM FUNCTIONS********************************************************************
-*********************************************************************************************************************************
-*********************************************************************************************************************************/
-
-
-
-
-def addContainer(containers, numPerRow){
-    
-    def html_ = """
-            <div class = "mdl-grid" style="margin: 0; padding: 0;"> 
-    """
-    containers.each{container->
-        html_ += """<div class="mdl-cell mdl-cell--${12/numPerRow}-col-desktop mdl-cell--${8/numPerRow}-col-tablet mdl-cell--${4/numPerRow}-col-phone">"""
-        html_ += container;
-        html_ += """</div>"""
-    }
-    html_ += """</div>"""
-         
-    paragraph (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
-    
-}
-
-def addText(text){
-    
-    def html_ = "$text";
-    
-    return html_
-}
-
-def specialPageButton(title, page, width, icon){
-    def html_ = """
-        <button type="button" name="_action_href_${page}|${page}|1" class="btn btn-default btn-lg btn-block hrefElem  mdl-button--raised mdl-shadow--2dp mdl-button__icon" style="text-align:left;width:${width}; margin: 0;">
-            <span style="text-align:left;white-space:pre-wrap">
-                ${title}
-            </span>
-            <ul class="nav nav-pills pull-right">
-                <li><i class="material-icons">${icon}</i></li>
-            </ul>
-            <br>
-            <span class="state-incomplete-text " style="text-align: left; white-space:pre-wrap"></span>
-       </button>
-    """.replace('\t', '').replace('\n', '').replace('  ', '');
-    
-    return html_;
-}
-
-def specialSection(String name, pos, icon="", Closure code) {
-    def id = name.replace(' ', '_');
-    //def icon = "vibration";
-    
-    def titleHTML = """
-        <div class="mdl-layout__header" style="display: block; background:#033673; margin: 0 -16px; width: calc(100% + 32px); position: relative; z-index: ${pos}; overflow: visible;">          
-            <div class="mdl-layout__header-row">
-                <span class="mdl-layout__title" style="margin-left: -32px; font-size: 20px; width: auto;">
-                        ${name}
-                </span>
-                <div class="mdl-layout-spacer"></div>
-                <ul class="nav nav-pills pull-right">
-                        <li> <i class="material-icons">${icon}</i></li>
-                </ul>
-             </div> 
-        </div>
-    """;
-    
-    def modContent = """
-    <div id=${id} style="display: none;"></div>
-    <script>
-        var sectionElem = jQuery('#${id}').parent();
-        
-        /*hide default header*/
-        sectionElem.css('display', 'none');
-        sectionElem.css('z-index', ${pos});
-
-        var elem = sectionElem.parent().parent();
-        elem.addClass('mdl-card mdl-card-wide mdl-shadow--8dp');
-        elem.css('width', '100%');
-        elem.css('padding', '0 16px');
-        elem.css('display', 'block');
-        elem.css('min-height', 0);
-        elem.css('position', 'relative');
-        elem.css('z-index', ${pos});
-        elem.css('overflow', 'visible');
-        elem.prepend('${titleHTML}');
-    </script>
-    """;
-    
-    modContent = modContent.replace('\t', '').replace('\n', '').replace('  ', '');
-    
-    section(modContent) {
-        code.call();
-    }
-}
-
-def specialSwitch(title, var, defaultVal, submitOnChange){
-   
-    def actualVal = settings[var] != null ? settings[var] : defaultVal;
-    
-   def html_ = """      
-                    <div class="form-group">
-                        <input type="hidden" name="${var}.type" value="bool">
-                        <input type="hidden" name="${var}.multiple" value="false">
-                    </div>
-                    <label for="settings[${var}]"
-                        class="mdl-switch mdl-js-switch mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events is-upgraded ${actualVal ? "is-checked" : ""}  
-                            data-upgraded=",MaterialSwitch,MaterialRipple">
-                            <input name="checkbox[${var}]" id="settings[${var}]" class="mdl-switch__input 
-                                ${submitOnChange ? "submitOnChange" : ""} "
-                                    type="checkbox" 
-                                ${actualVal ? "checked" : ""}>                
-                            <div class="mdl-switch__label">${title}</div>    
-                            <div class="mdl-switch__track"></div>
-                            <div class="mdl-switch__thumb">
-                                <span class="mdl-switch__focus-helper">
-                                </span>
-                            </div>
-                            <span class="mdl-switch__ripple-container mdl-js-ripple-effect mdl-ripple--center" data-upgraded=",MaterialRipple">
-                                <span class="mdl-ripple">
-                                </span>
-                            </span>
-                    </label>
-                    <input name="settings[${var}]" type="hidden" value="${actualVal}">
-    """
-    return html_.replace('\t', '').replace('\n', '').replace('  ', '');;
- }
-
-def specialTextInput(title, var, submitOnChange){
-     def html_ = """
-        <div class="form-group">
-            <input type="hidden" name="${var}.type" value="text">
-            <input type="hidden" name="${var}.multiple" value="false">
-        </div>
-        <label for="settings[${var}]" class="control-label">
-            <b>${title}</b>
-        </label>
-            <input type="text" name="settings[${var}]" 
-                   class="mdl-textfield__input ${submitOnChange == "true" ? "submitOnChange" : ""} " 
-                   value="${settings[var]}" placeholder="Click to set" id="settings[${var}]">
-        """
-     return html_.replace('\t', '').replace('\n', '').replace('  ', '');
-}
-
-def fontSizeSelector(varname, label, defaultSize, min, max){
-    
-    def fontSize;
-    def varFontSize = "${varname}_font"
-    
-    settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : defaultSize;
-    
-    def html = "";
-    
-    html += 
-    """
-    <table style="width:100%">
-    <tr><td><label for="settings[${varFontSize}]" class="control-label"><b>${label} Font Size</b></td>
-        <td style="text-align:right; font-size:${settings[varFontSize]}px">Font Size: ${settings[varFontSize]}</td>
-        </label>
-    </tr>
-    </table>
-    <input type="range" min = "$min" max = "$max" name="settings[${varFontSize}]" class="mdl-slider submitOnChange " value="${settings[varFontSize]}" id="settings[${varFontSize}]">
-    <div class="form-group">
-        <input type="hidden" name="${varFontSize}.type" value="number">
-        <input type="hidden" name="${varFontSize}.multiple" value="false">
-    </div>
-    """.replace('\t', '').replace('\n', '').replace('  ', '');
-    
-    paragraph html
-    
-    //input (type: "range", name: varFontSize, title: "${label}:<p style='font-size:${settings["$varFontSize"]}px'>Font Size: ${settings["$varFontSize"]}</p>", min: "2", max: "20", submitOnChange: true);
-    
-}
-
-def colorSelector(varname, label, defaultColorValue, defaultTransparentValue){
-    def html = ""
-    def varnameColor = "${varname}_color";
-    def varnameTransparent = "${varname}_color_transparent"
-    def colorTitle = "<b>${label} Color</b>"
-    def notTransparentTitle = "Transparent";
-    def transparentTitle = "${label}: Transparent"
-    
-    settings[varnameColor] = settings[varnameColor] ? settings[varnameColor]: defaultColorValue;
-    settings[varnameTransparent] = settings[varnameTransparent] ? settings[varnameTransparent]: defaultTransparentValue;
-    
-    def isTransparent = settings[varnameTransparent];
-    
-    html += 
-    """
-    <div style="display: flex; flex-flow: row wrap;">
-        <div style="display: flex; flex-flow: row nowrap; flex-basis: 100%;">
-            ${!isTransparent ? """<label for="settings[${varnameColor}]" class="control-label" style="flex-grow: 1">${colorTitle}</label>""" : """"""}
-            <label for="settings[${varnameTransparent}]" class="control-label" style="width: auto;">${isTransparent ? transparentTitle: notTransparentTitle}</label>
-        </div>
-        ${!isTransparent ? """
-            <div style="flex-grow: 1; flex-basis: 1px; padding-right: 8px;">
-                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]" list="presetColors">
-                  <datalist id="presetColors">
-                    <option>#800000</option>
-                    <option>#FF0000</option>
-                    <option>#FFA500</option>
-                    <option>#FFFF00</option>
-
-                    <option>#808000</option>
-                    <option>#008000</option>
-                    <option>#00FF00</option>
-                    
-                    <option>#800080</option>
-                    <option>#FF00FF</option>
-                    
-                    <option>#000080</option>
-                    <option>#0000FF</option>
-                    <option>#00FFFF</option>
-
-                    <option>#FFFFFF</option>
-                    <option>#C0C0C0</option>
-                    <option>#000000</option>
-                  </datalist>
-            </div>
-        """ : ""}
-        <div class="submitOnChange">
-            <input name="checkbox[${varnameTransparent}]" id="settings[${varnameTransparent}]" style="width: 27.6px; height: 27.6px;" type="checkbox" onmousedown="((e) => { jQuery('#${varnameTransparent}').val('${!isTransparent}'); })()" ${isTransparent ? 'checked' : ''} />
-            <input id="${varnameTransparent}" name="settings[${varnameTransparent}]" type="hidden" value="${isTransparent}" />
-        </div>
-        <div class="form-group">
-            <input type="hidden" name="${varnameColor}.type" value="color">
-            <input type="hidden" name="${varnameColor}.multiple" value="false">
-
-            <input type="hidden" name="${varnameTransparent}.type" value="bool">
-            <input type="hidden" name="${varnameTransparent}.multiple" value="false">
-        </div>
-    </div>
-    """.replace('\t', '').replace('\n', '').replace('  ', '');
-    
-    paragraph html;
-}
-
-def graphPreview(){
-  def html = ""
-    if (!state.count_) state.count_ = 5;
-    html+= """<iframe id="preview" style="width: 100%; position: relative; z-index: 1; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}" data-fullscreen="false" onload="(() => {
-          this.handel = -1;
-          const thisFrame = this;
-          const body = thisFrame.contentDocument.body;
-          const start = () => {
-              if(thisFrame.dataset.fullscreen == 'false') {
-                thisFrame.style = 'position:fixed !important; z-index: 100; height: 100%; width: 100%; top: 60px; left: 0; overflow:visible;';
-                thisFrame.dataset.fullscreen = 'true';
-              } else {
-                thisFrame.style = 'position:relative; top: 0; z-index: 1; left: 0; overflow:hidden; opacity: 1.0;';
-                const box = jQuery('#preview').parent()[0].getBoundingClientRect();
-                const h = 100 * ${state.count_.floatValue()} + 30;
-                const w = box.width * 1.00;
-                jQuery('#preview').css('height', h);
-                jQuery('#preview').css('width', w);
-                thisFrame.dataset.fullscreen = 'false';
-              }
-          }
-          body.addEventListener('dblclick', start);
-    })()""></iframe>
-    <script>
-    function resize() {
-        const box = jQuery('#preview').parent()[0].getBoundingClientRect();
-        const h = 100 * ${state.count_.floatValue()} + 30;
-        const w = box.width * 1.00;
-        jQuery('#preview').css('height', h);
-        jQuery('#preview').css('width', w);
-    }
-    resize();
-    jQuery(window).on('resize', () => {
-        resize();
-    });
-    </script><small> *Double-click to Toggle Full-Screen </small>
-"""
-    
-return html;
-}
-
-def getSubTitle(myText=""){
-    def newText = myText.replaceAll( /'/, '' )
-    def html = """
-        <div class="mdl-layout__header" style="display: block; min-height: 0;">
-        <div class="mdl-layout__header-row" style="height: 48px;">
-        <span class="mdl-layout__title" style="margin-left: -32px; font-size: 9px; width: auto;">
-                   <h5 style="font-size: 16px;">${newText}</h5>
-        </span>
-        </div>
-        </div>
-    """.replace('\t', '').replace('\n', '').replace('  ', '');
-                
-    return html
-}
-
-def logDebug(str){
-    if (debug==true){
-        log.debug(str);   
-    }
-}
-
-def createHubiGraphTile() {
-	log.info "Creating HubiGraph Child Device"
-    
-    def childDevice = getChildDevice("HUBIGRAPH_${app.id}");     
-    logDebug(childDevice);
-   
-    if (!childDevice) {
-        if (!device_name) device_name="Dummy Device";
-        logDebug("Creating Device $device_name");
-    	childDevice = addChildDevice("tchoward", "Hubigraph Tile Device", "HUBIGRAPH_${app.id}", null,[completedSetup: true, label: device_name]) 
-        log.info "Created HTTP Switch [${childDevice}]"
-        
-        //Send the html automatically
-        childDevice.setGraph("${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
-        log.info "Sent setGraph: ${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
-	}
-    else {
-    	
-        childDevice.label = device_name;
-        log.info "Label Updated to [${device_name}]"
-        
-        //Send the html automatically
-        childDevice.setGraph("${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
-        log.info "Sent setGraph: ${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
-	}
-
-}
-
-def getLine(){	  
-	def html = "<hr style='background-color:#1A77C9; height: 1px; border: 0;'>"
-    html
-}
-
-def getTableRow(col1, col2, col3, col4){
-     def html = "<tr><td width='40%'>$col1</td><td width='30%'>$col2</td><td width='20%'>$col3</td><td width='10%'>$col4</td></tr>"  
-     html
-}
-
-def getTitle(myText=""){
-    def html = "<div class='row-full' style='background-color:#1A77C9;color:white;font-weight: bold; text-align: center; font-size: 20px '>"
-    html += "${myText}</div>"
-    html
-}
-
-/********************************************************************************************************************************************
-*********************************************************************************************************************************************
-***************************************************  END HELPER FUNCTIONS  ******************************************************************
-*********************************************************************************************************************************************
-*********************************************************************************************************************************************/
 
 def getTableRow3(col1, col2, col3){
      def html = "<tr><td width='30%'>$col1</td><td width='30%'>$col2</td><td width='40%'>$col3</td></tr>"  
@@ -785,17 +442,20 @@ def getChartOptions(){
             ],
             "backgroundColor": graph_background_color_transparent ? "transparent" : graph_background_color,
             "isStacked": true,
-            "chartArea": [ "left": graph_v_buffer, "right" : 10, "top": 10, "bottom": 40 ],
+             "chartArea": [ "left": graph_type == "1" ? graph_v_buffer : graph_h_buffer, 
+                           "right" : 10, 
+                           "top": 10, 
+                           "bottom": graph_type == "1" ? graph_h_buffer : graph_v_buffer ],
             "legend" : [ "position" : "none" ],
-             axis1: [ "viewWindow" : ["max" : graph_max, 
+            "${axis1}": [ "viewWindow" : ["max" : graph_max, 
                                         "min" : graph_min], 
                          "minValue" : graph_min, 
                          "maxValue" : graph_max,
-                        "textStyle" : ["color": haxis_color_transparent ? "transparent" : haxis_color,
+                         "textStyle" : ["color": haxis_color_transparent ? "transparent" : haxis_color,
                                        "fontSize": haxis_font]
                       ],
-            axis2: [ "textStyle" : ["color": graph_axis_color_transparent ? "transparent" : graph_axis_color,
-                                       "fontSize": graph_axis_font]
+            "${axis2}": [ "textStyle" : ["color": graph_axis_color_transparent ? "transparent" : graph_axis_color,
+                                    "fontSize": graph_axis_font]
                        ],
             "annotations" : [    "alwaysOutside": true,
                                  "textStyle": [
@@ -805,7 +465,7 @@ def getChartOptions(){
       	         					"color":    annotation_color_transparent ? "transparent" : annotation_color,
       					            "auraColor":annotation_aura_color_transparent ? "transparent" : annotation_aura_color,
 				                 ],
-                                 "stem": [ "color": annotation_stem_color_transparent ? "transparent" : annotation_stem_color ],
+                                 "stem": [ "color": "transparent" ],
                                  "highContrast": "false"
                              ],
               
@@ -1062,11 +722,15 @@ function drawChart(callback) {
         var cur_String = '';
         var units_ = ``;
 
+        
         const name = subscriptions.labels[deviceId][attr].replace('%deviceName%', subscriptions.sensors[deviceId].displayName).replace('%attributeName%', attr);
         const colors = subscriptions.colors[deviceId][attr];
+        if (colors.annotation_units != null){
+            units_ = `\${colors.annotation_units}`
+        }
         if (colors.showAnnotation == true){
-            cur_String = `\${cur_.toFixed(1)}\${colors.annotation_units}`;
-            units_ = `\${colors.annotation_units}`;
+            cur_String = `\${cur_.toFixed(1)}\${units_}`;
+            
         }
 
         var stats_ = `\${name}\nMin: \${event.min}\${units_}\nMax: \${event.max}\${units_}\nCurrent: \${event.current}\${units_}`
@@ -1202,7 +866,7 @@ def getSubscriptions() {
                                             "minMaxColor":             settings["attribute_${sensor.id}_${attribute}_minmax_color"],
                                             "currentValueColor":       settings["attribute_${sensor.id}_${attribute}_current_color"],
                                             "currentValueBorderColor": settings["attribute_${sensor.id}_${attribute}_current_border_color"],
-                                            "showAnnotation":          settings["attribute_${sensor.id}_${attribute}_showAnnotation"],
+                                            "showAnnotation":              settings["attribute_${sensor.id}_${attribute}_show_value"],
                                             "annotation_font":         settings["attribute_${sensor.id}_${attribute}_annotation_font"],
                                             "annotation_units":        settings["attribute_${sensor.id}_${attribute}_annotation_units"],
                                            ];
@@ -1231,3 +895,4 @@ def getSubscriptions() {
     
     return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
 }
+
