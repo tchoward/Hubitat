@@ -1,4 +1,4 @@
-ddefinition(
+definition(
     name: "Hubigraphs",
     namespace: "tchoward",
     author: "Thomas Howard",
@@ -99,15 +99,15 @@ def hubiForm_page_button(child, title, page, width, icon=""){
 }
 
 //specialSection
-def hubiForm_section(child, name, pos, icon="", Closure code) {
+def hubiForm_section(child, title, pos, icon="", Closure code) {
         child.call(){
-                def id = name.replace(' ', '_');
+                def id = title.replace(' ', '_');
 
                 def titleHTML = """
                         <div class="mdl-layout__header" style="display: block; background:#033673; margin: 0 -16px; width: calc(100% + 32px); position: relative; z-index: ${pos}; overflow: visible;">          
                         <div class="mdl-layout__header-row">
                                 <span class="mdl-layout__title" style="margin-left: -32px; font-size: 20px; width: auto;">
-                                        ${name}
+                                        ${title}
                                 </span>
                                 <div class="mdl-layout-spacer"></div>
                                 <ul class="nav nav-pills pull-right">
@@ -207,7 +207,7 @@ def hubiForm_text_input(child, title, var, defaultVal, submitOnChange){
 }
 
 //fontSizeSelector
-def hubiForm_font_size(child, varname, label, defaultSize, min, max){
+def hubiForm_font_size(child, title, varname, defaultSize, min, max){
     
     child.call(){
         def fontSize;
@@ -218,7 +218,7 @@ def hubiForm_font_size(child, varname, label, defaultSize, min, max){
         def html_ = 
                 """
                 <table style="width:100%">
-                <tr><td><label for="settings[${varFontSize}]" class="control-label"><b>${label} Font Size</b></td>
+                <tr><td><label for="settings[${varFontSize}]" class="control-label"><b>${title} Font Size</b></td>
                         <td style="text-align:right; font-size:${settings[varFontSize]}px">Font Size: ${settings[varFontSize]}</td>
                         </label>
                 </tr>
@@ -235,7 +235,7 @@ def hubiForm_font_size(child, varname, label, defaultSize, min, max){
 }
 
 //lineSizeSlector
-def hubiForm_line_size(child, varname, label, defaultSize, min, max){
+def hubiForm_line_size(child, title, varname, defaultSize, min, max){
     
     child.call(){
         def fontSize;
@@ -246,7 +246,7 @@ def hubiForm_line_size(child, varname, label, defaultSize, min, max){
         def html_ =
                 """
                 <table style="width:100%">
-                <tr><td><label for="settings[${varLineSize}]" class="control-label"><b>${label} Line Size</b></td>
+                <tr><td><label for="settings[${varLineSize}]" class="control-label"><b>${title} Line Size</b></td>
                         <td border=1 style="text-align:right;">Line Size: ${settings[varLineSize]}<hr style='background-color:#1A77C9; height:${settings[varLineSize]}px; border: 0;'></td>
                         </label>
                 </tr>
@@ -264,7 +264,7 @@ def hubiForm_line_size(child, varname, label, defaultSize, min, max){
 }
 
 //sliderSelector
-def hubiForm_slider(child, varname, label, defaultSize, min, max, units=""){
+def hubiForm_slider(child, title, varname, defaultSize, min, max, units=""){
     
     child.call(){
         def fontSize;
@@ -275,7 +275,7 @@ def hubiForm_slider(child, varname, label, defaultSize, min, max, units=""){
         def html_ =
                 """
                 <table style="width:100%">
-                <tr><td><label for="settings[${varSize}]" class="control-label"><b>${label}</b></td>
+                <tr><td><label for="settings[${varSize}]" class="control-label"><b>${title}</b></td>
                         <td border=1 style="text-align:right;">Value: ${settings[varSize]}${units}</td>
                         </label>
                 </tr>
@@ -292,14 +292,14 @@ def hubiForm_slider(child, varname, label, defaultSize, min, max, units=""){
 }
 
 //colorSelector
-def hubiForm_color(child, varname, label, defaultColorValue, defaultTransparentValue){
+def hubiForm_color(child, title, varname, defaultColorValue, defaultTransparentValue){
         child.call(){
                 
                 def varnameColor = "${varname}_color";
                 def varnameTransparent = "${varname}_color_transparent"
-                def colorTitle = "<b>${label} Color</b>"
+                def colorTitle = "<b>${title} Color</b>"
                 def notTransparentTitle = "Transparent";
-                def transparentTitle = "${label}: Transparent"
+                def transparentTitle = "${title}: Transparent"
                 
                 settings[varnameColor] = settings[varnameColor] ? settings[varnameColor]: defaultColorValue;
                 settings[varnameTransparent] = settings[varnameTransparent] ? settings[varnameTransparent]: defaultTransparentValue;
@@ -450,7 +450,41 @@ def hubiTool_create_tile(child) {
                         log.info "Sent setGraph: ${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
                 }
         }
+}
 
+def hubiTools_validate_order(child, all) {
+    child.call(){
+        def order = [];
+        sensors.eachWithIndex {sensor, idx ->
+            order << settings["displayOrder_${sensor.id}"];
+        }
+    
+        //if we are initialized and need to check
+        if(state.lastOrder && state.lastOrder[0]) {
+            def remains = all.findAll { !order.contains(it) }
+    
+            def dupes = [];
+        
+            order.each {ord ->
+                if(order.count(ord) > 1) dupes << ord;
+            }
+        
+            sensors.eachWithIndex {sensor, idx ->
+                if(state.lastOrder[idx] == order[idx] && dupes.contains(settings["displayOrder_${sensor.id}"])) {
+                    settings["displayOrder_${sensor.id}"] = remains[0];
+                    app.updateSetting("displayOrder_${sensor.id}", [value: remains[0], type: "enum"]);
+                    remains.removeAt(0);
+                }
+            }
+        }
+    
+        //reconstruct order
+        order = [];
+        sensors.eachWithIndex {sensor, idx ->
+            order << settings["displayOrder_${sensor.id}"];
+        }
+        state.lastOrder = order;
+    }
 }
 
 /********************************************************************************************************************************************
