@@ -421,6 +421,24 @@ def hubiForm_sub_section(child, myText=""){
         }
 }
 
+def hubiForm_cell(child, containers, numPerRow){
+    
+        child.call(){
+                def html_ = 
+                        """
+                        <div class = "mdl-grid" style="margin: 0; padding: 0;"> 
+                        """
+                containers.each{container->
+                        html_ += """<div class="mdl-cell mdl-cell--${12/numPerRow}-col-desktop mdl-cell--${8/numPerRow}-col-tablet mdl-cell--${4/numPerRow}-col-phone">"""
+                        html_ += container;
+                        html_ += """</div>"""
+                }
+                html_ += """</div>"""
+                        
+                return (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
+        }
+}
+
 //createHubiGraphTile
 def hubiTool_create_tile(child) {
 	child.call(){
@@ -486,6 +504,55 @@ def hubiTools_validate_order(child, all) {
         state.lastOrder = order;
     }
 }
+
+def hubiTools_rotating_colors(c){
+    
+    ret = "#FFFFFF"
+    color = c % 13;
+    switch (color){
+        case 0: return hubiTools_get_color_code("RED"); break;
+        case 1: return hubiTools_get_color_code("GREEN"); break;
+        case 2: return hubiTools_get_color_code("BLUE"); break;
+        case 3: return hubiTools_get_color_code("MAROON"); break;
+        case 4: return hubiTools_get_color_code("YELLOW"); break;
+        case 5: return hubiTools_get_color_code("OLIVE"); break;
+        case 6: return hubiTools_get_color_code("AQUA"); break;
+        case 7: return hubiTools_get_color_code("LIME"); break;
+        case 8: return hubiTools_get_color_code("NAVY"); break;
+        case 9: return hubiTools_get_color_code("FUCHSIA"); break;
+        case 10: return hubiTools_get_color_code("PURPLE"); break;
+        case 11: return hubiTools_get_color_code("TEAL"); break;
+        case 12: return hubiTools_get_color_code("ORANGE"); break;
+    }
+    return ret;
+}
+
+def hubiTools_get_color_code(input_color){
+    
+    new_color = input_color.toUpperCase();
+    
+    switch (new_color){
+        
+        case "WHITE" :	return "#FFFFFF"; break;
+        case "SILVER" :	return "#C0C0C0"; break;
+        case "GRAY" :	return "#808080"; break;
+        case "BLACK" :	return "#000000"; break;
+        case "RED" :	return "#FF0000"; break;
+        case "MAROON" :	return "#800000"; break;
+        case "YELLOW" :	return "#FFFF00"; break;
+        case "OLIVE" :	return "#808000"; break;
+        case "LIME" :	return "#00FF00"; break;
+        case "GREEN" :	return "#008000"; break;
+        case "AQUA" :	return "#00FFFF"; break;
+        case "TEAL" :	return "#008080"; break;
+        case "BLUE" :	return "#0000FF"; break;
+        case "NAVY" :	return "#000080"; break;
+        case "FUCHSIA" :return "#FF00FF"; break;
+        case "PURPLE" :	return "#800080"; break;
+    }
+}
+   
+
 
 /********************************************************************************************************************************************
 *********************************************************************************************************************************************
