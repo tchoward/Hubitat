@@ -108,9 +108,7 @@ def deviceSelectionPage() {
                     container <<  parent.hubiForm_sub_section(this,  "${sensor.displayName}");
                     parent.hubiForm_container(this, container, 1);     
                     input( type: "enum", name: "attributes_${id}", title: "Attributes to graph", required: true, multiple: true, options: sensor_attributes, defaultValue: "1", submitOnChange: false )
-                    input( type: "enum", name: "displayOrder_${id}", title: "Order to Display on Timeline", required: true, multiple:false, options: all, defaultValue: idx, submitOnChange: true);
-                                      
-
+                             
                 }
             }
         }
@@ -128,6 +126,9 @@ def attributeConfigurationPage() {
 
             parent.hubiForm_container(this, container, 1); 
 
+         }
+         parent.hubiForm_section(this, "Graph Order", 1, "directions"){
+             parent.hubiForm_list_reorder(this, "graph_order", "#3e4475");       
          }
          cnt = 1;
          sensors.each { sensor ->
@@ -709,8 +710,11 @@ function drawChart(callback) {
                                                                                                        { type: 'number', label: 'High'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
                                                                                                        { type: 'number', label: 'Max'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" }]]);
 
-    subscriptions.order.forEach(deviceId => {
-      Object.entries(graphData[deviceId]).forEach(([attr, event]) => {
+    subscriptions.order.forEach(orderStr => {
+      const splitStr = orderStr.split('_');
+      const deviceId = splitStr[1];
+      const attr = splitStr[2];
+      const event = graphData[deviceId][attr];
         const max_ = event.max > options.graphHigh ? options.graphHigh : event.max;
         const min_ = event.min < options.graphLow ? options.graphLow : event.min;
         const cur_ = parseFloat(event.current);
@@ -741,7 +745,6 @@ function drawChart(callback) {
                                  d,     `color: \${colors.minMaxColor}`,                                                                                                        `\${stats_}`,     '',
                                  e,     `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     ''
         ]);
-      });
 
     });
 
@@ -879,10 +882,7 @@ def getSubscriptions() {
         sensors_fmt[it.id] = [ "id": it.id, "displayName": it.displayName, "currentStates": it.currentStates ];
     }
     
-    def order = [sensors.size()];
-    sensors.each {sensor ->
-        order[Integer.parseInt(settings["displayOrder_${sensor.id}"]) - 1] = sensor.idAsLong;
-    }
+    def order = parseJson(graph_order);
     
     def subscriptions = [
         "sensors": sensors_fmt,
@@ -895,4 +895,3 @@ def getSubscriptions() {
     
     return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
 }
-
