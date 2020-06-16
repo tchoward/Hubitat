@@ -1,4 +1,4 @@
-definitdefinition(
+definition(
     name: "Hubigraphs",
     namespace: "tchoward",
     author: "Thomas Howard",
