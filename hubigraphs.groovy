@@ -1,4 +1,4 @@
-definition(
+definitdefinition(
     name: "Hubigraphs",
     namespace: "tchoward",
     author: "Thomas Howard",
@@ -98,6 +98,8 @@ def hubiForm_page_button(child, title, page, width, icon=""){
         return html_;
 }
 
+
+
 //specialSection
 def hubiForm_section(child, title, pos, icon="", Closure code) {
         child.call(){
@@ -142,9 +144,9 @@ def hubiForm_section(child, title, pos, icon="", Closure code) {
                 modContent = modContent.replace('\t', '').replace('\n', '').replace('  ', '');
             
             section(modContent, code);
-        }
-                
+        }         
 }
+
 
 //specialSwitch
 def hubiForm_switch(child, title, var, defaultVal, submitOnChange){
@@ -439,6 +441,7 @@ def hubiForm_cell(child, containers, numPerRow){
         }
 }
 
+
 //createHubiGraphTile
 def hubiTool_create_tile(child) {
 	child.call(){
@@ -446,7 +449,7 @@ def hubiTool_create_tile(child) {
                 log.info "Creating HubiGraph Child Device"
         
                 def childDevice = getChildDevice("HUBIGRAPH_${app.id}");     
-                logDebug(childDevice);
+                log.debug(childDevice);
                 
                 if (!childDevice) {
                         if (!device_name) device_name="Dummy Device";
@@ -552,8 +555,37 @@ def hubiTools_get_color_code(input_color){
     }
 }
    
-
-
+def hubiForm_list_reorder(child, var, list_data) {
+        child.call(){
+            def html_ = 
+               """
+                <script src="/local/DragDropTouch.js"></script>
+                <div id = "moveable" class = "mdl-grid" style="margin: 0; padding: 0; text-color: white !important"> 
+               """
+               
+                list_data.each{data->
+                    color_ = settings["${data.var}_background_color"];
+                    id_ = "${data.var}"
+                    var_ = "${data.var}_data_order"
+                    html_ += """<div id="$id_" class="mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone mdl-shadow--4dp mdl-color-text--indigo-400" 
+                                        draggable="true" ondragover="dragOver(event)" ondragstart="dragStart(event)" ondragend= "dragEnd(event)"
+                                        style = "font-size: 16px !important; margin: 8px !important; padding: 14px !important;">
+                                        <i class="mdl-icon-toggle__label material-icons" style="color: ${color_} !important;">fiber_manual_record</i>
+                                        
+                                    """
+                        html_ += data.title;
+                        html_ += """</div>
+                        """
+               }
+               html_ += """</div>
+               <input type="hidden" name="${var}.type" value="text">
+               <input type="hidden" name="${var}.multiple" value="">"""
+            
+               html_ = html_.replace('\t', '').replace('\n', '').replace('  ', '');
+                  
+               paragraph (html_);
+        }
+}
 /********************************************************************************************************************************************
 *********************************************************************************************************************************************
 ***************************************************  END HELPER FUNCTIONS  ******************************************************************
