@@ -104,12 +104,13 @@ def hubiForm_page_button(child, title, page, width, icon=""){
 def hubiForm_section(child, title, pos, icon="", Closure code) {
         child.call(){
                 def id = title.replace(' ', '_');
+                def title_ = title.replace("'", "’").replace("`", "’")
 
                 def titleHTML = """
                         <div class="mdl-layout__header" style="display: block; background:#033673; margin: 0 -16px; width: calc(100% + 32px); position: relative; z-index: ${pos}; overflow: visible;">          
                         <div class="mdl-layout__header-row">
                                 <span class="mdl-layout__title" style="margin-left: -32px; font-size: 20px; width: auto;">
-                                        ${title}
+                                        ${title_}
                                 </span>
                                 <div class="mdl-layout-spacer"></div>
                                 <ul class="nav nav-pills pull-right">
@@ -407,7 +408,7 @@ def hubiForm_graph_preview(child){
 //getSubTitle
 def hubiForm_sub_section(child, myText=""){
         child.call(){
-                def newText = myText.replaceAll( /'/, '' )
+                def newText = myText.replaceAll( /'/, '’' ).replace("'", "’").replace("`", "’")
                 def html_ = 
                         """
                         <div class="mdl-layout__header" style="display: block; min-height: 0;">
@@ -453,7 +454,7 @@ def hubiTool_create_tile(child) {
                 
                 if (!childDevice) {
                         if (!device_name) device_name="Dummy Device";
-                        logDebug("Creating Device $device_name");
+                        log.debug("Creating Device $device_name");
                         childDevice = addChildDevice("tchoward", "Hubigraph Tile Device", "HUBIGRAPH_${app.id}", null,[completedSetup: true, label: device_name]) 
                         log.info "Created HTTP Switch [${childDevice}]"
                         
@@ -555,18 +556,122 @@ def hubiTools_get_color_code(input_color){
     }
 }
    
-def hubiForm_list_reorder(child, var, list_data) {
+def hubiTools_get_name_from_id(id, sensors){
+    
+    def return_val = "Error"
+    
+    sensors.each { sensor ->
+        if (id == sensor.id) {  
+            return_val = sensor.displayName;
+        }
+    }
+    return return_val;
+    
+}
+
+def hubiTools_get_order(order){
+    
+    split_ = order.replace('"', '').replace('[', '').replace(']', '').replace("attribute_", "").split(',');
+    list_ = [];
+    split_.each{device->
+        sub_ = device.split('_');
+        list_ << [id: sub_[0], attribute:sub_[1]]; 
+    }
+    return list_;    
+}
+
+def hubiTools_check_list(sensors, list_){
+    result = true;
+    count_ = 0;
+    //check for addition/changes
+    sensors.each { sensor ->
+                     id = sensor.id;
+                     
+                     attributes = settings["attributes_${sensor.id}"];
+                     attributes.each { attribute ->
+                         count_ ++;
+                         inner_result = false;
+                         for (i=0; i<list_.size(); i++){
+                             //log.debug("$list_[i].id : $id    $list_[i].attribute : $attribute");
+                             if (list_[i].id == id && list_[i].attribute == attribute){
+                                  inner_result = true;   
+                             }
+                         }
+                         log.debug("$id $inner_result");
+                         result = result & inner_result;
+                     }
+    }   
+    //check for smaller
+    count_result = false;
+    if (list_.size() == count_){
+        count_result = true;
+    }
+    return (result & count_result);  
+}
+
+
+def hubiForm_list_reorder(child, var, solid_background="") {
         child.call(){
+           
+            /**********************************************/
+            def count_ = 0;
+            
+            if (settings["${var}"] != null){
+                list_ = parent.hubiTools_get_order(settings["${var}"]);
+                result_ = parent.hubiTools_check_list(sensors, list_);
+            }
+            if (result_ == false) {
+                settings["${var}"] = null;        
+            }
+            //build list order
+            list_data = [];
+            //Setup Original Ordering
+            if (settings["${var}"] == null){
+                settings["${var}"] = "[";
+                sensors.each { sensor ->
+                     attributes = settings["attributes_${sensor.id}"];
+                     attributes.each { attribute ->
+                         settings["${var}"] += /"attribute_${sensor.id}_${attribute}",/  
+                         if (settings["attribute_${sensor.id}_${attribute}_background_color"] == null){
+                             if (solid_background== ""){
+                                 settings["attribute_${sensor.id}_${attribute}_background_color"] = parent.hubiTools_rotating_colors(count_);
+                             } else {
+                                 settings["attribute_${sensor.id}_${attribute}_background_color"] = solid_background;
+                             }
+                         }
+                         count_++;
+                     }
+                 }
+                settings["${var}"] = settings["${var}"].substring(0, settings["${var}"].length() - 1);
+                settings["${var}"] += "]";
+            }
+   
+            count_ = 0;
+            order_ = parent.hubiTools_get_order(settings["${var}"]);
+            order_.each { device_->
+                deviceName_ = parent.hubiTools_get_name_from_id(device_.id, sensors);
+                title_ = """<b>${deviceName_}</b><br><p style="float: right;">${device_.attribute}</p>""";
+                title_.replace("'", "’").replace("`", "’");
+                list_data << [title: title_, var: "attribute_${device_.id}_${device_.attribute}"];
+            }
+            
+            /**********************************************/
+            
+            def var_val_ = settings["${var}"].replace('"', '&quot;');
             def html_ = 
                """
-                <script src="/local/DragDropTouch.js"></script>
+                <script>
+                    function onOrderChange(order) {
+                                        jQuery("#settings${var}").val(JSON.stringify(order));
+                    }
+                </script>
+                <script src="/local/HubiGraph.js"></script>
                 <div id = "moveable" class = "mdl-grid" style="margin: 0; padding: 0; text-color: white !important"> 
                """
                
                 list_data.each{data->
                     color_ = settings["${data.var}_background_color"];
                     id_ = "${data.var}"
-                    var_ = "${data.var}_data_order"
                     html_ += """<div id="$id_" class="mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone mdl-shadow--4dp mdl-color-text--indigo-400" 
                                         draggable="true" ondragover="dragOver(event)" ondragstart="dragStart(event)" ondragend= "dragEnd(event)"
                                         style = "font-size: 16px !important; margin: 8px !important; padding: 14px !important;">
@@ -578,8 +683,11 @@ def hubiForm_list_reorder(child, var, list_data) {
                         """
                }
                html_ += """</div>
-               <input type="hidden" name="${var}.type" value="text">
-               <input type="hidden" name="${var}.multiple" value="">"""
+                <input type="text" id="settings${var}" name="settings[${var}]" value="${var_val_}" style="display: none;" disabled />
+                <div class="form-group">
+                   <input type="hidden" name="${var}.type" value="text">
+                   <input type="hidden" name="${var}.multiple" value="false">
+                </div>"""
             
                html_ = html_.replace('\t', '').replace('\n', '').replace('  ', '');
                   
