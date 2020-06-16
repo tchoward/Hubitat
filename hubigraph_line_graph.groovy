@@ -423,7 +423,7 @@ def updated() {
     app.updateLabel(app_name);
     
     if (install_device == true){
-        createHubiGraphTile();
+        parent.hubiTool_create_tile(this);
     }
     
 }
