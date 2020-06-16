@@ -1,5 +1,5 @@
 /**
- *  Hubigraph Bar Graph Child App
+ *  Hubigraph RangeBar Child App
  *
  *  Copyright 2020, but let's behonest, you'll copy it
  *
@@ -96,17 +96,13 @@ def deviceSelectionPage() {
             input (type: "capability.*", name: "sensors", title: "Choose Sensors", multiple: true, submitOnChange: true)
             if (sensors) {
                 def all = (1..sensors.size()).collect{ "" + it };
-                parent.hubiTools_validateOrder(all);
                 sensors.eachWithIndex {sensor, idx ->
                     id = sensor.id;
                     sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() };      
                     container = [];
                     container <<  parent.hubiForm_sub_section(this,  "${sensor.displayName}");
                     parent.hubiForm_container(this, container, 1);     
-                    input( type: "enum", name: "attributes_${id}", title: "Attributes to graph", required: true, multiple: true, options: sensor_attributes, defaultValue: "1", submitOnChange: false )
-                    input( type: "enum", name: "displayOrder_${id}", title: "Order to Display on Timeline", required: true, multiple:false, options: all, defaultValue: idx, submitOnChange: true);
-                                      
-
+                    input( type: "enum", name: "attributes_${id}", title: "Attributes to graph", required: true, multiple: true, options: sensor_attributes, defaultValue: "1", submitOnChange: false )                                     
                 }
             }
         }
@@ -114,42 +110,47 @@ def deviceSelectionPage() {
 
 }
 
-
 def attributeConfigurationPage() {
                            
-    state.count_ = 0;     
+    
+    
     dynamicPage(name: "attributeConfigurationPage") {
          parent.hubiForm_section(this, "Directions", 1, "directions"){
             container = [];
             container << parent.hubiForm_text(this, "Choose Numeric Attributes Only");
-
             parent.hubiForm_container(this, container, 1); 
 
          }
-         cnt = 1;
+        
+         parent.hubiForm_section(this, "Graph Order", 1, "directions"){
+             parent.hubiForm_list_reorder(this, "graph_order");       
+         }
+         
+        
+         count = 0;
          sensors.each { sensor ->
-             def attributes = settings["attributes_${sensor.id}"];
+             attributes = settings["attributes_${sensor.id}"];
              attributes.each { attribute ->
-                 state.count_++;
-                 parent.hubiForm_section(this, "${sensor.displayName} - ${attribute}", 1, "direction"){
-                        container = [];
-                        container << parent.hubiForm_text_input(this,   "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
-                                                                        "graph_name_override_${sensor.id}_${attribute}",
-                                                                        "%deviceName%: %attributeName%", false);
-                        container << parent.hubiForm_color      (this,  "Bar Background",               "attribute_${sensor.id}_${attribute}_background", "#3e4475", false);
-                        container << parent.hubiForm_color      (this,  "Bar Border",                   "attribute_${sensor.id}_${attribute}_current_border", "#FFFFFF", false);
-                        container << parent.hubiForm_line_size  (this,  "Bar Border",                   "attribute_${sensor.id}_${attribute}_current_border", 2, 1, 10);
-                        container << parent.hubiForm_switch     (this,  "Show Current Value on Bar",    "attribute_${sensor.id}_${attribute}_show_value", false, true);
-                        if (settings["attribute_${sensor.id}_${attribute}_show_value"]==true){
-                            container << parent.hubiForm_text_input(this, "Units", "attribute_${sensor.id}_${attribute}_annotation_units", "", false)
-                        } 
-                    parent.hubiForm_container(this, container, 1);                       
-                 }
-                 cnt += 1;
-               }
-            }
-     }
+                 container = [];
+                 parent.hubiForm_section(this, "${sensor.displayName} ${attribute}", 1, "directions"){
+                            container << parent.hubiForm_text_input(this,   "Override Device Name<small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
+                                                                            "graph_name_override_${sensor.id}_${attribute}",
+                                                                            "%deviceName%: %attributeName%", false);
+                            container << parent.hubiForm_color      (this,  "Bar Background",               "attribute_${sensor.id}_${attribute}_background", "#3e4475", false);
+                            container << parent.hubiForm_color      (this,  "Bar Border",                   "attribute_${sensor.id}_${attribute}_current_border", "#FFFFFF", false);
+                            container << parent.hubiForm_line_size  (this,  "Bar Border",                   "attribute_${sensor.id}_${attribute}_current_border", 2, 1, 10);
+                            container << parent.hubiForm_switch     (this,  "Show Current Value on Bar",    "attribute_${sensor.id}_${attribute}_show_value", false, true);
+                            if (settings["attribute_${sensor.id}_${attribute}_show_value"]==true){
+                                container<< parent.hubiForm_text_input(this, "Units", "attribute_${sensor.id}_${attribute}_annotation_units", "", false)
+                            }
+                            parent.hubiForm_container(this, container, 1); 
+                       }
+                       
+             }
+        }
+    }
 }
+
 def graphSetupPage(){
     
     def rateEnum = [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], 
@@ -265,7 +266,7 @@ def mainPage() {
                     parent.hubiForm_container(this, container, 1); 
                 }
                 
-                if (graph_timespan){
+                if (graph_update_rate){
                      parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
                          container = [];
                          container << parent.hubiForm_graph_preview(this)
@@ -341,7 +342,7 @@ def updated() {
     state.dataName = attribute;
     
      if (install_device == true){
-        createHubiGraphTile();
+        parent.hubiTool_create_tile(this);
     }
 }
 
@@ -387,7 +388,6 @@ def getChartOptions(){
     }
     
     def options = [
-        "graphTimespan": Integer.parseInt(graph_timespan),
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
         "graphType": Integer.parseInt(graph_type),
         "graphOptions": [
@@ -676,8 +676,11 @@ function drawChart(callback) {
 
     const dataTable = new google.visualization.arrayToDataTable([[{ type: 'string', label: 'Device' }, { type: 'number', label: 'Value'},   { role: "style" }, { role: "tooltip" }, { role: "annotation" },]]);
 
-    subscriptions.order.forEach(deviceId => {
-      Object.entries(graphData[deviceId]).forEach(([attr, event]) => {
+    subscriptions.order.forEach(orderStr => {
+      const splitStr = orderStr.split('_');
+      const deviceId = splitStr[1];
+      const attr = splitStr[2];
+      const event = graphData[deviceId][attr];
         const cur_ = parseFloat(event.current);
         var cur_String = '';
         var units_ = ``;
@@ -700,7 +703,6 @@ function drawChart(callback) {
                                         stroke-width:  \${colors.currentValueBorderLineSize};}`,      
                                  `\${stats_}`,     
                                  `\${cur_String} `]);
-      });
 
     });
 
@@ -840,11 +842,10 @@ def getSubscriptions() {
         sensors_fmt[it.id] = [ "id": it.id, "displayName": it.displayName, "currentStates": it.currentStates ];
     }
     
-    def order = [sensors.size()];
-    sensors.each {sensor ->
-        order[Integer.parseInt(settings["displayOrder_${sensor.id}"]) - 1] = sensor.idAsLong;
-    }
+   
     
+    def order = parseJson(graph_order);
+   
     def subscriptions = [
         "sensors": sensors_fmt,
         "ids": _ids,
