@@ -1,9 +1,9 @@
 {
   "packageName": "HubiGraphs",
   "author": "Thomas Howard",
-  "version": "1.54",
+  "version": "1.6",
   "minimumHEVersion": "0.0",
-  "dateReleased": "2020-06-09",
+  "dateReleased": "2020-06-17",
   "apps": [
     {
       "id": "8707a4e2-785d-4916-acd7-749a0ed10d7c",
@@ -34,6 +34,22 @@
       "name": "Hubigraph Time Line",
       "namespace": "tchoward",
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_time_line.groovy",
+      "required": true,
+      "oauth": true
+    },
+    {
+      "id": "a30ad8f9-b027-41ae-ba4d-efe5d19aad24",
+      "name": "Hubigraph Range Bar",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_range_bar.groovy",
+      "required": true,
+      "oauth": true
+    },
+    {
+      "id": "2f853243-ba9e-4335-92dd-1edb4cac7abe",
+      "name": "Hubigraph Bar Graph",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_bar_graph.groovy",
       "required": true,
       "oauth": true
     }
