@@ -1,5 +1,5 @@
 /**
- *  Hubigraph RangeBar Child App
+ *  Hubigraph BarGraph Child App
  *
  *  Copyright 2020, but let's behonest, you'll copy it
  *
@@ -314,7 +314,7 @@ def installed() {
 def uninstalled() {
     if (state.endpoint) {
         try {
-            logDebug "Revoking API access token"
+            log.debug "Revoking API access token"
             revokeAccessToken()
         }
         catch (e) {
