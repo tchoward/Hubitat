@@ -292,14 +292,14 @@ def mainPage() {
 
 
 def installed() {
-    logDebug "Installed with settings: ${settings}"
+    log.debug "Installed with settings: ${settings}"
     updated();
 }
 
 def uninstalled() {
     if (state.endpoint) {
         try {
-            logDebug "Revoking API access token"
+            log.debug "Revoking API access token"
             revokeAccessToken()
         }
         catch (e) {
@@ -554,7 +554,7 @@ def initializeAppEndpoint() {
             }
         }
         catch(e) {
-            logDebug("Error: $e");
+            log.debug("Error: $e");
             state.endpoint = null
         }
     }
