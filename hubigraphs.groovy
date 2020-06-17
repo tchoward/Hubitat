@@ -9,6 +9,7 @@ definition(
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
 
+//V 1.0 Ordering, Color and Common API Update
 
 preferences {
     // The parent app preferences are pretty simple: just use the app input for the child app.
@@ -49,7 +50,6 @@ def initialize() {
 *********************************************************************************************************************************
 *********************************************************************************************************************************/
 
-//addContainer
 def hubiForm_container(child, containers, numPerRow){
     
         child.call(){
@@ -68,7 +68,6 @@ def hubiForm_container(child, containers, numPerRow){
         }
 }
 
-//add_text
 def hubiForm_text(child, text){
     child.call(){
         def html_ = "$text";
@@ -77,7 +76,6 @@ def hubiForm_text(child, text){
     }
 }
 
-// specialPageButton
 def hubiForm_page_button(child, title, page, width, icon=""){
         def html_;
     
@@ -98,9 +96,6 @@ def hubiForm_page_button(child, title, page, width, icon=""){
         return html_;
 }
 
-
-
-//specialSection
 def hubiForm_section(child, title, pos, icon="", Closure code) {
         child.call(){
                 def id = title.replace(' ', '_');
@@ -109,7 +104,7 @@ def hubiForm_section(child, title, pos, icon="", Closure code) {
                 def titleHTML = """
                         <div class="mdl-layout__header" style="display: block; background:#033673; margin: 0 -16px; width: calc(100% + 32px); position: relative; z-index: ${pos}; overflow: visible;">          
                         <div class="mdl-layout__header-row">
-                                <span class="mdl-layout__title" style="margin-left: -32px; font-size: 20px; width: auto;">
+                                <span class="mdl-layout__title" style="margin-left: -32px; font-size: 18px; width: auto;">
                                         ${title_}
                                 </span>
                                 <div class="mdl-layout-spacer"></div>
@@ -148,8 +143,6 @@ def hubiForm_section(child, title, pos, icon="", Closure code) {
         }         
 }
 
-
-//specialSwitch
 def hubiForm_switch(child, title, var, defaultVal, submitOnChange){
          child.call(){
                
@@ -186,7 +179,6 @@ def hubiForm_switch(child, title, var, defaultVal, submitOnChange){
         }
  }
 
-//specialTextInput
 def hubiForm_text_input(child, title, var, defaultVal, submitOnChange){
     
      child.call(){
@@ -209,7 +201,6 @@ def hubiForm_text_input(child, title, var, defaultVal, submitOnChange){
      }
 }
 
-//fontSizeSelector
 def hubiForm_font_size(child, title, varname, defaultSize, min, max){
     
     child.call(){
@@ -237,7 +228,6 @@ def hubiForm_font_size(child, title, varname, defaultSize, min, max){
     }
 }
 
-//lineSizeSlector
 def hubiForm_line_size(child, title, varname, defaultSize, min, max){
     
     child.call(){
@@ -266,7 +256,6 @@ def hubiForm_line_size(child, title, varname, defaultSize, min, max){
     
 }
 
-//sliderSelector
 def hubiForm_slider(child, title, varname, defaultSize, min, max, units=""){
     
     child.call(){
@@ -294,8 +283,7 @@ def hubiForm_slider(child, title, varname, defaultSize, min, max, units=""){
     }
 }
 
-//colorSelector
-def hubiForm_color(child, title, varname, defaultColorValue, defaultTransparentValue){
+def hubiForm_color(child, title, varname, defaultColorValue, defaultTransparentValue, submit = false){
         child.call(){
                 
                 def varnameColor = "${varname}_color";
@@ -318,7 +306,7 @@ def hubiForm_color(child, title, varname, defaultColorValue, defaultTransparentV
                         </div>
                         ${!isTransparent ? """
                         <div style="flex-grow: 1; flex-basis: 1px; padding-right: 8px;">
-                                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input" value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]" list="presetColors">
+                                <input type="color" name="settings[${varnameColor}]" class="mdl-textfield__input ${submit ? "submitOnChange" : ""} " value="${settings[varnameColor] ? settings[varnameColor] : defaultColorValue}" placeholder="Click to set" id="settings[${varnameColor}]" list="presetColors">
                                 <datalist id="presetColors">
                                 <option>#800000</option>
                                 <option>#FF0000</option>
@@ -360,7 +348,6 @@ def hubiForm_color(child, title, varname, defaultColorValue, defaultTransparentV
         }
 }
 
-//graphPreview
 def hubiForm_graph_preview(child){
         child.call(){
                 if (!state.count_) state.count_ = 5;
@@ -405,16 +392,16 @@ def hubiForm_graph_preview(child){
         }
 }
 
-//getSubTitle
 def hubiForm_sub_section(child, myText=""){
-        child.call(){
+
+		child.call(){
                 def newText = myText.replaceAll( /'/, '’' ).replace("'", "’").replace("`", "’")
                 def html_ = 
                         """
                         <div class="mdl-layout__header" style="display: block; min-height: 0;">
                                 <div class="mdl-layout__header-row" style="height: 48px;">
                                 <span class="mdl-layout__title" style="margin-left: -32px; font-size: 9px; width: auto;">
-                                        <h5 style="font-size: 16px;">${newText}</h5>
+                                    <h4 id="${myTest}" style="font-size: 16px;">${newText}</h5>
                                 </span>
                                 </div>
                         </div>
@@ -442,8 +429,124 @@ def hubiForm_cell(child, containers, numPerRow){
         }
 }
 
+def hubiForm_list_reorder(child, var, var_color, solid_background="") {
+        child.call(){
+           
+           def count_ = 0;
+            
+            if (settings["${var}"] != null){
+                list_ = parent.hubiTools_get_order(settings["${var}"]);
+                
+                //Check List
+                result_ = true;
+                count_ = 0;
+                //check for addition/changes
+                sensors.each { sensor ->
+                     id = sensor.id;
+                     attributes = settings["attributes_${id}"];
+                     attributes.each { attribute ->
+                         count_ ++;
+                         inner_result = false;
+                         for (i=0; i<list_.size(); i++){
+                             if (list_[i].id == id && list_[i].attribute == attribute){
+                                  inner_result = true;   
+                             }
+                         }
+                         //log.debug("$id $inner_result");
+                         result_ = result_ & inner_result;
+                     }
+                 }   
+                 //check for smaller
+                count_result = false;
+                if (list_.size() == count_){
+                    count_result = true;
+                }
+                result_ = result_ & count_result;    
+            }
+            
+            if (result_ == false) {
+                //log.debug("Change Detected");
+                settings["${var}"] = null;        
+            } 
+            
+            //build list order
+            list_data = [];
+            //Setup Original Ordering
+            if (settings["${var}"] == null){
+                settings["${var}"] = "[";
+                sensors.each { sensor ->
+                     attributes = settings["attributes_${sensor.id}"];
+                     attributes.each { attribute ->
+                         settings["${var}"] += /"attribute_${sensor.id}_${attribute}",/  
+                         if (settings["attribute_${sensor.id}_${attribute}_${var_color}_color"] == null){
+                             if (solid_background== ""){
+                                 settings["attribute_${sensor.id}_${attribute}_${var_color}_color"] = parent.hubiTools_rotating_colors(count_);
+                             } else {
+                                 settings["attribute_${sensor.id}_${attribute}_${var_color}_color"] = solid_background;
+                             }
+                         }
+                         count_++;
+                     }
+                 }
+                settings["${var}"] = settings["${var}"].substring(0, settings["${var}"].length() - 1);
+                settings["${var}"] += "]";
+            }
+   
+            count_ = 0;
+            order_ = parent.hubiTools_get_order(settings["${var}"]);
+            order_.each { device_->
+                deviceName_ = parent.hubiTools_get_name_from_id(device_.id, sensors);
+                title_ = """<b>${deviceName_}</b><br><p style="float: right;">${device_.attribute}</p>""";
+                title_.replace("'", "’").replace("`", "’");
+                list_data << [title: title_, var: "attribute_${device_.id}_${device_.attribute}"];
+            }
+            
+            /**********************************************/
+            
+            def var_val_ = settings["${var}"].replace('"', '&quot;');
+            def html_ = 
+               """
+                <script>
+                    function onOrderChange(order) {
+                                        jQuery("#settings${var}").val(JSON.stringify(order));
+                    }
+                </script>
+                <script src="/local/HubiGraph.js"></script>
+                <div id = "moveable" class = "mdl-grid" style="margin: 0; padding: 0; text-color: white !important"> 
+               """
+               
+                list_data.each{data->
+                    color_ = settings["${data.var}_${var_color}_color"];
+                    id_ = "${data.var}"
+                    html_ += """<div id="$id_" class="mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone mdl-shadow--4dp mdl-color-text--indigo-400" 
+                                        draggable="true" ondragover="dragOver(event)" ondragstart="dragStart(event)" ondragend= "dragEnd(event)"
+                                        style = "font-size: 16px !important; margin: 8px !important; padding: 14px !important;">
+                                        <i class="mdl-icon-toggle__label material-icons" style="color: ${color_} !important;">fiber_manual_record</i>
+                                        
+                                    """
+                        html_ += data.title;
+                        html_ += """</div>
+                        """
+               }
+               html_ += """</div>
+                <input type="text" id="settings${var}" name="settings[${var}]" value="${var_val_}" style="display: none;" disabled />
+                <div class="form-group">
+                   <input type="hidden" name="${var}.type" value="text">
+                   <input type="hidden" name="${var}.multiple" value="false">
+                </div>"""
+            
+               html_ = html_.replace('\t', '').replace('\n', '').replace('  ', '');
+                  
+               paragraph (html_);
+        }
+}
 
-//createHubiGraphTile
+/********************************************************************************************************************************
+*********************************************************************************************************************************
+****************************************** TOOLS ********************************************************************************
+*********************************************************************************************************************************
+*********************************************************************************************************************************/
+
 def hubiTool_create_tile(child) {
 	child.call(){
 
@@ -580,7 +683,8 @@ def hubiTools_get_order(order){
     return list_;    
 }
 
-def hubiTools_check_list(sensors, list_){
+def hubiTools_check_list(child, sensors, list_){
+    
     result = true;
     count_ = 0;
     //check for addition/changes
@@ -592,7 +696,7 @@ def hubiTools_check_list(sensors, list_){
                          count_ ++;
                          inner_result = false;
                          for (i=0; i<list_.size(); i++){
-                             //log.debug("$list_[i].id : $id    $list_[i].attribute : $attribute");
+                             log.debug("$list_[i].id : $id    $list_[i].attribute : $attribute");
                              if (list_[i].id == id && list_[i].attribute == attribute){
                                   inner_result = true;   
                              }
@@ -607,93 +711,9 @@ def hubiTools_check_list(sensors, list_){
         count_result = true;
     }
     return (result & count_result);  
+    
 }
 
-
-def hubiForm_list_reorder(child, var, solid_background="") {
-        child.call(){
-           
-            /**********************************************/
-            def count_ = 0;
-            
-            if (settings["${var}"] != null){
-                list_ = parent.hubiTools_get_order(settings["${var}"]);
-                result_ = parent.hubiTools_check_list(sensors, list_);
-            }
-            if (result_ == false) {
-                settings["${var}"] = null;        
-            }
-            //build list order
-            list_data = [];
-            //Setup Original Ordering
-            if (settings["${var}"] == null){
-                settings["${var}"] = "[";
-                sensors.each { sensor ->
-                     attributes = settings["attributes_${sensor.id}"];
-                     attributes.each { attribute ->
-                         settings["${var}"] += /"attribute_${sensor.id}_${attribute}",/  
-                         if (settings["attribute_${sensor.id}_${attribute}_background_color"] == null){
-                             if (solid_background== ""){
-                                 settings["attribute_${sensor.id}_${attribute}_background_color"] = parent.hubiTools_rotating_colors(count_);
-                             } else {
-                                 settings["attribute_${sensor.id}_${attribute}_background_color"] = solid_background;
-                             }
-                         }
-                         count_++;
-                     }
-                 }
-                settings["${var}"] = settings["${var}"].substring(0, settings["${var}"].length() - 1);
-                settings["${var}"] += "]";
-            }
-   
-            count_ = 0;
-            order_ = parent.hubiTools_get_order(settings["${var}"]);
-            order_.each { device_->
-                deviceName_ = parent.hubiTools_get_name_from_id(device_.id, sensors);
-                title_ = """<b>${deviceName_}</b><br><p style="float: right;">${device_.attribute}</p>""";
-                title_.replace("'", "’").replace("`", "’");
-                list_data << [title: title_, var: "attribute_${device_.id}_${device_.attribute}"];
-            }
-            
-            /**********************************************/
-            
-            def var_val_ = settings["${var}"].replace('"', '&quot;');
-            def html_ = 
-               """
-                <script>
-                    function onOrderChange(order) {
-                                        jQuery("#settings${var}").val(JSON.stringify(order));
-                    }
-                </script>
-                <script src="/local/HubiGraph.js"></script>
-                <div id = "moveable" class = "mdl-grid" style="margin: 0; padding: 0; text-color: white !important"> 
-               """
-               
-                list_data.each{data->
-                    color_ = settings["${data.var}_background_color"];
-                    id_ = "${data.var}"
-                    html_ += """<div id="$id_" class="mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone mdl-shadow--4dp mdl-color-text--indigo-400" 
-                                        draggable="true" ondragover="dragOver(event)" ondragstart="dragStart(event)" ondragend= "dragEnd(event)"
-                                        style = "font-size: 16px !important; margin: 8px !important; padding: 14px !important;">
-                                        <i class="mdl-icon-toggle__label material-icons" style="color: ${color_} !important;">fiber_manual_record</i>
-                                        
-                                    """
-                        html_ += data.title;
-                        html_ += """</div>
-                        """
-               }
-               html_ += """</div>
-                <input type="text" id="settings${var}" name="settings[${var}]" value="${var_val_}" style="display: none;" disabled />
-                <div class="form-group">
-                   <input type="hidden" name="${var}.type" value="text">
-                   <input type="hidden" name="${var}.multiple" value="false">
-                </div>"""
-            
-               html_ = html_.replace('\t', '').replace('\n', '').replace('  ', '');
-                  
-               paragraph (html_);
-        }
-}
 /********************************************************************************************************************************************
 *********************************************************************************************************************************************
 ***************************************************  END HELPER FUNCTIONS  ******************************************************************
