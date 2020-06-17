@@ -324,7 +324,7 @@ def installed() {
 def uninstalled() {
     if (state.endpoint) {
         try {
-            logDebug "Revoking API access token"
+            log.debug "Revoking API access token"
             revokeAccessToken()
         }
         catch (e) {
