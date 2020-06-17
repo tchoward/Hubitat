@@ -16,7 +16,7 @@
 
 // Hubigraph RangeBar Changelog
 // V 0.1 Intial release
-
+// V 0.2 Ordering, Color and Common API Update
 import groovy.json.JsonOutput
 
 def ignoredEvents() { return [ 'lastReceive' , 'reachable' , 
@@ -128,7 +128,7 @@ def attributeConfigurationPage() {
 
          }
          parent.hubiForm_section(this, "Graph Order", 1, "directions"){
-             parent.hubiForm_list_reorder(this, "graph_order", "#3e4475");       
+             parent.hubiForm_list_reorder(this, "graph_order", "background", "#3e4475");       
          }
          cnt = 1;
          sensors.each { sensor ->
@@ -140,7 +140,7 @@ def attributeConfigurationPage() {
                          container << parent.hubiForm_text_input(this,   "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                         "graph_name_override_${sensor.id}_${attribute}",
                                                                         "%deviceName%: %attributeName%", false); 
-                         container << parent.hubiForm_color      (this,  "Bar Background",        "attribute_${sensor.id}_${attribute}_background","#5b626e", false);
+                         container << parent.hubiForm_color      (this,  "Bar Background",        "attribute_${sensor.id}_${attribute}_background","#5b626e", false, true);
                          container << parent.hubiForm_color      (this,  "Min/Max",               "attribute_${sensor.id}_${attribute}_minmax",  "#607c91", false);
                          container << parent.hubiForm_color      (this,  "Current Value",         "attribute_${sensor.id}_${attribute}_current", "#8eb6d4", false);
                          container << parent.hubiForm_color      (this,  "Current Value Border",  "attribute_${sensor.id}_${attribute}_current_border", "#FFFFFF", false);
@@ -212,10 +212,7 @@ def graphSetupPage(){
             container << parent.hubiForm_switch    (this, "Italic Annotation", "annotation_bold", false, false);
 
             parent.hubiForm_container(this, container, 1); 
-        }    
-        
-            
-        
+        }     
     }
 }
 
