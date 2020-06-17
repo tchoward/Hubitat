@@ -17,7 +17,7 @@
 // Hubigraph Gauge Change Log
 // V 0.1 Intial release
 // V 1.0 Released (not Beta) Cleanup and Preview Enabled
-// V 1.5 UI Redesign
+// V 1.5 Ordering, Color and Common API Update
 
 import groovy.json.JsonOutput
 import java.text.DecimalFormat;
