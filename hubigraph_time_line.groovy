@@ -219,8 +219,13 @@ def graphSetupPage(){
     
     dynamicPage(name: "graphSetupPage") {
     	parent.hubiForm_section(this, "General Options", 1, "directions"){	
-            input( type: "enum", name: "graph_update_rate", title: "<b>Select graph update rate</b>", multiple: false, required: false, options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
+            input( type: "enum", name: "graph_update_rate", title: "<b>Select graph update rate</b>", multiple: false, required: false, 
+                  options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
             input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: false, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")     
+            input( type: "enum", name: "graph_combine_rate", title: "<b>Combine events with events less than ? apart</b>", multiple: false, required: false, options: 
+                  [["0":"Never"], ["10000":"10 Seconds"], ["30000":"30 seconds"], ["60000":"1 Minute"], ["120000":"2 Minutes"], ["180000":"3 Minutes"], ["240000":"4 Minutes"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"30 Minutes"],
+                   ["3600000":"1 Hour"], ["6400000":"2 Hours"], ["9600000":"3 Hours"], ["13200000":"4 Hours"],  ["16800000":"5 Hours"], ["20400000":"6 Hours"]], defaultValue: "Never")     
+
             container = [];
             container << parent.hubiForm_color (this, "Background", "graph_background",  "#FFFFFF", false);
             
@@ -235,10 +240,10 @@ def graphSetupPage(){
 
             parent.hubiForm_container(this, container, 1); 
         }
-        parent.hubiForm_section(this, "Axes", 1){
+        parent.hubiForm_section(this, "Devices", 1){
             container = [];
-            container << parent.hubiForm_color (this, 	  "Vertical Axis", "graph_axis", "#FFFFFF", false);
-            container << parent.hubiForm_font_size (this, "Vertical Axis", "graph_axis",  9, 2, 20);
+            container << parent.hubiForm_color (this, 	  "Device Text", "graph_axis", "#FFFFFF", false);
+            container << parent.hubiForm_font_size (this, "Device", "graph_axis",  9, 2, 20);
             parent.hubiForm_container(this, container, 1);  
         }  
     }
@@ -416,13 +421,15 @@ def getChartOptions(){
     def options = [
         "graphTimespan": Integer.parseInt(graph_timespan),
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
+        "graphCombine_msecs": Integer.parseInt(graph_combine_rate),
         "graphOptions": [
             "width": graph_static_size ? graph_h_size : "100%",
             "height": graph_static_size ? graph_v_size: "100%",
             "timeline": [
                 "rowLabelStyle": ["fontSize": graph_axis_font, "color": graph_axis_color_transparent ? "transparent" : graph_axis_color],
-                "barLabelStyle": ["fontSize": graph_axis_font]
+                "barLabelStyle": ["fontSize": graph_axis_font],
             ],
+            "haxis" : [ "text": ["fontSize": "24px"]],
             "backgroundColor": graph_background_color_transparent ? "transparent" : graph_background_color,
             "colors" : colors
         ],
@@ -445,8 +452,11 @@ def getTimeLine() {
             <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.0/moment.min.js" integrity="sha256-imB/oMaNA0YvIkDkF5mINRWpuFPEGVCEkHy6rm2lAzA=" crossorigin="anonymous"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/he/1.2.0/he.min.js" integrity="sha256-awnFgdmMV/qmPoT6Fya+g8h/E4m0Z+UFwEHZck/HRcc=" crossorigin="anonymous"></script>
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+            <script src="/local/HubiGraph.js"></script>
             <script type="text/javascript">
-google.charts.load('current', {'packages':['timeline']});
+            
+google.load("visualization", "1.1", {packages:["timeline"]});
+//google.charts.load('current', {'packages':['timeline']});
 google.charts.setOnLoadCallback(onLoad);
             
 let options = [];
@@ -586,7 +596,19 @@ async function update(callback) {
             //delete non-existant nodes
             newArr = newArr.filter(it => it.start || it.end);
 
-            graphData[id][attribute] = newArr;
+            //merge events
+            let mergedArr = [];
+
+            newArr.forEach((event, index) => {
+                if(index === 0) mergedArr.push(event);
+                else {
+                    if(event.start - mergedArr[mergedArr.length - 1].end <= options.graphCombine_msecs) {
+                        mergedArr[mergedArr.length - 1].end = event.end;
+                    } else mergedArr.push(event);
+                }
+            });
+
+            graphData[id][attribute] = mergedArr;
         });
     });
 
@@ -669,7 +691,7 @@ async function onLoad() {
                 font-weight: 200;
                 font-size: 2rem;
                 text-align: center;
-            }
+                }
         </style>
     `);
 
@@ -698,6 +720,9 @@ async function onLoad() {
             const end_event = subscriptions.definitions[id][attribute].end;
 
             const  thisOut = graphData[id][attribute];
+            var date;
+            var seconds = options.graphCombine_msecs;
+            var skip_trigger;
             if(events.length > 0) {
                 //if our first event is an end event, start at 1
                 thisOut.push(evalTest(start_event, events[0].value) ? { start: events[0].date } : { end: events[0].date });
@@ -706,8 +731,20 @@ async function onLoad() {
                     const is_end = evalTest(end_event, events[i].value);
                     
                     //always add the first event
-                    if(is_end && !thisOut[thisOut.length - 1].end) thisOut[thisOut.length - 1].end = events[i].date;
-                    else if(is_start && thisOut[thisOut.length - 1].end) thisOut.push({ start: events[i].date });
+                    if (is_end && !thisOut[thisOut.length - 1].end){
+                        thisOut[thisOut.length - 1].end = events[i].date;
+                        
+                    } else if(is_start && thisOut[thisOut.length - 1].end){
+                        /*TCH - Look for more than 5 minutes between events*/
+                        if (events[i].date - thisOut[thisOut.length - 1].end > seconds){
+                            thisOut.push({ start: events[i].date });
+                        } else {
+                            skip_trigger = true;
+                        } 
+                    } else if (is_end && skip_trigger){
+                        thisOut[thisOut.length - 1].end = events[i].date;
+                        skip_trigger = false;
+                    }
                 }
             }
             //if it's already on, add an event
@@ -751,7 +788,34 @@ async function onLoad() {
         min -= options.graphTimespan;
 
         drawChart(now, min);
+      
     });
+
+}
+
+function getToolTip(name, start, end){
+    var html =     "<div class='mdl-layout__header' style='display: block; background:#033673; width: 100%; padding-top:10px; padding-bottom:5px; overflow: hidden;'>";
+    html +=        "<div class='mdl-layout__header-row'";
+    html +=        "<span class='mdl-layout__title' style='font-size: 14px; color:#FFFFFF !important; width: auto; font-family:Roboto, Helvetica, Arial, sans-serif !important;'>";
+    html +=        name;
+    html +=        "</span>";
+    html +=        "</div>"; 
+    html +=        "</div>";
+
+    html +=        "<div class = 'mdl-grid' style='padding: 5px; background:#FFFFFF; font-family:Roboto, Helvetica, Arial, sans-serif !important;'>" 
+    html +=        "<div class='mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone' style='margin-bottom: 5px; padding: 5px;' >";
+    html = html+   start.toDateString()+" at "+start.toLocaleTimeString('en-US');
+    html +=        "</div>";    
+    html +=        "<div class='mdl-cell mdl-cell--12-col-desktop mdl-cell--8-col-tablet mdl-cell--4-col-phone' style='margin-bottom: 5px; padding: 5px;'>";
+    html = html+   end.toDateString()+" at "+end.toLocaleTimeString('en-US');
+    html +=        "</div>";    
+
+    
+    
+    //var html = "<p style = 'font-family:courier,arial,helvetica; font-size: 14px;'><b>"+name+"</b><br><hr><br>";
+    //html +=    "Start: "+start.toDateString()+" at "+start.toLocaleTimeString('en-US')+"<br>";
+    //html +=    "End: "+end.toDateString()+" at "+start.toLocaleTimeString('en-US')+"<br>";
+    return html;
 }
 
 function drawChart(now, min, callback) {
@@ -759,6 +823,7 @@ function drawChart(now, min, callback) {
     dataTable.addColumn({ type: 'string', id: 'Device' });
     dataTable.addColumn({ type: 'date', id: 'Start' });
     dataTable.addColumn({ type: 'date', id: 'End' });
+    dataTable.addColumn({'type': 'string', 'role': 'tooltip', 'p': {'html': true}});
 
     subscriptions.order.forEach(orderStr => {
       	const splitStr = orderStr.split('_');
@@ -787,8 +852,15 @@ function drawChart(now, min, callback) {
             }
 
             let name = subscriptions.sensors[id].displayName;
-
-            dataTable.addRows(newArr.map((parsed) => [subscriptions.labels[id][attribute].replace('%deviceName%', name).replace('%attributeName%', attribute), moment(parsed.start).toDate(), moment(parsed.end).toDate()]));
+            
+            dataTable.addRows(newArr.map((parsed) => [subscriptions.labels[id][attribute].replace('%deviceName%', name).replace('%attributeName%', attribute), 
+                                                      moment(parsed.start).toDate(), 
+                                                      moment(parsed.end).toDate(), 
+                                                      getToolTip(
+                                                            subscriptions.labels[id][attribute].replace('%deviceName%', name).replace('%attributeName%', attribute), 
+                                                            moment(parsed.start).toDate(), 
+                                                            moment(parsed.end).toDate() )
+                                                     ]));
        
     });
 
@@ -798,6 +870,18 @@ function drawChart(now, min, callback) {
     if(callback) google.visualization.events.addListener(chart, 'ready', callback);
 
     chart.draw(dataTable, options.graphOptions);
+    
+    google.visualization.events.addListener(chart, 'onmouseover', tooltipHandler);
+
+    function tooltipHandler(e){
+        if(e.row != null){
+            jQuery(".google-visualization-tooltip").html(dataTable.getValue(e.row,3)).css({width:"auto",height:"auto"});
+        }
+    }
+
+    
+
+        
 }
         </script>
       </head>
