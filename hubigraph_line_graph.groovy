@@ -207,7 +207,7 @@ def graphSetupPage(){
          }
 
         //Left Axis    
-        parent.hubiForm_section(this,"Left Axis", 1){  
+        parent.hubiForm_section(this,"Left Axis", 1, "arrow_back"){  
             container = [];
             container << parent.hubiForm_text_input(this,  "<b>Minimum for left axis</b><small>(Blank for auto)</small>", "graph_vaxis_1_min", "", false);
             container << parent.hubiForm_text_input(this,  "<b>Maximum for left axis</b><small>(Blank for auto)</small>", "graph_vaxis_1_max", "", false);   
@@ -222,11 +222,11 @@ def graphSetupPage(){
         }
 
         //Right Axis   
-        parent.hubiForm_section(this,"Right Axis", 1){  
+        parent.hubiForm_section(this,"Right Axis", 1, "arrow_forward"){  
             container = [];
-            container << parent.hubiForm_text_input(this,  "<b>Minimum for right axis</b><small>(Blank for auto)</small>", "graph_vaxis_1_min", "", false);
-            container << parent.hubiForm_text_input(this,  "<b>Maximum for right axis</b><small>(Blank for auto)</small>", "graph_vaxis_1_max", "", false);   
-            container << parent.hubiForm_text_input (this, "<b>Num Vertical Gridlines</b><br><small>(Blank for auto)</small>", "graph_vaxis_1_num_lines", "", false);
+            container << parent.hubiForm_text_input(this,  "<b>Minimum for right axis</b><small>(Blank for auto)</small>", "graph_vaxis_2_min", "", false);
+            container << parent.hubiForm_text_input(this,  "<b>Maximum for right axis</b><small>(Blank for auto)</small>", "graph_vaxis_2_max", "", false);   
+            container << parent.hubiForm_text_input (this, "<b>Num Vertical Gridlines</b><br><small>(Blank for auto)</small>", "graph_vaxis_2_num_lines", "", false);
             container << parent.hubiForm_switch     (this, "<b>Show Right Axis Label on Graph</b>", "graph_show_right_label", false, true);
             if (graph_show_right_label==true){
                 container << parent.hubiForm_text_input (this, "<b>Input right Axis Label</b>", "graph_right_label", "Right Axis Label", false);
