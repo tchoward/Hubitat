@@ -161,13 +161,18 @@ def graphSetupPage(){
             parent.hubiForm_container(this, container, 1); 
         }
         
-        num_ = num_highlights.toInteger();
-        log.debug("$num_ $num_highlights");
+        if (num_highlights == null){
+             settings["num_highlights"] = 3;    
+             num_ = 3;
+        } else {
+            num_ = num_highlights.toInteger();   
+        }
+        
         
         if (num_ > 0){
             parent.hubiForm_section(this,"HighLight Regions", 1){
                 container = [];
-                for (i=0; i<3; i+=1){
+                for (i=0; i<num_; i+=1){
                     switch (i) {
                         case 0 : color_ = "#00FF00"; break;
                         case 1 : color_ = "#a9a67e"; break;
@@ -250,7 +255,7 @@ def mainPage() {
                     parent.hubiForm_container(this, container, 1); 
                 }
                 
-                if (graph_timespan){
+                if (gauge_title){
                      parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
                          container = [];
                          container << parent.hubiForm_graph_preview(this)
