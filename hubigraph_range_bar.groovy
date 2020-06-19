@@ -862,10 +862,10 @@ def getSubscriptions() {
         attributes.each { attribute ->
             _attributes[sensor.id] << attribute;
             labels[sensor.id][attribute] = settings["graph_name_override_${sensor.id}_${attribute}"];
-            colors[sensor.id][attribute] = ["backgroundColor":         settings["attribute_${sensor.id}_${attribute}_background_color"],
-                                            "minMaxColor":             settings["attribute_${sensor.id}_${attribute}_minmax_color"],
-                                            "currentValueColor":       settings["attribute_${sensor.id}_${attribute}_current_color"],
-                                            "currentValueBorderColor": settings["attribute_${sensor.id}_${attribute}_current_border_color"],
+            colors[sensor.id][attribute] = ["backgroundColor":         settings["attribute_${sensor.id}_${attribute}_background_color_transparent"] ? "transparent" : settings["attribute_${sensor.id}_${attribute}_background_color"],
+                                            "minMaxColor":             settings["attribute_${sensor.id}_${attribute}_minmax_color_transparent"] ? "transparent" : settings["attribute_${sensor.id}_${attribute}_minmax_color"],
+                                            "currentValueColor":       settings["attribute_${sensor.id}_${attribute}_current_color_transparent"] ? "transparent" : settings["attribute_${sensor.id}_${attribute}_current_color"],
+                                            "currentValueBorderColor": settings["attribute_${sensor.id}_${attribute}_current_border_color_transparent"] ? "transparent" : settings["attribute_${sensor.id}_${attribute}_current_border_color"],
                                             "showAnnotation":              settings["attribute_${sensor.id}_${attribute}_show_value"],
                                             "annotation_font":         settings["attribute_${sensor.id}_${attribute}_annotation_font"],
                                             "annotation_units":        settings["attribute_${sensor.id}_${attribute}_annotation_units"],
