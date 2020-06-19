@@ -344,7 +344,7 @@ def updated() {
     state.dataName = attribute;
     
      if (install_device == true){
-        createHubiGraphTile();
+        parent.hubiTool_create_tile(this);
     }
 }
 
