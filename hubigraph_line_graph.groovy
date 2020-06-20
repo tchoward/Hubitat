@@ -112,18 +112,60 @@ def graphSetupPage(){
                       ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]];
     
     def timespanEnum = [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]]
-       
+     
+     def timespanEnum2 = [["60000":"1 Minute"], ["120000":"2 Minutes"], ["300000":"5 Minutes"], ["600000":"10 Minutes"],
+                                                        ["2400000":"30 minutes"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]];
+                                
+     def supportedTypes = [
+        
+         "alarm":           ["start": "on",       
+                            "end": "off"],
+        "contact":         ["start": "open",      
+                            "end": "closed"],
+        "switch":          ["start": "on",        
+                            "end": "off"],
+        "motion":          ["start": "active", 
+                            "end": "inactive"],
+        "mute":            ["start": "muted", 
+                            "end": "unmuted"],
+        "presence":        ["start":"present",
+                            "end":"not present"],
+        "holdableButton":  ["start":"true",
+                            "end":"false"],
+        "carbonMonoxide":  ["start":"detected",
+                            "end":"clear"],
+        "playing":         ["start":"playing", 
+                            "end":"stopped"],
+        "door":            ["start": "open",      
+                            "end": "closed"],
+        "speed":           ["start": "on",        
+                            "end": "off"],
+        "lock":            ["start": "unlocked",        
+                            "end": "locked"],
+        "shock":           ["start": "detected",        
+                            "end": "clear"],
+        "sleepSensor":     ["start": "sleeping",        
+                            "end": "not sleeping"],
+        "smoke":           ["start":"detected",
+                            "end":"clear"],
+        "sound":           ["start":"detected",
+                            "end":"not detected"],
+        "tamper":          ["start":"detected",
+                            "end":"clear"],
+        "valve":           ["start": "open",      
+                            "end": "closed"],
+        "camera":          ["start": "on",        
+                            "end": "off"],
+        "water":           ["start": "wet",        
+                            "end": "dry"],
+        "windowShade":     ["start": "open",      
+                            "end": "closed"],
+        "acceleration":    ["start": "inactive", 
+                            "end": "active"]        
+         ];
+    
     dynamicPage(name: "graphSetupPage") {
-      //  allowSmoothing = true;
-      //  sensors.each { sensor ->        
-      //          settings["attributes_${sensor.id}"].each { attribute ->
-     //               if (settings["attribute_${sensor.id}_${attribute}_drop_line"]==true){
-     //                   //log.debug("${sensor.displayName} $attribute");
-     //                   settings["graph_max_points"] = 0;
-     //                   allowSmoothing = false;
-     //               }
-     //           }
-     //   }
+      
         log.debug("$allowSmoothing");
         parent.hubiForm_section(this,"General Options", 1)
         {      
@@ -134,12 +176,9 @@ def graphSetupPage(){
             container << parent.hubiForm_color (this, "Graph Background",    "graph_background", "#FFFFFF", false)
             container << parent.hubiForm_switch(this, "Smooth Graph Points", "graph_smoothing", true, false);
             container << parent.hubiForm_switch(this, "<b>Flip Graph to Vertical?</b><br><small>(Rotate 90 degrees)</small>", "graph_y_orientation", false, false);
-            container << parent.hubiForm_switch(this, "<b>Reverse Data Order?</b><br><small> (Flip data left to Right)</small>", "graph_z_orientation", false, false);
-           // if (allowSmoothing) {
-                container << parent.hubiForm_slider (this, "Maximum number of Data Points?</b><br><small>(Zero for ALL)</small>", "graph_max_points",  0, 0, 1000, " data points");
-           // } else {
-              //  container << parent.hubiForm_text (this, "Smoothing is not allowed with <b>drop lines</b><br><small>Please disable to use smoothing</small>");
-            //}
+            container << parent.hubiForm_switch(this, "<b>Reverse Data Order?</b><br><small> (Flip data left to Right)</small>", "graph_z_orientation", false, false)
+            container << parent.hubiForm_slider (this, "Maximum number of Data Points?</b><br><small>(Zero for ALL)</small>", "graph_max_points",  0, 0, 1000, " data points");
+           
             parent.hubiForm_container(this, container, 1); 
      
         }
@@ -299,19 +338,38 @@ def graphSetupPage(){
                                                                                 "graph_name_override_${sensor.id}_${attribute}",
                                                                                 "%deviceName%: %attributeName%", false);
                         
-                                container << parent.hubiForm_switch(this, "Display as a Drop Line", "attribute_${sensor.id}_${attribute}_drop_line", false, true);
-                                
-                                if (settings["attribute_${sensor.id}_${attribute}_drop_line"]==true){
-                                    container << parent.hubiForm_text_input(this,"Value to drop the Line",
-                                                                                 "attribute_${sensor.id}_${attribute}_drop_value",
-                                                                                 "0", false);
-                                    parent.hubiForm_container(this, container, 1);
-                                    def timespanEnum2 = [["60000":"1 Minute"], ["120000":"2 Minutes"], ["300000":"5 Minutes"], ["600000":"10 Minutes"],
-                                                        ["2400000":"30 minutes"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]];
-                                    input( type: "enum", name: "attribute_${sensor.id}_${attribute}_drop_time", title: "Drop Line Time", defaultValue: "5 Minutes", options: timespanEnum2 )
-
-                                } else {
+                                startVal = supportedTypes[attribute] ? supportedTypes[attribute].start : "";
+                                endVal = supportedTypes[attribute] ? supportedTypes[attribute].end : "";
+                        
+                                if (startVal != ""){
+                                    app.updateSetting ("attribute_${sensor.id}_${attribute}_non_number", true);
+                                    app.updateSetting ("attribute_${sensor.id}_${attribute}_startString", startVal);
+                                    app.updateSetting ("attribute_${sensor.id}_${attribute}_endString", endVal);
+                                    container << parent.hubiForm_text(this, "<b><mark>This Attribute ($attribute) is non-numerical, please choose values for the states below</mark></b>");
+                                    container << parent.hubiForm_text_input(this, "Value for <mark>$startVal</mark>",
+                                                                                  "attribute_${sensor.id}_${attribute}_${startVal}",
+                                                                                  "100", false);
+                                    
+                                    container << parent.hubiForm_text_input(this, "Value for <mark>$endVal</mark>",
+                                                                                  "attribute_${sensor.id}_${attribute}_${endVal}",
+                                                                                  "0", false);
+                                    
                                     parent.hubiForm_container(this, container, 1); 
+                                    
+                                } else {
+                                    container << parent.hubiForm_switch(this, "Display as a Drop Line", "attribute_${sensor.id}_${attribute}_drop_line", false, true);
+                                                              
+                                    if (settings["attribute_${sensor.id}_${attribute}_drop_line"]==true){
+                                        container << parent.hubiForm_text_input(this,"Value to drop the Line",
+                                                                                     "attribute_${sensor.id}_${attribute}_drop_value",
+                                                                                     "0", false);
+                                        parent.hubiForm_container(this, container, 1);
+                                       
+                                        input( type: "enum", name: "attribute_${sensor.id}_${attribute}_drop_time", title: "Drop Line Time", defaultValue: "5 Minutes", options: timespanEnum2 )
+
+                                    } else {
+                                        parent.hubiForm_container(this, container, 1); 
+                                    }
                                 }
                                 
                                
@@ -467,6 +525,16 @@ def initialize() {
    updated();
 }
 
+private getValue(id, attr, val){
+    def reg = ~/[a-z,A-Z]+/;
+    if (settings["attribute_${id}_${attr}_${val}"]!=null){
+        ret = Float.parseFloat(settings["attribute_${id}_${attr}_${val}"]);
+    } else {
+        ret = Float.parseFloat(val - reg )
+    }
+    return ret;
+}
+
 private buildData() {
     def resp = [:]
     def today = new Date();
@@ -476,19 +544,42 @@ private buildData() {
            then -= Integer.parseInt(graph_timespan).milliseconds;
     }
     
-    
     if(sensors) {
         sensors.each { sensor ->
             resp[sensor.id] = [:];
             settings["attributes_${sensor.id}"].each { attribute ->
                 def respEvents = [];    
                 
-                def reg = ~/[a-z,A-Z]+/;
-            
-                respEvents << sensor.statesSince(attribute, then, [max: 50000]).collect{[ date: it.date.getTime(), value: Float.parseFloat(it.value - reg ) ]}
+                respEvents << sensor.statesSince(attribute, then, [max: 50000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)  ]}
                 respEvents = respEvents.flatten();
                 respEvents = respEvents.reverse();
-                                
+                
+                //Add drop lines for non-numerical devices
+                if (settings["attribute_${sensor.id}_${attribute}_non_number"] && respEvents.size()>1){
+                    start = settings["attribute_${sensor.id}_${attribute}_startString"];
+                    end = settings["attribute_${sensor.id}_${attribute}_endString"];
+                    startVal = Float.parseFloat(settings["attribute_${sensor.id}_${attribute}_${start}"]);
+                    endVal = Float.parseFloat(settings["attribute_${sensor.id}_${attribute}_${end}"]);
+                    tEvents = [];
+                    //Add Start Event
+                    
+                    if (respEvents[0].value == startVal){         
+                          tEvents.push([date: then+10000, value: endVal]);  
+                        } else {
+                          tEvents.push([date: then+10000, value: startVal]);
+                    }
+                    for (i=0; i<respEvents.size(); i++){
+                        currDate = respEvents[i].date;
+                        if (respEvents[i].value == startVal){         
+                            tEvents.push([date: currDate-1000, value: endVal]);
+                            
+                        } else {
+                            tEvents.push([date: currDate-1000, value: startVal]);
+                        }
+                        tEvents.push(respEvents[i]);
+                    }
+                    respEvents = tEvents;
+                }
                 
                 //graph_max_points
                 if (graph_max_points > 0) {
@@ -505,14 +596,16 @@ private buildData() {
                 //add drop line data
                 tEvents = [];
                 if (settings["attribute_${sensor.id}_${attribute}_drop_line"] && respEvents.size()>1){
-                    def drop_time = settings["attribute_${sensor.id}_${attribute}_drop_time"];
-                    def drop_value = settings["attribute_${sensor.id}_${attribute}_drop_value"];
+                    def curr, prev, currDate, prevDate, drop_time, drop_value;
+                    
+                    drop_time = settings["attribute_${sensor.id}_${attribute}_drop_time"];
+                    drop_value = settings["attribute_${sensor.id}_${attribute}_drop_value"];
                     tEvents.push(respEvents[0]);
                     for (i=1; i<respEvents.size(); i++){
-                        def curr = respEvents[i];
-                        def prev = respEvents[i-1];
-                        def currDate = curr.date;
-                        def prevDate = prev.date;
+                        curr = respEvents[i];
+                        prev = respEvents[i-1];
+                        currDate = curr.date;
+                        prevDate = prev.date;
                         
                         if ((currDate - prevDate) > Integer.parseInt(drop_time)){
                               //add first zero
@@ -704,23 +797,39 @@ function parseEvent(event) {
         let value = event.value;
         let attribute = event.name;
 
-        stack[deviceId][attribute].push({ date: now, value: value });
+        non_num = subscriptions.non_num[deviceId][attribute];
+         
+        if (non_num.valid){
+            if (value == non_num.start){
+                graphData[deviceId][attribute].push({ date: now-1000, value: non_num.endVal});
+                graphData[deviceId][attribute].push({ date: now, value: non_num.startVal});
+            } else if (value == non_num.end){
+                graphData[deviceId][attribute].push({ date: now-1000, value: non_num.startVal});
+                graphData[deviceId][attribute].push({ date: now, value: non_num.endVal});
+            } 
+        } else {
+            stack[deviceId][attribute].push({ date: now, value: value });
+              
+            //check the stack
+            const graphEvents = graphData[deviceId][attribute];
+            const stackEvents = stack[deviceId][attribute];
+            const span = graphEvents[1].date - graphEvents[0].date;
         
-        //check the stack
-        const graphEvents = graphData[deviceId][attribute];
-        const stackEvents = stack[deviceId][attribute];
-        const span = graphEvents[1].date - graphEvents[0].date;
-        if(stackEvents[stackEvents.length - 1].date - graphEvents[graphEvents.length - 1].date >= span || (stackEvents.length > 1 && stackEvents[stackEvents.length - 1].date - stackEvents[0].date >= span)) {
-            //push the stack
-            graphData[deviceId][attribute].push(stack[deviceId][attribute].reduce((accum, it) =>  accum = { date: accum.date + it.date / stackEvents.length, value: accum.value + it.value / stackEvents.length }, { date: 0, value: 0.0 }));
-            stack[deviceId][attribute] = [];
+            if(stackEvents[stackEvents.length - 1].date - graphEvents[graphEvents.length - 1].date >= span 
+               || (stackEvents.length > 1 
+               && stackEvents[stackEvents.length - 1].date - stackEvents[0].date >= span)) {
+                
+               //push the stack
+               graphData[deviceId][attribute].push(stack[deviceId][attribute].reduce((accum, it) =>  accum = { date: accum.date + it.date / stackEvents.length, value: accum.value + it.value / stackEvents.length }, { date: 0, value: 0.0 }));
+               stack[deviceId][attribute] = [];
 
-            //check for drop
-            const thisDrop = subscriptions.drop[deviceId][attribute];
-            const thisEvents = graphData[deviceId][attribute];
-            if(thisDrop.valid && thisEvents[thisEvents.length - 2].date - thisEvents[thisEvents.length - 1].date > thisDrop.time) {
-                graphData[deviceId][attribute].splice(thisEvents.length - 2, 0, { date: thisEvents[thisEvents.length - 2].date + 1000, value: thisDrop.value });
-                graphData[deviceId][attribute].splice(thisEvents.length - 2, 0, { date: thisEvents[thisEvents.length - 1].date - 1000, value: thisDrop.value });
+                //check for drop
+                const thisDrop = subscriptions.drop[deviceId][attribute];
+                const thisEvents = graphData[deviceId][attribute];
+                if(thisDrop.valid && thisEvents[thisEvents.length - 2].date - thisEvents[thisEvents.length - 1].date > thisDrop.time) {
+                    graphData[deviceId][attribute].splice(thisEvents.length - 2, 0, { date: thisEvents[thisEvents.length - 2].date + 1000, value: thisDrop.value });
+                    graphData[deviceId][attribute].splice(thisEvents.length - 2, 0, { date: thisEvents[thisEvents.length - 1].date - 1000, value: thisDrop.value });
+                }
             }
         }
 
@@ -903,19 +1012,18 @@ function drawChart(callback) {
     //map the graph data
     Object.entries(graphData).forEach(([deviceIndex, attributes]) => {
         Object.entries(attributes).forEach(([attribute, events]) => {
+            non_num = subscriptions.non_num[deviceIndex][attribute];
+            var length = events.length;
             events.forEach((event) => {
-                //try to find an already existing date
-                //let index = parsedGraphData.findIndex((val) => val[0] === event.date);
-                //if(index !== -1) parsedGraphData[index][colNums[deviceIndex][attribute] + 1] = event.value;
-                //else {
-                    //else make a new entry
-                    let newEntry = Array.apply(null, new Array(totalCols + 1));
-                    newEntry[0] = event.date;
-                    newEntry[colNums[deviceIndex][attribute] + 1] = event.value;
-                    parsedGraphData.push(newEntry);
-                //}
+              
+              //Make a new entry
+              let newEntry = Array.apply(null, new Array(totalCols + 1));
+              newEntry[0] = event.date;
+              newEntry[colNums[deviceIndex][attribute] + 1] = event.value;
+              parsedGraphData.push(newEntry);
+              
             });
-            
+           
         });
     });
 
@@ -930,6 +1038,7 @@ function drawChart(callback) {
                 newEntry[colNums[deviceIndex][attribute] + 1] = event.value;
                 parsedGraphData.push(newEntry);
             }
+            
         });
     });
 
@@ -1027,6 +1136,7 @@ def getSubscriptions() {
     def attributes = [:];
     def labels = [:];
     def drop_ = [:];
+    def non_num_ = [:];
     sensors.each {sensor->
         ids << sensor.idAsLong;
         
@@ -1040,8 +1150,23 @@ def getSubscriptions() {
         }
         
         drop_[sensor.id] = [:];
+        non_num_[sensor.id] = [:];
         settings["attributes_${sensor.id}"].each { attr ->
-            
+            if (settings["attribute_${sensor.id}_${attr}_non_number"]==true){
+                startString = settings["attribute_${sensor.id}_${attr}_startString"];
+                endString = settings["attribute_${sensor.id}_${attr}_endString"];
+                non_num_[sensor.id][attr] = [ valid: true,
+                                              start:       startString,
+                                              startVal:    settings["attribute_${sensor.id}_${attr}_${startString}"],
+                                              end:         endString,
+                                              endVal:      settings["attribute_${sensor.id}_${attr}_${endString}"]
+                                            ];  
+            } else {
+                non_num_[sensor.id][attr] = [ valid: false,
+                                              start: "",
+                                              end:   ""]; 
+            }
+                                   
             drop_[sensor.id][attr] = [valid: settings["attribute_${sensor.id}_${attr}_drop_line"],
                                       time:  settings["attribute_${sensor.id}_${attr}_drop_time"],
                                       value: settings["attribute_${sensor.id}_${attr}_drop_value"]];
@@ -1054,7 +1179,8 @@ def getSubscriptions() {
         sensors: sensors_,
         attributes: attributes, 
         labels : labels,
-        drop : drop_
+        drop : drop_,
+        non_num: non_num_
     ]
     
     def subscriptions = obj;
