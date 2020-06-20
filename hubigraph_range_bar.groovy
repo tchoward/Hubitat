@@ -209,7 +209,7 @@ def graphSetupPage(){
             container << parent.hubiForm_color     (this, "Annotation", "annotation",  "#000000", false);
             container << parent.hubiForm_color     (this, "Annotation Aura", "annotation_aura", "#FFFFFF", false);
             container << parent.hubiForm_switch    (this, "Bold Annotation", "annotation_bold", false, false);
-            container << parent.hubiForm_switch    (this, "Italic Annotation", "annotation_bold", false, false);
+            container << parent.hubiForm_switch    (this, "Italic Annotation", "annotation_italic", false, false);
 
             parent.hubiForm_container(this, container, 1); 
         }     
@@ -701,28 +701,34 @@ function drawChart(callback) {
     let now = new Date().getTime();
     let min = now - options.graphTimespan;
 
-    const dataTable = new google.visualization.arrayToDataTable([[{ type: 'string', label: 'Device' }, { type: 'number', label: 'Min' }, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
-                                                                        					           { type: 'number', label: 'Low'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+    const dataTable = new google.visualization.arrayToDataTable([[{ type: 'string', label: 'Device' }, { type: 'number', label: 'Neg' }, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                        					           { type: 'number', label: 'Min' }, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                                                       { type: 'number', label: 'Low'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
                                                                                                        { type: 'number', label: 'Value'},   { role: "style" }, { role: "tooltip" }, { role: "annotation" },
                                                                                                        { type: 'number', label: 'High'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
                                                                                                        { type: 'number', label: 'Max'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" }]]);
 
     subscriptions.order.forEach(orderStr => {
-      const splitStr = orderStr.split('_');
-      const deviceId = splitStr[1];
-      const attr = splitStr[2];
-      const event = graphData[deviceId][attr];
+        const splitStr = orderStr.split('_');
+        const deviceId = splitStr[1];
+        const attr = splitStr[2];
+        const event = graphData[deviceId][attr];
         const max_ = event.max > options.graphHigh ? options.graphHigh : event.max;
         const min_ = event.min < options.graphLow ? options.graphLow : event.min;
         const cur_ = parseFloat(event.current);
-        const b = cur_ - min_;
-        const c = 1;
-        const d = max_ - cur_ ;
-        const e = options.graphHigh - max_;
-        const a = (options.graphHigh - options.graphLow) - (b + c + d + e);
+        
+        var low = options.graphLow;
+        var a, b, c, d, e, n;
+
+        b = (cur_ - min_);
+        c = ((options.graphHigh - options.graphLow) * 0.01);
+        d = max_-cur_ ;
+        e = options.graphHigh - max_;
+        a = (options.graphHigh) - (b + c + d + e);
+        n = options.graphLow >= 0 ? 0 : parseFloat(options.graphLow);
+        
         var cur_String = '';
         var units_ = ``;
-
         
         const name = subscriptions.labels[deviceId][attr].replace('%deviceName%', subscriptions.sensors[deviceId].displayName).replace('%attributeName%', attr);
         const colors = subscriptions.colors[deviceId][attr];
@@ -736,11 +742,12 @@ function drawChart(callback) {
 
         var stats_ = `\${name}\nMin: \${event.min}\${units_}\nMax: \${event.max}\${units_}\nCurrent: \${event.current}\${units_}`
 
-        dataTable.addRow([name,  a,     `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     '',
-                                 b,     `color: \${colors.minMaxColor}`,                                                                                                        `\${stats_}`,     '',
-                                 c,     `{color: \${colors.currentValueColor}; stroke-color:  \${colors.currentValueBorderColor}; stroke-opacity: 1.0; stroke-width: 1;}`,      `\${stats_}`,     cur_String,
-                                 d,     `color: \${colors.minMaxColor}`,                                                                                                        `\${stats_}`,     '',
-                                 e,     `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     ''
+        dataTable.addRow([name,  n,        `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     '',
+                                 a,        `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     '',
+                                 b,        `color: \${colors.minMaxColor}`,                                                                                                        `\${stats_}`,     '',
+                                 c,        `{color: \${colors.currentValueColor}; stroke-color:  \${colors.currentValueBorderColor}; stroke-opacity: 1.0; stroke-width: 1;}`,      `\${stats_}`,     cur_String,
+                                 d,        `color: \${colors.minMaxColor}`,                                                                                                        `\${stats_}`,     '',
+                                 e,        `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     ''
         ]);
 
     });
