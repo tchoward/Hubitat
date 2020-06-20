@@ -701,31 +701,80 @@ function drawChart(callback) {
     let now = new Date().getTime();
     let min = now - options.graphTimespan;
 
-    const dataTable = new google.visualization.arrayToDataTable([[{ type: 'string', label: 'Device' }, { type: 'number', label: 'Neg' }, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
-                                                                        					           { type: 'number', label: 'Min' }, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
-                                                                                                       { type: 'number', label: 'Low'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
-                                                                                                       { type: 'number', label: 'Value'},   { role: "style" }, { role: "tooltip" }, { role: "annotation" },
-                                                                                                       { type: 'number', label: 'High'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
-                                                                                                       { type: 'number', label: 'Max'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" }]]);
+    const dataTable = new google.visualization.arrayToDataTable([[{ type: 'string', label: 'Device' }, { type: 'number', label: 'na' },	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                        					           { type: 'number', label: 'nb' },	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                                                       { type: 'number', label: 'nc' },	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                                                       { type: 'number', label: 'nd'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                                                       { type: 'number', label: 'ne'},  { role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                                                       { type: 'number', label: 'a'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                                                       { type: 'number', label: 'b'}, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                                                       { type: 'number', label: 'c' }, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                        					           { type: 'number', label: 'd' }, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                                                       { type: 'number', label: 'e' }, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
+                                                                ]]);
 
     subscriptions.order.forEach(orderStr => {
         const splitStr = orderStr.split('_');
         const deviceId = splitStr[1];
         const attr = splitStr[2];
         const event = graphData[deviceId][attr];
-        const max_ = event.max > options.graphHigh ? options.graphHigh : event.max;
-        const min_ = event.min < options.graphLow ? options.graphLow : event.min;
-        const cur_ = parseFloat(event.current);
+        var max_ = event.max > options.graphHigh ? options.graphHigh : event.max;
+        var min_ = event.min < options.graphLow ? options.graphLow : event.min;
+        var cur_ = parseFloat(event.current);
         
-        var low = options.graphLow;
-        var a, b, c, d, e, n;
+        var L = parseFloat(options.graphLow);
+        var H = parseFloat(options.graphHigh);
+        var Mi = min_;
+        var Ma = max_;
+        var C1 = cur_ - (0.5*(( H - L ) * 0.01));  //the bar is 1% high
+        var C2 = cur_ + (0.5*(( H - L ) * 0.01));  //the bar is 1% high
 
-        b = (cur_ - min_);
-        c = ((options.graphHigh - options.graphLow) * 0.01);
-        d = max_-cur_ ;
-        e = options.graphHigh - max_;
-        a = (options.graphHigh) - (b + c + d + e);
-        n = options.graphLow >= 0 ? 0 : parseFloat(options.graphLow);
+
+        var na, nb, nc, nd, ne;
+        var a, b, c, d, e;
+
+        //Handle all the positive ranges
+        a = Mi - L;
+        b = C1 - Mi;
+        c = C2 - C1;
+        d = Ma - C2;
+        e = H - Ma;
+    
+        //Handle all the negative ranges
+        na = -e;
+        nb = -d;
+        nc = -c;
+        nd = -b;
+        ne = -a;
+
+        if (H <= 0){
+            a = 0; b = 0;  c = 0; d = 0; e = 0;
+        } else if (Ma <= 0){
+            a = 0; b = 0; c = 0; d = 0;
+            e = H;
+            na = Ma;
+        } else if (C2 <=0 ){
+            a = 0; b = 0; c = 0;
+            d = Ma;
+            nb = C2;
+            na = 0;
+        } else if (C1 <= 0){
+            a = 0; b = 0; 
+            c = C2;
+            nc = C1;
+            na = 0; nb = 0;
+        } else if (Mi <= 0){
+            a = 0; 
+            b = C1;
+            nd = Mi;
+            na = 0; nb = 0; nc = 0;            
+        } else if (L <= 0) {          
+            a = Mi;
+            ne = L;
+            na = 0; nb = 0; nc = 0; nd = 0;  
+        } else {
+            na = 0; nb = 0; nc = 0; nd = 0;  ne = 0;
+        }
         
         var cur_String = '';
         var units_ = ``;
@@ -735,14 +784,20 @@ function drawChart(callback) {
         if (colors.annotation_units != null){
             units_ = `\${colors.annotation_units}`
         }
+        cur_String = ``;
+        ncur_String = ``;
         if (colors.showAnnotation == true){
-            cur_String = `\${cur_.toFixed(1)}\${units_}`;
-            
+            if (cur_ >= 0) cur_String = `\${cur_.toFixed(1)}\${units_}`;
+            if (cur_ < 0) ncurString = `\${cur_.toFixed(1)}\${units_}`;
         }
 
-        var stats_ = `\${name}\nMin: \${event.min}\${units_}\nMax: \${event.max}\${units_}\nCurrent: \${event.current}\${units_}`
+        var stats_ = `\${name}\nMin: \${min_}\${units_}\nMax: \${max_}\${units_}\nCurrent: \${cur_}\${units_}`
 
-        dataTable.addRow([name,  n,        `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     '',
+        dataTable.addRow([name,  na,       `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     '',
+                                 nb,       `color: \${colors.minMaxColor}`,                                                                                                        `\${stats_}`,     '',
+                                 nc,       `{color: \${colors.currentValueColor}; stroke-color:  \${colors.currentValueBorderColor}; stroke-opacity: 1.0; stroke-width: 1;}`,      `\${stats_}`,     ncur_String,
+                                 nd,       `color: \${colors.minMaxColor}`,                                                                                                        `\${stats_}`,     '',
+                                 ne,       `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     '',
                                  a,        `color: \${colors.backgroundColor}`,                                                                                                    `\${stats_}`,     '',
                                  b,        `color: \${colors.minMaxColor}`,                                                                                                        `\${stats_}`,     '',
                                  c,        `{color: \${colors.currentValueColor}; stroke-color:  \${colors.currentValueBorderColor}; stroke-opacity: 1.0; stroke-width: 1;}`,      `\${stats_}`,     cur_String,
