@@ -112,9 +112,19 @@ def graphSetupPage(){
                       ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]];
     
     def timespanEnum = [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]]
-    
+       
     dynamicPage(name: "graphSetupPage") {
-        
+      //  allowSmoothing = true;
+      //  sensors.each { sensor ->        
+      //          settings["attributes_${sensor.id}"].each { attribute ->
+     //               if (settings["attribute_${sensor.id}_${attribute}_drop_line"]==true){
+     //                   //log.debug("${sensor.displayName} $attribute");
+     //                   settings["graph_max_points"] = 0;
+     //                   allowSmoothing = false;
+     //               }
+     //           }
+     //   }
+        log.debug("$allowSmoothing");
         parent.hubiForm_section(this,"General Options", 1)
         {      
             input( type: "enum", name: "graph_type", title: "<b>Graph Type</b>", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"] )
@@ -125,8 +135,11 @@ def graphSetupPage(){
             container << parent.hubiForm_switch(this, "Smooth Graph Points", "graph_smoothing", true, false);
             container << parent.hubiForm_switch(this, "<b>Flip Graph to Vertical?</b><br><small>(Rotate 90 degrees)</small>", "graph_y_orientation", false, false);
             container << parent.hubiForm_switch(this, "<b>Reverse Data Order?</b><br><small> (Flip data left to Right)</small>", "graph_z_orientation", false, false);
-            container << parent.hubiForm_slider (this, "Maximum number of Data Points?</b><br><small>(Zero for ALL)</small>", "graph_max_points",  0, 0, 1000, " data points");
-
+           // if (allowSmoothing) {
+                container << parent.hubiForm_slider (this, "Maximum number of Data Points?</b><br><small>(Zero for ALL)</small>", "graph_max_points",  0, 0, 1000, " data points");
+           // } else {
+              //  container << parent.hubiForm_text (this, "Smoothing is not allowed with <b>drop lines</b><br><small>Please disable to use smoothing</small>");
+            //}
             parent.hubiForm_container(this, container, 1); 
      
         }
@@ -285,7 +298,23 @@ def graphSetupPage(){
                                 container << parent.hubiForm_text_input(this,   "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                                 "graph_name_override_${sensor.id}_${attribute}",
                                                                                 "%deviceName%: %attributeName%", false);
-                                parent.hubiForm_container(this, container, 1); 
+                        
+                                container << parent.hubiForm_switch(this, "Display as a Drop Line", "attribute_${sensor.id}_${attribute}_drop_line", false, true);
+                                
+                                if (settings["attribute_${sensor.id}_${attribute}_drop_line"]==true){
+                                    container << parent.hubiForm_text_input(this,"Value to drop the Line",
+                                                                                 "attribute_${sensor.id}_${attribute}_drop_value",
+                                                                                 "0", false);
+                                    parent.hubiForm_container(this, container, 1);
+                                    def timespanEnum2 = [["60000":"1 Minute"], ["120000":"2 Minutes"], ["300000":"5 Minutes"], ["600000":"10 Minutes"],
+                                                        ["2400000":"30 minutes"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]];
+                                    input( type: "enum", name: "attribute_${sensor.id}_${attribute}_drop_time", title: "Drop Line Time", defaultValue: "5 Minutes", options: timespanEnum2 )
+
+                                } else {
+                                    parent.hubiForm_container(this, container, 1); 
+                                }
+                                
+                               
                                 cnt += 1;
                         }
                 }           
@@ -459,19 +488,41 @@ private buildData() {
                 respEvents << sensor.statesSince(attribute, then, [max: 50000]).collect{[ date: it.date.getTime(), value: Float.parseFloat(it.value - reg ) ]}
                 respEvents = respEvents.flatten();
                 respEvents = respEvents.reverse();
+                                
                 
-                //graph_max_ponts
+                //graph_max_points
                 if (graph_max_points > 0) {
                     reduction = (int) Math.ceil((float)respEvents.size() / graph_max_points);
                     respEvents = respEvents.collate(reduction).collect{ group -> 
-                        group.inject([ date: 0, value: 0.0f ]){ col, it -> 
+                        group.inject([ date: 0, value: 0 ]){ col, it -> 
                             col.date += it.date / group.size();
-                            col.value += + it.value / group.size();
+                            col.value += it.value / group.size();
                             return col;
                         } 
                     };                             
                 }                    
                 
+                //add drop line data
+                tEvents = [];
+                if (settings["attribute_${sensor.id}_${attribute}_drop_line"] && respEvents.size()>1){
+                    def drop_time = settings["attribute_${sensor.id}_${attribute}_drop_time"];
+                    def drop_value = settings["attribute_${sensor.id}_${attribute}_drop_value"];
+                    tEvents.push(respEvents[0]);
+                    for (i=1; i<respEvents.size(); i++){
+                        def curr = respEvents[i];
+                        def prev = respEvents[i-1];
+                        def currDate = curr.date;
+                        def prevDate = prev.date;
+                        
+                        if ((currDate - prevDate) > Integer.parseInt(drop_time)){
+                              //add first zero
+                              tEvents.push([date: prevDate-1000, value: Float.parseFloat(drop_value)]);
+                              tEvents.push([date: currDate+1000, value: Float.parseFloat(drop_value)]);
+                        }
+                        tEvents.push(curr);
+                     }
+                     respEvents = tEvents;
+                }         
                 resp[sensor.id][attribute] = respEvents;
             }
         }
@@ -543,11 +594,13 @@ def getChartOptions(){
             def text_color = settings["graph_line_${sensor.id}_${attribute}_color"];
             def text_color_transparent = settings["graph_line_${sensor.id}_${attribute}_color_transparent"];
             def line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute}"];
+           
             
             def annotations = [
                 "targetAxisIndex": axis, 
                 "color": text_color_transparent ? "transparent" : text_color,
-                "lineWidth": line_thickness
+                "lineWidth": line_thickness,
+                
             ];
             
             options.graphOptions.series << annotations;  
@@ -651,7 +704,7 @@ function parseEvent(event) {
         let value = event.value;
         let attribute = event.name;
 
-        stack[deviceId][attribute].push({ date: now, value });
+        stack[deviceId][attribute].push({ date: now, value: value });
         
         //check the stack
         const graphEvents = graphData[deviceId][attribute];
@@ -661,6 +714,14 @@ function parseEvent(event) {
             //push the stack
             graphData[deviceId][attribute].push(stack[deviceId][attribute].reduce((accum, it) =>  accum = { date: accum.date + it.date / stackEvents.length, value: accum.value + it.value / stackEvents.length }, { date: 0, value: 0.0 }));
             stack[deviceId][attribute] = [];
+
+            //check for drop
+            const thisDrop = subscriptions.drop[deviceId][attribute];
+            const thisEvents = graphData[deviceId][attribute];
+            if(thisDrop.valid && thisEvents[thisEvents.length - 2].date - thisEvents[thisEvents.length - 1].date > thisDrop.time) {
+                graphData[deviceId][attribute].splice(thisEvents.length - 2, 0, { date: thisEvents[thisEvents.length - 2].date + 1000, value: thisDrop.value });
+                graphData[deviceId][attribute].splice(thisEvents.length - 2, 0, { date: thisEvents[thisEvents.length - 1].date - 1000, value: thisDrop.value });
+            }
         }
 
         //update if we are realtime
@@ -830,6 +891,7 @@ function drawChart(callback) {
     subscriptions.ids.forEach((deviceId) => {
         colNums[deviceId] = {};
         subscriptions.attributes[deviceId].forEach((attr) => {
+            
             dataTable.addColumn({ label: subscriptions.labels[deviceId][attr].replace('%deviceName%', subscriptions.sensors[deviceId].displayName).replace('%attributeName%', attr), type: 'number' });
             colNums[deviceId][attr] = i++;
         });
@@ -964,6 +1026,7 @@ def getSubscriptions() {
     def sensors_ = [:];
     def attributes = [:];
     def labels = [:];
+    def drop_ = [:];
     sensors.each {sensor->
         ids << sensor.idAsLong;
         
@@ -975,13 +1038,23 @@ def getSubscriptions() {
         settings["attributes_${sensor.id}"].each { attr ->
             labels[sensor.id][attr] = settings["graph_name_override_${sensor.id}_${attr}"];
         }
+        
+        drop_[sensor.id] = [:];
+        settings["attributes_${sensor.id}"].each { attr ->
+            
+            drop_[sensor.id][attr] = [valid: settings["attribute_${sensor.id}_${attr}_drop_line"],
+                                      time:  settings["attribute_${sensor.id}_${attr}_drop_time"],
+                                      value: settings["attribute_${sensor.id}_${attr}_drop_value"]];
+        }
+        
     }
     
     def obj = [
         ids: ids,
         sensors: sensors_,
         attributes: attributes, 
-        labels : labels
+        labels : labels,
+        drop : drop_
     ]
     
     def subscriptions = obj;
