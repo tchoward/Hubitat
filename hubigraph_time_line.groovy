@@ -234,8 +234,8 @@ def graphSetupPage(){
             container = [];
             input( type: "bool", name: "graph_static_size", title: "<b>Set size of Graph?</b><br><small>(False = Fill Window)</small>", defaultValue: false, submitOnChange: true);
             if (graph_static_size==true){      
-                container << parent.hubiForm_slider (this, "Horizontal dimension of the graph", "graph_h_size",  800, 100, 3000, " pixels");
-                container << parent.hubiForm_slider (this, "Vertical dimension of the graph", "graph_v_size",  600, 100, 3000, " pixels");   
+                container << parent.hubiForm_slider (this, title: "Horizontal dimension of the graph", name: "graph_h_size",  default_value: 800, min: 100, max: 3000, units: " pixels", submit_on_change: false);
+                container << parent.hubiForm_slider (this, title: "Vertical dimension of the graph", name: "graph_v_size",  default_value: 600, min: 100, max: 3000, units: " pixels", submit_on_change: false);   
             }
 
             parent.hubiForm_container(this, container, 1); 
