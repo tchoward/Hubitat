@@ -169,7 +169,7 @@ def graphSetupPage(){
         log.debug("$allowSmoothing");
         parent.hubiForm_section(this,"General Options", 1)
         {      
-            input( type: "enum", name: "graph_type", title: "<b>Graph Type</b>", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"] )
+            input( type: "enum", name: "graph_type", title: "<b>Graph Type</b>", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"], submitOnChange: true)
             input( type: "enum", name: "graph_update_rate", title: "<b>Select graph update rate</b>", multiple: false, required: true, options: updateEnum, defaultValue: "0")
             input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: true, options: timespanEnum, defaultValue: "43200000")
             container = [];
@@ -177,7 +177,7 @@ def graphSetupPage(){
             container << parent.hubiForm_switch(this, "Smooth Graph Points", "graph_smoothing", true, false);
             container << parent.hubiForm_switch(this, "<b>Flip Graph to Vertical?</b><br><small>(Rotate 90 degrees)</small>", "graph_y_orientation", false, false);
             container << parent.hubiForm_switch(this, "<b>Reverse Data Order?</b><br><small> (Flip data left to Right)</small>", "graph_z_orientation", false, false)
-            container << parent.hubiForm_slider (this, "Maximum number of Data Points?</b><br><small>(Zero for ALL)</small>", "graph_max_points",  0, 0, 1000, " data points");
+            container << parent.hubiForm_slider (this, title: "Maximum number of Data Points?</b><br><small>(Zero for ALL)</small>", name: "graph_max_points",  default_value: 0, min: 0, max: 1000, units: " data points", submit_on_change: false);
            
             parent.hubiForm_container(this, container, 1); 
      
@@ -200,8 +200,8 @@ def graphSetupPage(){
             container = [];
             container << parent.hubiForm_switch     (this, "<b>Set size of Graph?</b><br><small>(False = Fill Window)</small>", "graph_static_size", false, true);
             if (graph_static_size==true){      
-                container << parent.hubiForm_slider (this, "Horizontal dimension of the graph", "graph_h_size",  800, 100, 3000, " pixels");
-                container << parent.hubiForm_slider (this, "Vertical dimension of the graph", "graph_v_size",  600, 100, 3000, " pixels");   
+                container << parent.hubiForm_slider (this, title: "Horizontal dimension of the graph", name: "graph_h_size",  default_value: 800, min: 100, max: 3000, units: " pixels", submit_on_change: false);
+                container << parent.hubiForm_slider (this, title: "Vertical dimension of the graph", name: "graph_v_size",  default_value: 600, min: 100, max: 3000, units: " pixels", submit_on_change: false);   
             }
 
             parent.hubiForm_container(this, container, 1); 
@@ -325,21 +325,31 @@ def graphSetupPage(){
                     
                     parent.hubiForm_section(this,"${sensor.displayName} - ${attribute}", 1){
                                
-                            container = [];
-                            input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "<b>Graph Axis Side</b>", defaultValue: "0", options: availableAxis);
-                            container << parent.hubiForm_color(this,        "Line", 
+                        container = [];
+                        input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "<b>Graph Axis Side</b>", defaultValue: "0", options: availableAxis);
+                        container << parent.hubiForm_color(this,        "Line", 
                                                                                 "graph_line_${sensor.id}_${attribute}", 
                                                                                 parent.hubiTools_rotating_colors(cnt), 
                                                                                 false);
-                                container << parent.hubiForm_line_size  (this,  "Line Thickness",                   
+                        container << parent.hubiForm_line_size  (this,  "Line Thickness",                   
                                                                                 "attribute_${sensor.id}_${attribute}_current_border", 
                                                                                 2, 1, 20);
-                                container << parent.hubiForm_text_input(this,   "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
+                        container << parent.hubiForm_text_input(this,   "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                                 "graph_name_override_${sensor.id}_${attribute}",
                                                                                 "%deviceName%: %attributeName%", false);
                         
-                                startVal = supportedTypes[attribute] ? supportedTypes[attribute].start : "";
-                                endVal = supportedTypes[attribute] ? supportedTypes[attribute].end : "";
+                        startVal = supportedTypes[attribute] ? supportedTypes[attribute].start : "";
+                        endVal = supportedTypes[attribute] ? supportedTypes[attribute].end : "";
+                                
+                        if (graph_type == "Area Graph"){
+                            container << parent.hubiForm_slider (this, title: "Opacity of the area below the line", 
+                                                                       name:  "attribute_${sensor.id}_${attribute}_opacity",  
+                                                                       default_value: 30, 
+                                                                       min: 0,
+                                                                       max: 100, 
+                                                                       units: "%",
+                                                                       submit_on_change: false);
+                        }
                         
                                 if (startVal != ""){
                                     app.updateSetting ("attribute_${sensor.id}_${attribute}_non_number", true);
@@ -528,9 +538,9 @@ def initialize() {
 private getValue(id, attr, val){
     def reg = ~/[a-z,A-Z]+/;
     if (settings["attribute_${id}_${attr}_${val}"]!=null){
-        ret = Float.parseFloat(settings["attribute_${id}_${attr}_${val}"]);
+        ret = Double.parseDouble(settings["attribute_${id}_${attr}_${val}"]);
     } else {
-        ret = Float.parseFloat(val - reg )
+        ret = Double.parseDouble(val - reg )
     }
     return ret;
 }
@@ -562,11 +572,11 @@ private buildData() {
                     endVal = Float.parseFloat(settings["attribute_${sensor.id}_${attribute}_${end}"]);
                     tEvents = [];
                     //Add Start Event
-                    
-                    if (respEvents[0].value == startVal){         
-                          tEvents.push([date: then+10000, value: endVal]);  
-                        } else {
-                          tEvents.push([date: then+10000, value: startVal]);
+                    currDate = then;
+                    if (respEvents[0].value == startVal){  
+                          tEvents.push([date: currDate, value: endVal]);  
+                    } else {
+                          tEvents.push([date: currDate, value: startVal]);
                     }
                     for (i=0; i<respEvents.size(); i++){
                         currDate = respEvents[i].date;
@@ -687,12 +697,17 @@ def getChartOptions(){
             def text_color = settings["graph_line_${sensor.id}_${attribute}_color"];
             def text_color_transparent = settings["graph_line_${sensor.id}_${attribute}_color_transparent"];
             def line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute}"];
-           
+            if (settings["attribute_${sensor.id}_${attribute}_opacity"]){
+                   def opacity = settings["attribute_${sensor.id}_${attribute}_opacity"]/100.0;
+            }
             
+            log.debug("Opacity: $opacity");
             def annotations = [
                 "targetAxisIndex": axis, 
                 "color": text_color_transparent ? "transparent" : text_color,
+                "stroke": text_color_transparent ? "transparent" : "red",
                 "lineWidth": line_thickness,
+                "areaOpacity" : opacity,
                 
             ];
             
