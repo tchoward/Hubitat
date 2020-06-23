@@ -55,6 +55,7 @@ def hubiForm_container(child, containers, numPerRow){
         child.call(){
                 def html_ = 
                         """
+                        
                         <div class = "mdl-grid" style="margin: 0; padding: 0;"> 
                         """
                 containers.each{container->
@@ -98,8 +99,8 @@ def hubiForm_page_button(child, title, page, width, icon=""){
 
 def hubiForm_section(child, title, pos, icon="", Closure code) {
         child.call(){
-                def id = title.replace(' ', '_');
-                def title_ = title.replace("'", "’").replace("`", "’")
+                def id = title.replace(' ', '_').replace('(', '').replace(')','');
+                def title_ = title.replace("'", "’").replace("`", "’");
 
                 def titleHTML = """
                         <div class="mdl-layout__header" style="display: block; background:#033673; margin: 0 -16px; width: calc(100% + 32px); position: relative; z-index: ${pos}; overflow: visible;">          
@@ -256,27 +257,48 @@ def hubiForm_line_size(child, title, varname, defaultSize, min, max){
     
 }
 
-def hubiForm_slider(child, title, varname, defaultSize, min, max, units=""){
-    
+def hubiForm_slider(Map map, child){
+      
     child.call(){
+        def title = map.title;
+        def varname = map.name;
+        def default_value = map.default_value;
+        def min = map.min;
+        def max = map.max;
+        def units = map.units;
+        def submit_on_change = map.submit_on_change;
+            
         def fontSize;
         def varSize = "${varname}"
+        def baseId = "${varname}";
         
         settings[varSize] = settings[varSize] ? settings[varSize] : defaultSize;
+        submitOnChange = submit_on_change ? "submitOnChange" : "";
         
         def html_ =
                 """
                 <table style="width:100%">
                 <tr><td><label for="settings[${varSize}]" class="control-label"><b>${title}</b></td>
-                        <td border=1 style="text-align:right;">Value: ${settings[varSize]}${units}</td>
+                    <td border=1 style="text-align:right;"><span id="${baseId}_slider_val" name="testing" >${settings[varSize]}${units}</span></td>
                         </label>
                 </tr>
                 </table>
-                <input type="range" min = "$min" max = "$max" name="settings[${varSize}]" class="mdl-slider submitOnChange "value="${settings[varSize]}" id="settings[${varSize}]">
+                <input type="range" min = "$min" max = "$max" name="settings[${varSize}]" 
+                                                              class="mdl-slider $submitOnChange " 
+                                                              value="${settings[varSize]}" 
+                                                              id="settings[${varSize}]"
+                                                              onchange="${baseId}_updateTextInput(this.value);">
                 <div class="form-group">
                         <input type="hidden" name="${varSize}.type" value="number">
                         <input type="hidden" name="${varSize}.multiple" value="false">
                 </div>
+                <script>
+                      function ${baseId}_updateTextInput(val) {
+                            var text = "";
+                            text += val+"${units}";
+                            jQuery('#${baseId}_slider_val').text(text); 
+                        }
+                </script>
                 """
         
         return (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
