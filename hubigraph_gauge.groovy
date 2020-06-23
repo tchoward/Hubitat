@@ -156,7 +156,7 @@ def graphSetupPage(){
 
                     
             
-            container << parent.hubiForm_slider (this, "Select Number of Highlight Areas on Gauge", "num_highlights",  3, 0, 3, " highlights");
+            container << parent.hubiForm_slider (this, title: "Select Number of Highlight Areas on Gauge", name: "num_highlights",  default_value: 3, min: 0, max: 3, units: " highlights", submit_on_change: true);
                       
             parent.hubiForm_container(this, container, 1); 
         }
@@ -189,11 +189,12 @@ def graphSetupPage(){
         
         parent.hubiForm_section(this,"Major and Minor Tics", 1){
                 container = [];
-                container << parent.hubiForm_slider (this, "Number Minor Tics", "gauge_minor_tics",  3, 0, 10, " tics");
+                container << parent.hubiForm_slider (this, title: "Number Minor Tics", name: "gauge_minor_tics",  default_value: 3, min: 0, max: 10, units: " tics");
                 
                 container << parent.hubiForm_switch     (this, "Use Custom Tics/Labels", "default_major_ticks", false, true);
                 if (default_major_ticks == true){
-                    container << parent.hubiForm_slider (this, "Number Major Tics", "gauge_major_tics",  3, 0, 20, " tics");
+                    if (gauge_major_tics == null) gauge_major_tics=3;
+                    container << parent.hubiForm_slider (this, title: "Number Major Tics", name: "gauge_major_tics",  default_value: 3, min: 0, max: 20, units: " tics");
                     for (tic = 0; tic<gauge_major_tics.toInteger(); tic++){
                         container << parent.hubiForm_text_input (this, "Input the Label for Tick ${tic+1}", "tic_title${tic}", "Label", false);
                     }
