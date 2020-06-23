@@ -99,7 +99,7 @@ def deviceSelectionPage() {
                 def all = (1..sensors.size()).collect{ "" + it };
                 sensors.eachWithIndex {sensor, idx ->
                     id = sensor.id;
-                    sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() };      
+                    sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() }.unique();      
                     container = [];
                     container <<  parent.hubiForm_sub_section(this,  "${sensor.displayName}");
                     parent.hubiForm_container(this, container, 1);     
@@ -167,7 +167,7 @@ def graphSetupPage(){
             
                  
             container << parent.hubiForm_color (this, "Graph Background", "graph_background", "#FFFFFF", false)
-            container << parent.hubiForm_slider (this, "Graph Bar Width (1%-100%)", "graph_bar_percent", 90, 1, 100, "%");
+            container << parent.hubiForm_slider (this, title: "Graph Bar Width (1%-100%)", name: "graph_bar_percent", default_value: 90, min: 1, max: 100, units: "%");
             container << parent.hubiForm_text_input(this, "Graph Max", "graph_max", "", false);
             container << parent.hubiForm_text_input(this, "Graph Min", "graph_min", "", false);   
 
@@ -178,14 +178,14 @@ def graphSetupPage(){
             container = [];
             container << parent.hubiForm_color (this, "Axis", "haxis", "#000000", false);
             container << parent.hubiForm_font_size (this, "Axis", "haxis", 9, 2, 20);
-            container << parent.hubiForm_slider (this, "Number of Pixels for Axis", "graph_h_buffer",  40, 10, 500, " pixels");
+            container << parent.hubiForm_slider (this, title: "Number of Pixels for Axis", name: "graph_h_buffer", default_value: 40, min: 10, max: 500, units: " pixels");
             parent.hubiForm_container(this, container, 1);  
         }
         parent.hubiForm_section(this, "Device Names", 1){
             container = [];
             container << parent.hubiForm_font_size (this, "Device Name","graph_axis",  9, 2, 20);
             container << parent.hubiForm_color (this, "Device Name","graph_axis",  "#000000", false);         
-            container << parent.hubiForm_slider (this, "Number of Pixels for Device Name Area", "graph_v_buffer",  100, 10, 500, " pixels");
+            container << parent.hubiForm_slider (this, title: "Number of Pixels for Device Name Area", name: "graph_v_buffer",  default_value: 100, min: 10, max: 500, " pixels");
 
             parent.hubiForm_container(this, container, 1); 
         }
@@ -193,8 +193,8 @@ def graphSetupPage(){
             container = [];
             input( type: "bool", name: "graph_static_size", title: "<b>Set size of Graph?</b><br><small>(False = Fill Window)</small>", defaultValue: false, submitOnChange: true);
             if (graph_static_size==true){      
-                container << parent.hubiForm_slider (this, "Horizontal dimension of the graph", "graph_h_size",  800, 100, 3000, " pixels");
-                container << parent.hubiForm_slider (this, "Vertical dimension of the graph", "graph_v_size",  600, 100, 3000, " pixels");   
+                container << parent.hubiForm_slider (this, title: "Horizontal dimension of the graph", name: "graph_h_size",  default_value: 800, min: 100, max: 3000, units: " pixels");
+                container << parent.hubiForm_slider (this, title: "Vertical dimension of the graph", name: "graph_v_size",  default_value: 600, min: 100, max: 3000, units: " pixels");   
             }
 
             parent.hubiForm_container(this, container, 1); 
@@ -342,9 +342,7 @@ def buildData() {
     def resp = [:]
     def now = new Date();
     def then = new Date();
-    
-    log.debug(graph_timespan);
-         
+            
     if(sensors) {
       sensors.each {sensor ->
           def attributes = settings["attributes_${sensor.id}"];
