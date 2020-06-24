@@ -334,6 +334,20 @@ def hubiForm_slider(Map map, child){
                         <input type="hidden" name="${varSize}.multiple" value="false">
                 </div>
                 <script>
+		
+		//Something to try
+		//<label for="price">Choose a maximum house price: </label>
+		//<input type="range" name="price" id="price" min="50000" max="500000" step="100" value="250000">
+		//<output class="price-output" for="price"></output>
+		
+		//const price = document.querySelector('#price');
+		//const output = document.querySelector('.price-output');
+
+		//output.textContent = price.value;
+
+		//price.addEventListener('input', function() {
+  		//	output.textContent = price.value;
+		//});
                       function ${baseId}_updateTextInput(val) {
                             var text = "";
                             text += val+"${units}";
