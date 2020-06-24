@@ -10,6 +10,7 @@ definition(
     iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png")
 
 //V 1.0 Ordering, Color and Common API Update
+//V 1.8 Smoother sliders, bug fixes
 
 preferences {
     // The parent app preferences are pretty simple: just use the app input for the child app.
@@ -269,12 +270,9 @@ def hubiForm_line_size(Map map, child){
         def submit_on_change = map.submit_on_change;
         def baseId = varname;
 	   
-	def varLineSize = "${varname}_line_size"     
-        settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : default_;
+	    def varLineSize = "${varname}_line_size"     
+        settings[varLineSize] = settings[varLineSize] ? settings[varLineSize] : default_;
         submitOnChange = submit_on_change ? "submitOnChange" : "";
-       
-        
-        settings[varLineSize] = settings[varLineSize] ? settings[varLineSize] : defaultSize;
         
         def html_ =
                 """
@@ -532,7 +530,6 @@ def hubiForm_list_reorder(child, var, var_color, solid_background="") {
                                   inner_result = true;   
                              }
                          }
-                         //log.debug("$id $inner_result");
                          result_ = result_ & inner_result;
                      }
                  }   
@@ -545,7 +542,6 @@ def hubiForm_list_reorder(child, var, var_color, solid_background="") {
             }
             
             if (result_ == false) {
-                //log.debug("Change Detected");
                 settings["${var}"] = null;        
             } 
             
@@ -776,12 +772,10 @@ def hubiTools_check_list(child, sensors, list_){
                          count_ ++;
                          inner_result = false;
                          for (i=0; i<list_.size(); i++){
-                             log.debug("$list_[i].id : $id    $list_[i].attribute : $attribute");
                              if (list_[i].id == id && list_[i].attribute == attribute){
                                   inner_result = true;   
                              }
                          }
-                         log.debug("$id $inner_result");
                          result = result & inner_result;
                      }
     }   
