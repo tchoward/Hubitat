@@ -98,6 +98,7 @@ def hubiForm_page_button(child, title, page, width, icon=""){
 }
 
 def hubiForm_section(child, title, pos, icon="", Closure code) {
+	
         child.call(){
                 def id = title.replace(' ', '_').replace('(', '').replace(')','');
                 def title_ = title.replace("'", "’").replace("`", "’");
@@ -144,11 +145,18 @@ def hubiForm_section(child, title, pos, icon="", Closure code) {
         }         
 }
 
-def hubiForm_switch(child, title, var, defaultVal, submitOnChange){
-         child.call(){
-               
+def hubiForm_switch(Map map, child){
+         
+        child.call(){
+             	def title = map.title;
+		        def var = map.name;
+		        def defaultVal = map.default;
+		        def submit_on_change = map.submit_on_change;
+		
+		
                 def actualVal = settings[var] != null ? settings[var] : defaultVal;
-                
+                def submitOnChange = submit_on_change ? "submitOnChange" : "";
+		 
                 def html_ = """      
                                 <div class="form-group">
                                         <input type="hidden" name="${var}.type" value="bool">
@@ -158,7 +166,7 @@ def hubiForm_switch(child, title, var, defaultVal, submitOnChange){
                                         class="mdl-switch mdl-js-switch mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events is-upgraded ${actualVal ? "is-checked" : ""}  
                                         data-upgraded=",MaterialSwitch,MaterialRipple">
                                         <input name="checkbox[${var}]" id="settings[${var}]" class="mdl-switch__input 
-                                                ${submitOnChange ? "submitOnChange" : ""} "
+                                                ${submitOnChange}"
                                                 type="checkbox" 
                                                 ${actualVal ? "checked" : ""}>                
                                         <div class="mdl-switch__label">${title}</div>    
@@ -202,38 +210,69 @@ def hubiForm_text_input(child, title, var, defaultVal, submitOnChange){
      }
 }
 
-def hubiForm_font_size(child, title, varname, defaultSize, min, max){
+def hubiForm_font_size(Map map, child){
     
     child.call(){
-        def fontSize;
-        def varFontSize = "${varname}_font"
-        
-        settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : defaultSize;
-        
+        def title = map.title;
+        def varname = map.name;
+        def default_ = map.default;
+        def min = map.min;
+        def max = map.max;
+        def submit_on_change = map.submit_on_change;
+        def baseId = varname;
+	
+	    def varFontSize = "${varname}_font"    
+        settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : default_;
+        submitOnChange = submit_on_change ? "submitOnChange" : "";
+	    
         def html_ = 
                 """
                 <table style="width:100%">
                 <tr><td><label for="settings[${varFontSize}]" class="control-label"><b>${title} Font Size</b></td>
-                        <td style="text-align:right; font-size:${settings[varFontSize]}px">Font Size: ${settings[varFontSize]}</td>
+                        <td >
+                            <span id="${baseId}_font_size_val" style="text-align:right; font-size:${settings[varFontSize]}px">Font Size: ${settings[varFontSize]}</span>
+                        </td>
                         </label>
                 </tr>
                 </table>
-                <input type="range" min = "$min" max = "$max" name="settings[${varFontSize}]" class="mdl-slider submitOnChange " value="${settings[varFontSize]}" id="settings[${varFontSize}]">
+                <input type="range" min = "$min" max = "$max" name="settings[${varFontSize}]" 
+							      class="mdl-slider $submit_on_change " 
+							      value="${settings[varFontSize]}" 
+							      id="settings[${varFontSize}]"
+							      onchange="${baseId}_updateFontSize(this.value);">
                 <div class="form-group">
                         <input type="hidden" name="${varFontSize}.type" value="number">
                         <input type="hidden" name="${varFontSize}.multiple" value="false">
                 </div>
+		        <script>
+                      function ${baseId}_updateFontSize(val) {
+                            var text = "";
+                            text += "Font Size: "+val;
+                            jQuery('#${baseId}_font_size_val').css("font-size", val+"px");
+                            jQuery('#${baseId}_font_size_val').text(text); 
+                      }
+                </script>
                 """
         
         return (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
     }
 }
 
-def hubiForm_line_size(child, title, varname, defaultSize, min, max){
+def hubiForm_line_size(Map map, child){
     
-    child.call(){
-        def fontSize;
-        def varLineSize = "${varname}_line_size"
+     child.call(){
+        def title = map.title;
+        def varname = map.name;
+        def default_ = map.default;
+        def min = map.min;
+        def max = map.max;
+        def submit_on_change = map.submit_on_change;
+        def baseId = varname;
+	   
+	def varLineSize = "${varname}_line_size"     
+        settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : default_;
+        submitOnChange = submit_on_change ? "submitOnChange" : "";
+       
         
         settings[varLineSize] = settings[varLineSize] ? settings[varLineSize] : defaultSize;
         
@@ -241,15 +280,33 @@ def hubiForm_line_size(child, title, varname, defaultSize, min, max){
                 """
                 <table style="width:100%">
                 <tr><td><label for="settings[${varLineSize}]" class="control-label"><b>${title} Line Size</b></td>
-                        <td border=1 style="text-align:right;">Line Size: ${settings[varLineSize]}<hr style='background-color:#1A77C9; height:${settings[varLineSize]}px; border: 0;'></td>
+                        <td border=1 style="text-align:right;">
+			                <span id="${baseId}_line_size_text" name="testing" >
+				                Line Size: ${settings[varLineSize]} <hr id='${baseId}_line_size_draw' style='background-color:#1A77C9; height:${settings[varLineSize]}px; border: 0;'>
+			                </span>
+			</td>
                         </label>
                 </tr>
                 </table>
-                <input type="range" min = "$min" max = "$max" name="settings[${varLineSize}]" class="mdl-slider submitOnChange "value="${settings[varLineSize]}" id="settings[${varLineSize}]">
+                <input type="range" min = "$min" max = "$max" name="settings[${varLineSize}]" 
+                                  class="mdl-slider ${submitOnChange}"
+							      value="${settings[varLineSize]}" 
+							      id="settings[${varLineSize}]"
+							      onchange="${baseId}_updateLineInput(this.value);">
                 <div class="form-group">
                         <input type="hidden" name="${varLineSize}.type" value="number">
                         <input type="hidden" name="${varLineSize}.multiple" value="false">
                 </div>
+		<script>
+                      function ${baseId}_updateLineInput(val) {
+                            var text = "";
+                            text += "Line Size: "+val;
+                            
+                            jQuery('#${baseId}_line_size_text').text(text);
+                            jQuery('#${baseId}_line_size_draw').remove();
+                            jQuery('#${baseId}_line_size_text').after("<hr id='${baseId}_line_size_draw' style='background-color:#1A77C9; height:"+val+"px; border: 0;'>");
+                        }
+                </script>
                 """
         
         return (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
@@ -262,7 +319,7 @@ def hubiForm_slider(Map map, child){
     child.call(){
         def title = map.title;
         def varname = map.name;
-        def default_value = map.default_value;
+        def default_ = map.default;
         def min = map.min;
         def max = map.max;
         def units = map.units;
@@ -272,7 +329,7 @@ def hubiForm_slider(Map map, child){
         def varSize = "${varname}"
         def baseId = "${varname}";
         
-        settings[varSize] = settings[varSize] ? settings[varSize] : defaultSize;
+        settings[varSize] = settings[varSize] ? settings[varSize] : default_;
         submitOnChange = submit_on_change ? "submitOnChange" : "";
         
         def html_ =
@@ -293,7 +350,8 @@ def hubiForm_slider(Map map, child){
                         <input type="hidden" name="${varSize}.multiple" value="false">
                 </div>
                 <script>
-                      function ${baseId}_updateTextInput(val) {
+		
+		                function ${baseId}_updateTextInput(val) {
                             var text = "";
                             text += val+"${units}";
                             jQuery('#${baseId}_slider_val').text(text); 
