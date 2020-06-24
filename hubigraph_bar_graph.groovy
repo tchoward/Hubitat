@@ -17,6 +17,8 @@
 // Hubigraph Bar Graph Changelog
 // V 0.1 Intial release
 // V 0.2 Ordering, Color and Common API Update
+// V 1.8 Smoother sliders, bug fixes
+
 
 import groovy.json.JsonOutput
 
@@ -139,8 +141,20 @@ def attributeConfigurationPage() {
                                                                             "%deviceName%: %attributeName%", false);
                             container << parent.hubiForm_color      (this,  "Bar Background",               "attribute_${sensor.id}_${attribute}_background", "#3e4475", false, true);
                             container << parent.hubiForm_color      (this,  "Bar Border",                   "attribute_${sensor.id}_${attribute}_current_border", "#FFFFFF", false);
-                            container << parent.hubiForm_line_size  (this,  "Bar Border",                   "attribute_${sensor.id}_${attribute}_current_border", 2, 1, 10);
-                            container << parent.hubiForm_switch     (this,  "Show Current Value on Bar",    "attribute_${sensor.id}_${attribute}_show_value", false, true);
+                     
+                            container << parent.hubiForm_slider     (this,     title: "Bar Opacity", 
+                                                                               name: "attribute_${sensor.id}_${attribute}_opacity", 
+                                                                               default_value: 100, min: 1, max: 100, units: "%");
+ 
+                            container << parent.hubiForm_line_size  (this,  	title: "Bar Border", 	
+								     		                                    name: "attribute_${sensor.id}_${attribute}_current_border", 
+								     		                                    default: 2, min: 1, max: 10);
+			 
+                            container << parent.hubiForm_switch     (this,  	title: "Show Current Value on Bar", 
+								     		                                    name: "attribute_${sensor.id}_${attribute}_show_value", 
+								     		                                    default: false, 
+								     		                                    submit_on_change: true);
+                     
                             if (settings["attribute_${sensor.id}_${attribute}_show_value"]==true){
                                 container<< parent.hubiForm_text_input(this, "Units", "attribute_${sensor.id}_${attribute}_annotation_units", "", false)
                             }
@@ -167,7 +181,7 @@ def graphSetupPage(){
             
                  
             container << parent.hubiForm_color (this, "Graph Background", "graph_background", "#FFFFFF", false)
-            container << parent.hubiForm_slider (this, title: "Graph Bar Width (1%-100%)", name: "graph_bar_percent", default_value: 90, min: 1, max: 100, units: "%");
+            container << parent.hubiForm_slider (this, title: "Graph Bar Width (1%-100%)", name: "graph_bar_percent", default: 90, min: 1, max: 100, units: "%");
             container << parent.hubiForm_text_input(this, "Graph Max", "graph_max", "", false);
             container << parent.hubiForm_text_input(this, "Graph Min", "graph_min", "", false);   
 
@@ -177,15 +191,15 @@ def graphSetupPage(){
         parent.hubiForm_section(this, "Axes", 1){
             container = [];
             container << parent.hubiForm_color (this, "Axis", "haxis", "#000000", false);
-            container << parent.hubiForm_font_size (this, "Axis", "haxis", 9, 2, 20);
-            container << parent.hubiForm_slider (this, title: "Number of Pixels for Axis", name: "graph_h_buffer", default_value: 40, min: 10, max: 500, units: " pixels");
+            container << parent.hubiForm_font_size (this, title: "Axis", name: "haxis", default: 9, min: 2, max: 20);
+            container << parent.hubiForm_slider (this, title: "Number of Pixels for Axis", name: "graph_h_buffer", default: 40, min: 10, max: 500, units: " pixels");
             parent.hubiForm_container(this, container, 1);  
         }
         parent.hubiForm_section(this, "Device Names", 1){
             container = [];
-            container << parent.hubiForm_font_size (this, "Device Name","graph_axis",  9, 2, 20);
+            container << parent.hubiForm_font_size (this, title: "Device Name", name: "graph_axis",  default: 9, min: 2, max: 20);
             container << parent.hubiForm_color (this, "Device Name","graph_axis",  "#000000", false);         
-            container << parent.hubiForm_slider (this, title: "Number of Pixels for Device Name Area", name: "graph_v_buffer",  default_value: 100, min: 10, max: 500, " pixels");
+            container << parent.hubiForm_slider (this, title: "Number of Pixels for Device Name Area", name: "graph_v_buffer",  default: 100, min: 10, max: 500, units: " pixels");
 
             parent.hubiForm_container(this, container, 1); 
         }
@@ -193,20 +207,20 @@ def graphSetupPage(){
             container = [];
             input( type: "bool", name: "graph_static_size", title: "<b>Set size of Graph?</b><br><small>(False = Fill Window)</small>", defaultValue: false, submitOnChange: true);
             if (graph_static_size==true){      
-                container << parent.hubiForm_slider (this, title: "Horizontal dimension of the graph", name: "graph_h_size",  default_value: 800, min: 100, max: 3000, units: " pixels");
-                container << parent.hubiForm_slider (this, title: "Vertical dimension of the graph", name: "graph_v_size",  default_value: 600, min: 100, max: 3000, units: " pixels");   
+                container << parent.hubiForm_slider (this, title: "Horizontal dimension of the graph", name: "graph_h_size",  default: 800, min: 100, max: 3000, units: " pixels");
+                container << parent.hubiForm_slider (this, title: "Vertical dimension of the graph", name: "graph_v_size",  default: 600, min: 100, max: 3000, units: " pixels");   
             }
 
             parent.hubiForm_container(this, container, 1); 
         }
         parent.hubiForm_section(this, "Annotations", 1){
             container = [];
-            container << parent.hubiForm_font_size (this, "Annotation", "annotation", 16, 2, 40);
-            container << parent.hubiForm_switch    (this, "Show Annotation Outside (true) or Inside (false) of Bars", "annotation_inside", false, false);
+            container << parent.hubiForm_font_size (this, title: "Annotation", name: "annotation", default: 16, min: 2, max: 40);
+            container << parent.hubiForm_switch    (this, title: "Show Annotation Outside (true) or Inside (false) of Bars", name: "annotation_inside", default:false);
             container << parent.hubiForm_color     (this, "Annotation", "annotation",  "#FFFFFF", false);
             container << parent.hubiForm_color     (this, "Annotation Aura", "annotation_aura", "#000000", false);
-            container << parent.hubiForm_switch    (this, "Bold Annotation", "annotation_bold", false, false);
-            container << parent.hubiForm_switch    (this, "Italic Annotation", "annotation_bold", false, false);
+            container << parent.hubiForm_switch    (this, title: "Bold Annotation", name: "annotation_bold", default:false);
+            container << parent.hubiForm_switch    (this, title: "Italic Annotation", name: "annotation_bold", default:false);
 
             parent.hubiForm_container(this, container, 1); 
         }            
@@ -278,7 +292,7 @@ def mainPage() {
                     parent.hubiForm_section(this, "Hubigraph Tile Installation", 2, "apps"){
                         container = [];
                              
-                        container << parent.hubiForm_switch(this, "Install Hubigraph Tile Device?", "install_device", false, true);
+                        container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
                         if (install_device==true){ 
                              container << parent.hubiForm_text_input(this, "Name for HubiGraph Tile Device", "device_name", "Hubigraph Tile", "false");
                         }
@@ -293,7 +307,7 @@ def mainPage() {
                         container << parent.hubiForm_sub_section(this, "Application Name");
                         container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Bar Graph", "false");
                         container << parent.hubiForm_sub_section(this, "Debugging");
-                        container << parent.hubiForm_switch(this, "Enable Debug Logging?", "debug", false, false);
+                        container << parent.hubiForm_switch(this, title: "Enable Debug Logging?", name: "debug", default: false);
                         container << parent.hubiForm_sub_section(this, "Disable Oauth Authorization");
                         container << parent.hubiForm_page_button(this, "Disable API", "disableAPIPage", "100%", "cancel");  
                        
@@ -688,9 +702,10 @@ function drawChart(callback) {
 
         var stats_ = `\${name}\nCurrent: \${event.current}\${units_}\nDate: \${date_String} \${time_String}`
 
-        dataTable.addRow([name,  cur_, `{color:         \${colors.backgroundColor}; stroke-color:   \${colors.currentValueBorderColor}; 
-                                        stroke-opacity: 1.0; 
-                                        stroke-width:  \${colors.currentValueBorderLineSize};}`,      
+         dataTable.addRow([name,  cur_, `{color:          \${colors.backgroundColor}; 
+                                         stroke-color:   \${colors.currentValueBorderColor}; 
+                                         fill-opacity:       \${colors.opacity}; 
+                                         stroke-width:   \${colors.currentValueBorderLineSize};}`,      
                                  `\${stats_}`,     
                                  `\${cur_String} `]);
 
@@ -822,6 +837,7 @@ def getSubscriptions() {
                                             "annotation_font_size":        settings["attribute_${sensor.id}_${attribute}_annotation_font_size"],
                                             "annotation_color":            settings["attribute_${sensor.id}_${attribute}_annotation_color"],
                                             "annotation_units":            settings["attribute_${sensor.id}_${attribute}_annotation_units"],
+                                            "opacity":                     settings["attribute_${sensor.id}_${attribute}_opacity"]/100.0,
                                            ];
         }
                                                
