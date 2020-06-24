@@ -27,6 +27,8 @@
 // v0.3 Added waiting screen for initial graph loading & sped up load times
 // V 1.0 Released (not Beta) Cleanup and Preview Enabled
 // V 1.5 Ordering, Color and Common API Update
+// V 1.8 Smoother sliders, bug fixes
+
 
  
 import groovy.json.JsonOutput
@@ -223,8 +225,8 @@ def graphSetupPage(){
                   options: [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]], defaultValue: "0")
             input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: false, options: [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]], defaultValue: "43200000")     
             input( type: "enum", name: "graph_combine_rate", title: "<b>Combine events with events less than ? apart</b>", multiple: false, required: false, options: 
-                  [["0":"Never"], ["10000":"10 Seconds"], ["30000":"30 seconds"], ["60000":"1 Minute"], ["120000":"2 Minutes"], ["180000":"3 Minutes"], ["240000":"4 Minutes"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"30 Minutes"],
-                   ["3600000":"1 Hour"], ["6400000":"2 Hours"], ["9600000":"3 Hours"], ["13200000":"4 Hours"],  ["16800000":"5 Hours"], ["20400000":"6 Hours"]], defaultValue: "Never")     
+                  [["0":"Never"], ["10000":"10 Seconds"], ["30000":"30 seconds"], ["60000":"1 Minute"], ["120000":"2 Minutes"], ["180000":"3 Minutes"], ["240000":"4 Minutes"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], 
+                   ["1200000":"20 Minutes"], ["1800000":"30 Minutes"], ["3600000":"1 Hour"], ["6400000":"2 Hours"], ["9600000":"3 Hours"], ["13200000":"4 Hours"],  ["16800000":"5 Hours"], ["20400000":"6 Hours"]], defaultValue: "Never")     
 
             container = [];
             container << parent.hubiForm_color (this, "Background", "graph_background",  "#FFFFFF", false);
@@ -243,7 +245,7 @@ def graphSetupPage(){
         parent.hubiForm_section(this, "Devices", 1){
             container = [];
             container << parent.hubiForm_color (this, 	  "Device Text", "graph_axis", "#FFFFFF", false);
-            container << parent.hubiForm_font_size (this, "Device", "graph_axis",  9, 2, 20);
+            container << parent.hubiForm_font_size (this, title: "Device", name: "graph_axis", default: 9, min: 2, max: 20);
             parent.hubiForm_container(this, container, 1);  
         }  
     }
@@ -313,7 +315,7 @@ def mainPage() {
                     parent.hubiForm_section(this, "Hubigraph Tile Installation", 2, "apps"){
                         container = [];
                              
-                        container << parent.hubiForm_switch(this, "Install Hubigraph Tile Device?", "install_device", false, true);
+                        container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
                         if (install_device==true){ 
                              container << parent.hubiForm_text_input(this, "Name for HubiGraph Tile Device", "device_name", "Hubigraph Tile", "false");
                         }
@@ -328,7 +330,7 @@ def mainPage() {
                         container << parent.hubiForm_sub_section(this, "Application Name");
                         container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Bar Graph", "false");
                         container << parent.hubiForm_sub_section(this, "Debugging");
-                        container << parent.hubiForm_switch(this, "Enable Debug Logging?", "debug", false, false);
+                        container << parent.hubiForm_switch(this, title: "Enable Debug Logging?", name: "debug", default: false);
                         container << parent.hubiForm_sub_section(this, "Disable Oauth Authorization");
                         container << parent.hubiForm_page_button(this, "Disable API", "disableAPIPage", "100%", "cancel");  
                        
