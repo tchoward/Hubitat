@@ -243,7 +243,7 @@ def graphSetupPage(){
         parent.hubiForm_section(this, "Devices", 1){
             container = [];
             container << parent.hubiForm_color (this, 	  "Device Text", "graph_axis", "#FFFFFF", false);
-            container << parent.hubiForm_font_size (this, "Device", "graph_axis",  9, 2, 20);
+            container << parent.hubiForm_font_size (this, title: "Device", name: "graph_axis", default: 9, min: 2, max: 20);
             parent.hubiForm_container(this, container, 1);  
         }  
     }
