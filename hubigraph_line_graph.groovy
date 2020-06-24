@@ -33,7 +33,9 @@ import groovy.json.*;
 // V 1.0 Released (not Beta) Cleanup and Preview Enabled
 // v 1.2 Complete UI Refactor
 // V 1.5 Ordering, Color and Common API Update
+// V 1.8 Smoother sliders, bug fixes
     
+
 // Credit to Alden Howard for optimizing the code.
 
  
@@ -166,7 +168,6 @@ def graphSetupPage(){
     
     dynamicPage(name: "graphSetupPage") {
       
-        log.debug("$allowSmoothing");
         parent.hubiForm_section(this,"General Options", 1)
         {      
             input( type: "enum", name: "graph_type", title: "<b>Graph Type</b>", defaultValue: "Line Graph", options: ["Line Graph", "Area Graph", "Scatter Plot"], submitOnChange: true)
@@ -174,9 +175,9 @@ def graphSetupPage(){
             input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: true, options: timespanEnum, defaultValue: "43200000")
             container = [];
             container << parent.hubiForm_color (this, "Graph Background",    "graph_background", "#FFFFFF", false)
-            container << parent.hubiForm_switch(this, "Smooth Graph Points", "graph_smoothing", true, false);
-            container << parent.hubiForm_switch(this, "<b>Flip Graph to Vertical?</b><br><small>(Rotate 90 degrees)</small>", "graph_y_orientation", false, false);
-            container << parent.hubiForm_switch(this, "<b>Reverse Data Order?</b><br><small> (Flip data left to Right)</small>", "graph_z_orientation", false, false)
+            container << parent.hubiForm_switch(this, title: "Smooth Graph Points", name: "graph_smoothing", default: false);
+            container << parent.hubiForm_switch(this, title: "<b>Flip Graph to Vertical?</b><br><small>(Rotate 90 degrees)</small>", name: "graph_y_orientation", default: false);
+            container << parent.hubiForm_switch(this, title: "<b>Reverse Data Order?</b><br><small> (Flip data left to Right)</small>", name: "graph_z_orientation", default: false)
             container << parent.hubiForm_slider (this, title: "Maximum number of Data Points?</b><br><small>(Zero for ALL)</small>", name: "graph_max_points",  default_value: 0, min: 0, max: 1000, units: " data points", submit_on_change: false);
            
             parent.hubiForm_container(this, container, 1); 
@@ -186,19 +187,19 @@ def graphSetupPage(){
         parent.hubiForm_section(this,"Graph Title", 1)
         {    
             container = [];
-            container << parent.hubiForm_switch(this, "Show Title on Graph", "graph_show_title", false, true);
+            container << parent.hubiForm_switch(this, title: "Show Title on Graph", name: "graph_show_title", default: false, submit_on_change: true);
             if (graph_show_title==true) {
                 container << parent.hubiForm_text_input (this, "Graph Title", "graph_title", "Graph Title", false);
-                container << parent.hubiForm_font_size  (this, "Title", "graph_title", 9, 2, 20);
+                container << parent.hubiForm_font_size  (this, title: "Title", name: "graph_title", default: 9, min: 2, max: 20);
                 container << parent.hubiForm_color      (this, "Title", "graph_title", "#000000", false);
-                container << parent.hubiForm_switch     (this, "Graph Title Inside Graph?", "graph_title_inside", false, false);
+                container << parent.hubiForm_switch     (this, title: "Graph Title Inside Graph?", name: "graph_title_inside", default: false);
             }
             parent.hubiForm_container(this, container, 1); 
         }
             
          parent.hubiForm_section(this, "Graph Size", 1){
             container = [];
-            container << parent.hubiForm_switch     (this, "<b>Set size of Graph?</b><br><small>(False = Fill Window)</small>", "graph_static_size", false, true);
+            container << parent.hubiForm_switch     (this, title: "<b>Set size of Graph?</b><br><small>(False = Fill Window)</small>", name: "graph_static_size", default: false, submit_on_change: true);
             if (graph_static_size==true){      
                 container << parent.hubiForm_slider (this, title: "Horizontal dimension of the graph", name: "graph_h_size",  default_value: 800, min: 100, max: 3000, units: " pixels", submit_on_change: false);
                 container << parent.hubiForm_slider (this, title: "Vertical dimension of the graph", name: "graph_v_size",  default_value: 600, min: 100, max: 3000, units: " pixels", submit_on_change: false);   
@@ -211,12 +212,12 @@ def graphSetupPage(){
          { 
             //Axis
             container = [];
-            container << parent.hubiForm_font_size  (this, "Horizontal Axis", "graph_haxis", 9, 2, 20);
+            container << parent.hubiForm_font_size  (this, title: "Horizontal Axis", name: "graph_haxis", default: 9, min: 2, max: 20);
             container << parent.hubiForm_color      (this, "Horizonal Header", "graph_hh", "#C0C0C0", false);
             container << parent.hubiForm_color      (this, "Horizonal Axis", "graph_ha", "#C0C0C0", false);
             container << parent.hubiForm_text_input (this, "<b>Num Horizontal Gridlines</b><br><small>(Blank for auto)</small>", "graph_h_num_grid", "", false);
             
-            container << parent.hubiForm_switch     (this, "Show String Formatting Help", "dummy", false, true);
+            container << parent.hubiForm_switch     (this, title: "Show String Formatting Help", name: "dummy", default: false, submit_on_change: true);
             if (dummy == true){
                 val = [];
                 val <<"<b>Name"; val << "Format" ; val <<"Result</b>"; 
@@ -252,7 +253,7 @@ def graphSetupPage(){
          parent.hubiForm_section(this,"Vertical Axis", 1)
          { 
             container = [];
-            container << parent.hubiForm_font_size (this, "Vertical Axis", "graph_vaxis", 9, 2, 20);
+            container << parent.hubiForm_font_size (this, title: "Vertical Axis", name: "graph_vaxis", default: 9, min: 2, max: 20);
             container << parent.hubiForm_color (this, "Vertical Header", "graph_vh", "#000000", false);
             container << parent.hubiForm_color (this, "Vertical Axis", "graph_va", "#C0C0C0", false);
             parent.hubiForm_container(this, container, 1); 
@@ -264,10 +265,10 @@ def graphSetupPage(){
             container << parent.hubiForm_text_input(this,  "<b>Minimum for left axis</b><small>(Blank for auto)</small>", "graph_vaxis_1_min", "", false);
             container << parent.hubiForm_text_input(this,  "<b>Maximum for left axis</b><small>(Blank for auto)</small>", "graph_vaxis_1_max", "", false);   
             container << parent.hubiForm_text_input (this, "<b>Num Vertical Gridlines</b><br><small>(Blank for auto)</small>", "graph_vaxis_1_num_lines", "", false);
-            container << parent.hubiForm_switch     (this, "<b>Show Left Axis Label on Graph</b>", "graph_show_left_label", false, true);
+            container << parent.hubiForm_switch     (this, title: "<b>Show Left Axis Label on Graph</b>", name: "graph_show_left_label", default: false, submit_on_change: true);
             if (graph_show_left_label==true){
                 container << parent.hubiForm_text_input (this, "<b>Input Left Axis Label</b>", "graph_left_label", "Left Axis Label", false);
-                container << parent.hubiForm_font_size  (this, "Left Axis", "graph_left", 9, 2, 20);
+                container << parent.hubiForm_font_size  (this, title: "Left Axis", name: "graph_left", default: 9, min: 2, max: 20);
                 container << parent.hubiForm_color      (this, "Left Axis", "graph_left", "#FFFFFF", false);
             }
             parent.hubiForm_container(this, container, 1); 
@@ -279,10 +280,10 @@ def graphSetupPage(){
             container << parent.hubiForm_text_input(this,  "<b>Minimum for right axis</b><small>(Blank for auto)</small>", "graph_vaxis_2_min", "", false);
             container << parent.hubiForm_text_input(this,  "<b>Maximum for right axis</b><small>(Blank for auto)</small>", "graph_vaxis_2_max", "", false);   
             container << parent.hubiForm_text_input (this, "<b>Num Vertical Gridlines</b><br><small>(Blank for auto)</small>", "graph_vaxis_2_num_lines", "", false);
-            container << parent.hubiForm_switch     (this, "<b>Show Right Axis Label on Graph</b>", "graph_show_right_label", false, true);
+            container << parent.hubiForm_switch     (this, title: "<b>Show Right Axis Label on Graph</b>", name: "graph_show_right_label", default: false, submit_on_change: true);
             if (graph_show_right_label==true){
                 container << parent.hubiForm_text_input (this, "<b>Input right Axis Label</b>", "graph_right_label", "Right Axis Label", false);
-                container << parent.hubiForm_font_size  (this, "Right Axis", "graph_right", 9, 2, 20);
+                container << parent.hubiForm_font_size  (this, title: "Right Axis", name: "graph_right", default: 9, min: 2, max: 20);
                 container << parent.hubiForm_color      (this, "Right Axis", "graph_right", "#FFFFFF", false);
             }
             parent.hubiForm_container(this, container, 1); 
@@ -293,10 +294,10 @@ def graphSetupPage(){
             container = [];
             def legendPosition = [["top": "Top"], ["bottom":"Bottom"], ["in": "Inside Top"]];
             def insidePosition = [["start": "Left"], ["center": "Center"], ["end": "Right"]];
-            container << parent.hubiForm_switch(this, "Show Legend on Graph", "graph_show_legend", false, true);
+            container << parent.hubiForm_switch(this, title: "Show Legend on Graph", name: "graph_show_legend", default: false, submit_on_change: true);
             if (graph_show_legend==true){
-                container << parent.hubiForm_font_size  (this, "Legend", "graph_legend", 9, 2, 20);
-                container << parent.hubiForm_color      (ths, "Legend", "graph_legend", "#000000", false);
+                container << parent.hubiForm_font_size  (this, title: "Legend", name: "graph_legend", default: 9, min: 2, max: 20);
+                container << parent.hubiForm_color      (this, "Legend", "graph_legend", "#000000", false);
                 parent.hubiForm_container(this, container, 1); 
                 input( type: "enum", name: "graph_legend_position", title: "<b>Legend Position</b>", defaultValue: "Bottom", options: legendPosition);
                 input( type: "enum", name: "graph_legend_in side_position", title: "<b>Legend Justification</b>", defaultValue: "center", options: insidePosition);
@@ -331,9 +332,10 @@ def graphSetupPage(){
                                                                                 "graph_line_${sensor.id}_${attribute}", 
                                                                                 parent.hubiTools_rotating_colors(cnt), 
                                                                                 false);
-                        container << parent.hubiForm_line_size  (this,  "Line Thickness",                   
-                                                                                "attribute_${sensor.id}_${attribute}_current_border", 
-                                                                                2, 1, 20);
+                        container << parent.hubiForm_line_size  (this,  title: "Line Thickness",                   
+                                                                        name: "attribute_${sensor.id}_${attribute}", 
+                                                                        default: 2, min: 1, max: 20);
+                        
                         container << parent.hubiForm_text_input(this,   "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                                 "graph_name_override_${sensor.id}_${attribute}",
                                                                                 "%deviceName%: %attributeName%", false);
@@ -367,7 +369,7 @@ def graphSetupPage(){
                                     parent.hubiForm_container(this, container, 1); 
                                     
                                 } else {
-                                    container << parent.hubiForm_switch(this, "Display as a Drop Line", "attribute_${sensor.id}_${attribute}_drop_line", false, true);
+                                    container << parent.hubiForm_switch(this, title: "Display as a Drop Line", name: "attribute_${sensor.id}_${attribute}_drop_line", default: false, submit_on_change: true);
                                                               
                                     if (settings["attribute_${sensor.id}_${attribute}_drop_line"]==true){
                                         container << parent.hubiForm_text_input(this,"Value to drop the Line",
@@ -468,7 +470,7 @@ def mainPage() {
                     parent.hubiForm_section(this, "Hubigraph Tile Installation", 2, "apps"){
                         container = [];
                              
-                        container << parent.hubiForm_switch(this, "Install Hubigraph Tile Device?", "install_device", false, true);
+                        container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
                         if (install_device==true){ 
                              container << parent.hubiForm_text_input(this, "Name for HubiGraph Tile Device", "device_name", "Hubigraph Tile", "false");
                         }
@@ -483,7 +485,7 @@ def mainPage() {
                         container << parent.hubiForm_sub_section(this, "Application Name");
                         container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Bar Graph", "false");
                         container << parent.hubiForm_sub_section(this, "Debugging");
-                        container << parent.hubiForm_switch(this, "Enable Debug Logging?", "debug", false, false);
+                        container << parent.hubiForm_switch(this, title: "Enable Debug Logging?", name: "debug", default: false);
                         container << parent.hubiForm_sub_section(this, "Disable Oauth Authorization");
                         container << parent.hubiForm_page_button(this, "Disable API", "disableAPIPage", "100%", "cancel");  
                        
@@ -696,12 +698,11 @@ def getChartOptions(){
             def axis = Integer.parseInt(settings["graph_axis_number_${sensor.id}_${attribute}"]);
             def text_color = settings["graph_line_${sensor.id}_${attribute}_color"];
             def text_color_transparent = settings["graph_line_${sensor.id}_${attribute}_color_transparent"];
-            def line_thickness = settings["graph_line_thickness_${sensor.id}_${attribute}"];
+            def line_thickness = settings["attribute_${sensor.id}_${attribute}_line_size"];
             if (settings["attribute_${sensor.id}_${attribute}_opacity"]){
                    def opacity = settings["attribute_${sensor.id}_${attribute}_opacity"]/100.0;
             }
             
-            log.debug("Opacity: $opacity");
             def annotations = [
                 "targetAxisIndex": axis, 
                 "color": text_color_transparent ? "transparent" : text_color,
