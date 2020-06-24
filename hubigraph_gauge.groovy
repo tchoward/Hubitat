@@ -18,6 +18,8 @@
 // V 0.1 Intial release
 // V 1.0 Released (not Beta) Cleanup and Preview Enabled
 // V 1.5 Ordering, Color and Common API Update
+// V 1.8 Smoother sliders, bug fixes
+
 
 import groovy.json.JsonOutput
 import java.text.DecimalFormat;
@@ -191,13 +193,15 @@ def graphSetupPage(){
                 container = [];
                 container << parent.hubiForm_slider (this, title: "Number Minor Tics", name: "gauge_minor_tics",  default_value: 3, min: 0, max: 10, units: " tics");
                 
-                container << parent.hubiForm_switch     (this, "Use Custom Tics/Labels", "default_major_ticks", false, true);
+                container << parent.hubiForm_switch (this, title: "Use Custom Tics/Labels", name: "default_major_ticks", default: false, submit_on_change: true);
                 if (default_major_ticks == true){
-                    if (gauge_major_tics == null) gauge_major_tics=3;
-                    container << parent.hubiForm_slider (this, title: "Number Major Tics", name: "gauge_major_tics",  default_value: 3, min: 0, max: 20, units: " tics");
-                    for (tic = 0; tic<gauge_major_tics.toInteger(); tic++){
-                        container << parent.hubiForm_text_input (this, "Input the Label for Tick ${tic+1}", "tic_title${tic}", "Label", false);
-                    }
+			if (gauge_major_tics == null) { 
+				gauge_major_tics=3;
+			}
+			container << parent.hubiForm_slider (this, title: "Number Major Tics", name: "gauge_major_tics",  default_value: 3, min: 0, max: 20, units: " tics");
+                    	for (tic = 0; tic<gauge_major_tics.toInteger(); tic++){
+                        	container << parent.hubiForm_text_input (this, "Input the Label for Tick ${tic+1}", "tic_title${tic}", "Label", false);
+                    	}
                 } 
                parent.hubiForm_container(this, container, 1);   
         }
@@ -267,7 +271,7 @@ def mainPage() {
                     parent.hubiForm_section(this, "Hubigraph Tile Installation", 2, "apps"){
                         container = [];
                              
-                        container << parent.hubiForm_switch(this, "Install Hubigraph Tile Device?", "install_device", false, true);
+                        container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
                         if (install_device==true){ 
                              container << parent.hubiForm_text_input(this, "Name for HubiGraph Tile Device", "device_name", "Hubigraph Tile", "false");
                         }
@@ -282,7 +286,7 @@ def mainPage() {
                         container << parent.hubiForm_sub_section(this, "Application Name");
                         container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Bar Graph", "false");
                         container << parent.hubiForm_sub_section(this, "Debugging");
-                        container << parent.hubiForm_switch(this, "Enable Debug Logging?", "debug", false, false);
+                        container << parent.hubiForm_switch(this, title: "Enable Debug Logging?", name: "debug", default: false);
                         container << parent.hubiForm_sub_section(this, "Disable Oauth Authorization");
                         container << parent.hubiForm_page_button(this, "Disable API", "disableAPIPage", "100%", "cancel");  
                        
