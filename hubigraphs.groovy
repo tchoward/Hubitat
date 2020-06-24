@@ -97,7 +97,8 @@ def hubiForm_page_button(child, title, page, width, icon=""){
         return html_;
 }
 
-def hubiForm_section(child, title, pos, icon="", Closure code) {
+def hubiForm_section(Map map, child, title, pos, icon="", Closure code) {
+	
         child.call(){
                 def id = title.replace(' ', '_').replace('(', '').replace(')','');
                 def title_ = title.replace("'", "’").replace("`", "’");
@@ -146,9 +147,15 @@ def hubiForm_section(child, title, pos, icon="", Closure code) {
 
 def hubiForm_switch(child, title, var, defaultVal, submitOnChange){
          child.call(){
-               
+               	def title = map.title;
+		def var = map.name;
+		def defaultVal = map.default;
+		def submit_on_change = map.submit_on_change;
+		
+		
                 def actualVal = settings[var] != null ? settings[var] : defaultVal;
-                
+                def submitOnChange = submit_on_change ? "submitOnChange" : "";
+		 
                 def html_ = """      
                                 <div class="form-group">
                                         <input type="hidden" name="${var}.type" value="bool">
@@ -158,7 +165,7 @@ def hubiForm_switch(child, title, var, defaultVal, submitOnChange){
                                         class="mdl-switch mdl-js-switch mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events is-upgraded ${actualVal ? "is-checked" : ""}  
                                         data-upgraded=",MaterialSwitch,MaterialRipple">
                                         <input name="checkbox[${var}]" id="settings[${var}]" class="mdl-switch__input 
-                                                ${submitOnChange ? "submitOnChange" : ""} "
+                                                ${submitOnChange}"
                                                 type="checkbox" 
                                                 ${actualVal ? "checked" : ""}>                
                                         <div class="mdl-switch__label">${title}</div>    
