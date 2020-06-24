@@ -142,7 +142,11 @@ def attributeConfigurationPage() {
                             container << parent.hubiForm_line_size  (this,  	title: "Bar Border", 	
 								     		name: "attribute_${sensor.id}_${attribute}_current_border", 
 								     		default: 2, min: 1, max: 10);
-                            container << parent.hubiForm_switch     (this,  "Show Current Value on Bar",    "attribute_${sensor.id}_${attribute}_show_value", false, true);
+			 
+                            container << parent.hubiForm_switch     (this,  	title: "Show Current Value on Bar", 
+								     		name: "attribute_${sensor.id}_${attribute}_show_value", 
+								     		default: false, 
+								     		submit_on_change: true);
                             if (settings["attribute_${sensor.id}_${attribute}_show_value"]==true){
                                 container<< parent.hubiForm_text_input(this, "Units", "attribute_${sensor.id}_${attribute}_annotation_units", "", false)
                             }
@@ -204,11 +208,11 @@ def graphSetupPage(){
         parent.hubiForm_section(this, "Annotations", 1){
             container = [];
             container << parent.hubiForm_font_size (this, title: "Annotation", name: "annotation", default: 16, min: 2, max: 40);
-            container << parent.hubiForm_switch    (this, "Show Annotation Outside (true) or Inside (false) of Bars", "annotation_inside", false, false);
+            container << parent.hubiForm_switch    (this, title: "Show Annotation Outside (true) or Inside (false) of Bars", name: "annotation_inside", default:false);
             container << parent.hubiForm_color     (this, "Annotation", "annotation",  "#FFFFFF", false);
             container << parent.hubiForm_color     (this, "Annotation Aura", "annotation_aura", "#000000", false);
-            container << parent.hubiForm_switch    (this, "Bold Annotation", "annotation_bold", false, false);
-            container << parent.hubiForm_switch    (this, "Italic Annotation", "annotation_bold", false, false);
+            container << parent.hubiForm_switch    (this, title: "Bold Annotation", name: "annotation_bold", default:false);
+            container << parent.hubiForm_switch    (this, title: "Italic Annotation", name: "annotation_bold", default:false);
 
             parent.hubiForm_container(this, container, 1); 
         }            
@@ -280,7 +284,7 @@ def mainPage() {
                     parent.hubiForm_section(this, "Hubigraph Tile Installation", 2, "apps"){
                         container = [];
                              
-                        container << parent.hubiForm_switch(this, "Install Hubigraph Tile Device?", "install_device", false, true);
+                        container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
                         if (install_device==true){ 
                              container << parent.hubiForm_text_input(this, "Name for HubiGraph Tile Device", "device_name", "Hubigraph Tile", "false");
                         }
@@ -295,7 +299,7 @@ def mainPage() {
                         container << parent.hubiForm_sub_section(this, "Application Name");
                         container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Bar Graph", "false");
                         container << parent.hubiForm_sub_section(this, "Debugging");
-                        container << parent.hubiForm_switch(this, "Enable Debug Logging?", "debug", false, false);
+                        container << parent.hubiForm_switch(this, title: "Enable Debug Logging?", name: "debug", default: false);
                         container << parent.hubiForm_sub_section(this, "Disable Oauth Authorization");
                         container << parent.hubiForm_page_button(this, "Disable API", "disableAPIPage", "100%", "cancel");  
                        
