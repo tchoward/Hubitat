@@ -655,7 +655,7 @@ def getChartOptions(){
                      ],
             "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, 
                                     "color": graph_vh_color_transparent ? "transparent" : graph_vh_color], 
-                      "gridLines": ["color": graph_va_color_transparent ? "transparent" : graph_va_color],
+                      "gridlines": ["color": graph_va_color_transparent ? "transparent" : graph_va_color],
                      ],
             "vAxes": [
                 0: ["title" : graph_show_left_label ? graph_left_label: null,  
