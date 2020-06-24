@@ -207,13 +207,13 @@ def hubiForm_font_size(Map map, child){
     child.call(){
         def title = map.title;
         def varname = map.name;
-        def default_value = map.default_value;
+        def default = map.default;
         def min = map.min;
         def max = map.max;
         def submit_on_change = map.submit_on_change;
 	
 	def varFontSize = "${varname}_font"    
-        settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : default_value;
+        settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : default;
         submitOnChange = submit_on_change ? "submitOnChange" : "";
 	    
         def html_ = 
@@ -251,13 +251,13 @@ def hubiForm_line_size(Map map, child){
      child.call(){
         def title = map.title;
         def varname = map.name;
-        def default_value = map.default_value;
+        def default = map.default;
         def min = map.min;
         def max = map.max;
         def submit_on_change = map.submit_on_change;
 	   
 	def varLineSize = "${varname}_line_size"     
-        settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : default_value;
+        settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : default;
         submitOnChange = submit_on_change ? "submitOnChange" : "";
        
         
@@ -303,7 +303,7 @@ def hubiForm_slider(Map map, child){
     child.call(){
         def title = map.title;
         def varname = map.name;
-        def default_value = map.default_value;
+        def default = map.default;
         def min = map.min;
         def max = map.max;
         def units = map.units;
@@ -313,7 +313,7 @@ def hubiForm_slider(Map map, child){
         def varSize = "${varname}"
         def baseId = "${varname}";
         
-        settings[varSize] = settings[varSize] ? settings[varSize] : default_value;
+        settings[varSize] = settings[varSize] ? settings[varSize] : default;
         submitOnChange = submit_on_change ? "submitOnChange" : "";
         
         def html_ =
