@@ -189,7 +189,7 @@ def graphSetupPage(){
             container << parent.hubiForm_switch(this, "Show Title on Graph", "graph_show_title", false, true);
             if (graph_show_title==true) {
                 container << parent.hubiForm_text_input (this, "Graph Title", "graph_title", "Graph Title", false);
-                container << parent.hubiForm_font_size  (this, "Title", "graph_title", 9, 2, 20);
+                container << parent.hubiForm_font_size  (this, title: "Title", name: "graph_title", default: 9, min: 2, max: 20);
                 container << parent.hubiForm_color      (this, "Title", "graph_title", "#000000", false);
                 container << parent.hubiForm_switch     (this, "Graph Title Inside Graph?", "graph_title_inside", false, false);
             }
@@ -211,7 +211,7 @@ def graphSetupPage(){
          { 
             //Axis
             container = [];
-            container << parent.hubiForm_font_size  (this, "Horizontal Axis", "graph_haxis", 9, 2, 20);
+            container << parent.hubiForm_font_size  (this, title: "Horizontal Axis", name: "graph_haxis", default: 9, min: 2, max: 20);
             container << parent.hubiForm_color      (this, "Horizonal Header", "graph_hh", "#C0C0C0", false);
             container << parent.hubiForm_color      (this, "Horizonal Axis", "graph_ha", "#C0C0C0", false);
             container << parent.hubiForm_text_input (this, "<b>Num Horizontal Gridlines</b><br><small>(Blank for auto)</small>", "graph_h_num_grid", "", false);
@@ -252,7 +252,7 @@ def graphSetupPage(){
          parent.hubiForm_section(this,"Vertical Axis", 1)
          { 
             container = [];
-            container << parent.hubiForm_font_size (this, "Vertical Axis", "graph_vaxis", 9, 2, 20);
+            container << parent.hubiForm_font_size (this, title: "Vertical Axis", name: "graph_vaxis", default: 9, min: 2, max: 20);
             container << parent.hubiForm_color (this, "Vertical Header", "graph_vh", "#000000", false);
             container << parent.hubiForm_color (this, "Vertical Axis", "graph_va", "#C0C0C0", false);
             parent.hubiForm_container(this, container, 1); 
@@ -267,7 +267,7 @@ def graphSetupPage(){
             container << parent.hubiForm_switch     (this, "<b>Show Left Axis Label on Graph</b>", "graph_show_left_label", false, true);
             if (graph_show_left_label==true){
                 container << parent.hubiForm_text_input (this, "<b>Input Left Axis Label</b>", "graph_left_label", "Left Axis Label", false);
-                container << parent.hubiForm_font_size  (this, "Left Axis", "graph_left", 9, 2, 20);
+                container << parent.hubiForm_font_size  (this, title: "Left Axis", name: "graph_left", default: 9, min: 2, max: 20);
                 container << parent.hubiForm_color      (this, "Left Axis", "graph_left", "#FFFFFF", false);
             }
             parent.hubiForm_container(this, container, 1); 
@@ -282,7 +282,7 @@ def graphSetupPage(){
             container << parent.hubiForm_switch     (this, "<b>Show Right Axis Label on Graph</b>", "graph_show_right_label", false, true);
             if (graph_show_right_label==true){
                 container << parent.hubiForm_text_input (this, "<b>Input right Axis Label</b>", "graph_right_label", "Right Axis Label", false);
-                container << parent.hubiForm_font_size  (this, "Right Axis", "graph_right", 9, 2, 20);
+                container << parent.hubiForm_font_size  (this, title: "Right Axis", name: "graph_right", default: 9, min: 2, max: 20);
                 container << parent.hubiForm_color      (this, "Right Axis", "graph_right", "#FFFFFF", false);
             }
             parent.hubiForm_container(this, container, 1); 
@@ -295,8 +295,8 @@ def graphSetupPage(){
             def insidePosition = [["start": "Left"], ["center": "Center"], ["end": "Right"]];
             container << parent.hubiForm_switch(this, "Show Legend on Graph", "graph_show_legend", false, true);
             if (graph_show_legend==true){
-                container << parent.hubiForm_font_size  (this, "Legend", "graph_legend", 9, 2, 20);
-                container << parent.hubiForm_color      (ths, "Legend", "graph_legend", "#000000", false);
+                container << parent.hubiForm_font_size  (this, title: "Legend", name: "graph_legend", default: 9, min: 2, max: 20);
+                container << parent.hubiForm_color      (this, "Legend", "graph_legend", "#000000", false);
                 parent.hubiForm_container(this, container, 1); 
                 input( type: "enum", name: "graph_legend_position", title: "<b>Legend Position</b>", defaultValue: "Bottom", options: legendPosition);
                 input( type: "enum", name: "graph_legend_in side_position", title: "<b>Legend Justification</b>", defaultValue: "center", options: insidePosition);
@@ -331,9 +331,9 @@ def graphSetupPage(){
                                                                                 "graph_line_${sensor.id}_${attribute}", 
                                                                                 parent.hubiTools_rotating_colors(cnt), 
                                                                                 false);
-                        container << parent.hubiForm_line_size  (this,  "Line Thickness",                   
-                                                                                "attribute_${sensor.id}_${attribute}_current_border", 
-                                                                                2, 1, 20);
+                        container << parent.hubiForm_line_size  (this,  title: "Line Thickness",                   
+                                                                        name: "attribute_${sensor.id}_${attribute}_current_border", 
+                                                                        default: 2, min: 1, max: 20);
                         container << parent.hubiForm_text_input(this,   "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                                 "graph_name_override_${sensor.id}_${attribute}",
                                                                                 "%deviceName%: %attributeName%", false);
