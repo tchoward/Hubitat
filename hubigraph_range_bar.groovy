@@ -180,13 +180,13 @@ def graphSetupPage(){
         parent.hubiForm_section(this, "Axes", 1){
             container = [];
             container << parent.hubiForm_color (this, "Axis", "haxis", "#000000", false);
-            container << parent.hubiForm_font_size (this, "Axis", "haxis", 9, 2, 20);
+            container << parent.hubiForm_font_size (this, title: "Axis", name: "haxis", default: 9, min: 2, max: 20);
             container << parent.hubiForm_slider (this, title: "Number of Pixels for Axis", name: "graph_h_buffer",  default_value: 40, min: 10, max: 500, units: " pixels");
             parent.hubiForm_container(this, container, 1);  
         }
         parent.hubiForm_section(this, "Device Names", 1){
             container = [];
-            container << parent.hubiForm_font_size (this, "Device Name","graph_axis",  9, 2, 20);
+            container << parent.hubiForm_font_size (this, title: "Device Name", name: "graph_axis", default: 9, min: 2, max: 20);
             container << parent.hubiForm_color (this, "Device Name","graph_axis",  "#000000", false);         
             container << parent.hubiForm_slider (this, title: "Number of Pixels for Device Name Area", name: "graph_v_buffer",  default_value: 100, min: 10, max: 500, units: " pixels");
 
@@ -204,7 +204,7 @@ def graphSetupPage(){
         }
         parent.hubiForm_section(this, "Annotations", 1){
             container = [];
-            container << parent.hubiForm_font_size (this, "Annotation", "annotation", 16, 2, 40);
+            container << parent.hubiForm_font_size (this, title: "Annotation", name: "annotation", default: 16, min: 2, max: 40);
             container << parent.hubiForm_switch    (this, "Show Annotation Outside (true) or Inside (false) of Bars", "annotation_inside", false, false);
             container << parent.hubiForm_color     (this, "Annotation", "annotation",  "#000000", false);
             container << parent.hubiForm_color     (this, "Annotation Aura", "annotation_aura", "#FFFFFF", false);
