@@ -346,8 +346,10 @@ def hubiForm_slider(Map map, child){
 		//output.textContent = price.value;
 
 		//price.addEventListener('input', function() {
-  		//	output.textContent = price.value;
+  		//	output.textContent = price.value
 		//});
+		//$('html').css('font-size', newFontSize);
+		
                       function ${baseId}_updateTextInput(val) {
                             var text = "";
                             text += val+"${units}";
