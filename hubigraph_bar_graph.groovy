@@ -139,7 +139,9 @@ def attributeConfigurationPage() {
                                                                             "%deviceName%: %attributeName%", false);
                             container << parent.hubiForm_color      (this,  "Bar Background",               "attribute_${sensor.id}_${attribute}_background", "#3e4475", false, true);
                             container << parent.hubiForm_color      (this,  "Bar Border",                   "attribute_${sensor.id}_${attribute}_current_border", "#FFFFFF", false);
-                            container << parent.hubiForm_line_size  (this,  "Bar Border",                   "attribute_${sensor.id}_${attribute}_current_border", 2, 1, 10);
+                            container << parent.hubiForm_line_size  (this,  	title: "Bar Border", 	
+								     		name: "attribute_${sensor.id}_${attribute}_current_border", 
+								     		default_value: 2, min: 1, max: 10);
                             container << parent.hubiForm_switch     (this,  "Show Current Value on Bar",    "attribute_${sensor.id}_${attribute}_show_value", false, true);
                             if (settings["attribute_${sensor.id}_${attribute}_show_value"]==true){
                                 container<< parent.hubiForm_text_input(this, "Units", "attribute_${sensor.id}_${attribute}_annotation_units", "", false)
@@ -177,13 +179,13 @@ def graphSetupPage(){
         parent.hubiForm_section(this, "Axes", 1){
             container = [];
             container << parent.hubiForm_color (this, "Axis", "haxis", "#000000", false);
-            container << parent.hubiForm_font_size (this, "Axis", "haxis", 9, 2, 20);
+            container << parent.hubiForm_font_size (this, title: "Axis", name: "haxis", default_value: 9, min: 2, max: 20);
             container << parent.hubiForm_slider (this, title: "Number of Pixels for Axis", name: "graph_h_buffer", default_value: 40, min: 10, max: 500, units: " pixels");
             parent.hubiForm_container(this, container, 1);  
         }
         parent.hubiForm_section(this, "Device Names", 1){
             container = [];
-            container << parent.hubiForm_font_size (this, "Device Name","graph_axis",  9, 2, 20);
+            container << parent.hubiForm_font_size (this, title: "Device Name", name: "graph_axis",  default: 9, min: 2, max: 20);
             container << parent.hubiForm_color (this, "Device Name","graph_axis",  "#000000", false);         
             container << parent.hubiForm_slider (this, title: "Number of Pixels for Device Name Area", name: "graph_v_buffer",  default_value: 100, min: 10, max: 500, " pixels");
 
