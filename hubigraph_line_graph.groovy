@@ -662,7 +662,7 @@ def getChartOptions(){
                     "titleTextStyle": ["color": graph_left_color_transparent ? "transparent" : graph_left_color, "fontSize": graph_left_font],
                     "viewWindow": ["min": graph_vaxis_1_min != "" ?  graph_vaxis_1_min : null, 
                                    "max":  graph_vaxis_1_max != "" ?  graph_vaxis_1_max : null],
-                    "gridlines": ["count" : graph_vaxis_1_num_tics != "" ? graph_vaxis_1_num_tics : null ],
+                    "gridlines": ["count" : graph_vaxis_1_num_lines != "" ? graph_vaxis_1_num_lines : null ],
                     "minorGridlines": ["count" : 0]
                    ],
                 
@@ -670,7 +670,7 @@ def getChartOptions(){
                     "titleTextStyle": ["color": graph_right_color_transparent ? "transparent" : graph_right_color, "fontSize": graph_right_font],
                     "viewWindow": ["min": graph_vaxis_2_min != "" ?  graph_vaxis_2_min : null, 
                                    "max":  graph_vaxis_2_max != "" ?  graph_vaxis_2_max : null],
-                    "gridlines": ["count" : graph_vaxis_2_num_tics != "" ? graph_vaxis_2_num_tics : null ],
+                    "gridlines": ["count" : graph_vaxis_2_num_lines != "" ? graph_vaxis_2_num_lines : null ],
                     "minorGridlines": ["count" : 0]
                     ]
                 
