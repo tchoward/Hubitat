@@ -167,6 +167,18 @@ def graphSetupPage(){
          ];
     
     dynamicPage(name: "graphSetupPage") {
+        
+        def non_numeric = false;
+        sensors.each { sensor ->        
+            settings["attributes_${sensor.id}"].each { attribute ->
+               if (supportedTypes[attribute] != null) non_numeric = true; 
+            }
+        }
+        
+        if (non_numeric) {
+            app.updateSetting ("graph_max_points", 0);
+        }
+            
       
         parent.hubiForm_section(this,"General Options", 1)
         {      
@@ -178,7 +190,8 @@ def graphSetupPage(){
             container << parent.hubiForm_switch(this, title: "Smooth Graph Points", name: "graph_smoothing", default: false);
             container << parent.hubiForm_switch(this, title: "<b>Flip Graph to Vertical?</b><br><small>(Rotate 90 degrees)</small>", name: "graph_y_orientation", default: false);
             container << parent.hubiForm_switch(this, title: "<b>Reverse Data Order?</b><br><small> (Flip data left to Right)</small>", name: "graph_z_orientation", default: false)
-            container << parent.hubiForm_slider (this, title: "Maximum number of Data Points?</b><br><small>(Zero for ALL)</small>", name: "graph_max_points",  default_value: 0, min: 0, max: 1000, units: " data points", submit_on_change: false);
+            if (!non_numeric) 
+                container << parent.hubiForm_slider (this, title: "Maximum number of Data Points?</b><br><small>(Zero for ALL)</small>", name: "graph_max_points",  default: 0, min: 0, max: 1000, units: " data points", submit_on_change: false);
            
             parent.hubiForm_container(this, container, 1); 
      
@@ -358,6 +371,7 @@ def graphSetupPage(){
                                     app.updateSetting ("attribute_${sensor.id}_${attribute}_startString", startVal);
                                     app.updateSetting ("attribute_${sensor.id}_${attribute}_endString", endVal);
                                     container << parent.hubiForm_text(this, "<b><mark>This Attribute ($attribute) is non-numerical, please choose values for the states below</mark></b>");
+                                    
                                     container << parent.hubiForm_text_input(this, "Value for <mark>$startVal</mark>",
                                                                                   "attribute_${sensor.id}_${attribute}_${startVal}",
                                                                                   "100", false);
