@@ -341,8 +341,10 @@ def graphSetupPage(){
                                
                         container = [];
                         input( type: "enum", name: "graph_type_${sensor.id}_${attribute}", title: "<b>Graph Type</b>", defaultValue: "Line", options: ["Line", "Area", "Scatter", "Bar"], submitOnChange: true)
+                        input( type: "enum", name: "var_${sensor.id}_${attribute}_function", title: "<b>Data Point Combination Function</b>", defaultValue: "Average", options: ["Min", "Max", "Average"], submitOnChange: false)
                         input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "<b>Graph Axis Side</b>", defaultValue: "0", options: availableAxis);
                         def colorText = "";
+                        def fillText = "";
                         def graphType = settings["graph_type_${sensor.id}_${attribute}"]; 
                         switch (graphType){
                              case "Line":
@@ -350,23 +352,52 @@ def graphSetupPage(){
                                 break;
                              case "Area":
                                 colorText = "Line";
+                                fillText = "Area Fill"
                                 break;
                              case "Bar":
-                                colorText = "Bar";
+                                colorText = "Bar Border";
+                                fillText = "Bar Fill"
                                 break;
                              case "Scatter":
-                                colorText = "Plot";
+                                colorText = "Point";
                                 break;
                         }
+                        
                         container << parent.hubiForm_color(this, colorText, 
-                                                                 "graph_line_${sensor.id}_${attribute}", 
+                                                                 "var_${sensor.id}_${attribute}_stroke", 
                                                                   parent.hubiTools_rotating_colors(cnt), 
                                                                   false);
-                       
-                                                
-                        if (graphType == "Bar" ) {
+                        
+                        container << parent.hubiForm_slider (this, title: colorText+" Opacity", 
+                                                                           name:  "var_${sensor.id}_${attribute}_stroke_opacity",  
+                                                                           default: 90, 
+                                                                           min: 0,
+                                                                           max: 100, 
+                                                                           units: "%",
+                                                                           submit_on_change: false);
+                        
+                        container << parent.hubiForm_line_size  (this,  title: colorText+"Thickness",                   
+                                                                            name: "var_${sensor.id}_${attribute}_stroke", 
+                                                                            default: 2, min: 1, max: 20);
+                        
+                        
+                        if (graphType == "Bar" || graphType == "Area"){
                             
-                            if (!bar_size_shown){
+                            container << parent.hubiForm_color(this, fillText+" Color", 
+                                                                     "var_${sensor.id}_${attribute}_fill", 
+                                                                      parent.hubiTools_rotating_colors(cnt), 
+                                                                      false);
+                            
+                            container << parent.hubiForm_slider (this, title: fillText+" Opacity", 
+                                                                       name:  "var_${sensor.id}_${attribute}_fill_opacity",  
+                                                                       default: 90, 
+                                                                       min: 0,
+                                                                       max: 100, 
+                                                                       units: "%",
+                                                                       submit_on_change: false);    
+                        }
+                            
+                        if (graphType == "Bar"  && !bar_size_shown){
                             
                                 container << parent.hubiForm_slider (this, title: "Relative Width of ALL Bars", 
                                                                            name:  "graph_bar_width",  
@@ -376,44 +407,8 @@ def graphSetupPage(){
                                                                            units: "%",
                                                                            submit_on_change: false);
                                 bar_size_shown = true;
-                            }
-                            
-                            container << parent.hubiForm_color(this, "Bar Border Color", 
-                                                                     "a_${sensor.id}_${attribute}_bar_border", 
-                                                                      parent.hubiTools_rotating_colors(cnt), 
-                                                                      false);
-                            
-                            container << parent.hubiForm_line_size  (this,  title: "Bar Border Line Thickness",                   
-                                                                            name: "a_${sensor.id}_${attribute}_bar_border", 
-                                                                            default: 2, min: 1, max: 20);
-                            
-                            container << parent.hubiForm_slider (this, title: "Bar Fill Opacity", 
-                                                                       name:  "a_${sensor.id}_${attribute}_bar_opacity",  
-                                                                       default: 90, 
-                                                                       min: 0,
-                                                                       max: 100, 
-                                                                       units: "%",
-                                                                       submit_on_change: false);
-                            
-                            
-                            
                         }
-                        if (graphType == "Line" || graphType == "Area") {
-                            container << parent.hubiForm_line_size  (this,  title: "Line Thickness",                   
-                                                                            name: "attribute_${sensor.id}_${attribute}", 
-                                                                            default: 2, min: 1, max: 20);                            
-                        }
-                        if (graphType == "Area"){
-                            container << parent.hubiForm_slider (this, title: "Area Fill Opacity", 
-                                                                       name:  "a_${sensor.id}_${attribute}_area_opacity",  
-                                                                       default: 50, 
-                                                                       min: 0,
-                                                                       max: 100, 
-                                                                       units: "%",
-                                                                       submit_on_change: false);    
-                        }
-                        
-                        
+                            
                         
                         container << parent.hubiForm_text_input(this,   "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                                 "graph_name_override_${sensor.id}_${attribute}",
@@ -423,8 +418,8 @@ def graphSetupPage(){
                         endVal = supportedTypes[attribute] ? supportedTypes[attribute].end : "";
                                 
                        
-                        
-                                if (startVal != ""){
+                        //If this is a "non-numeric" attribute
+                        if (startVal != ""){
                                     app.updateSetting ("attribute_${sensor.id}_${attribute}_non_number", true);
                                     app.updateSetting ("attribute_${sensor.id}_${attribute}_startString", startVal);
                                     app.updateSetting ("attribute_${sensor.id}_${attribute}_endString", endVal);
@@ -439,34 +434,28 @@ def graphSetupPage(){
                                                                                   "attribute_${sensor.id}_${attribute}_${endVal}",
                                                                                   "0", false);
                                     
-                                    parent.hubiForm_container(this, container, 1); 
-                                    
-                                } else if (graphType == "Line" || graphType == "Area") {
+                         
+                        //Line and Area Graphs can be "Drop-line"
+                        } else if (graphType == "Line" || graphType == "Area") {
+                            
                                     container << parent.hubiForm_switch(this, title: "Display as a Drop Line", name: "attribute_${sensor.id}_${attribute}_drop_line", default: false, submit_on_change: true);
                                                               
                                     if (settings["attribute_${sensor.id}_${attribute}_drop_line"]==true){
+                                        
                                         container << parent.hubiForm_text_input(this,"Value to drop the Line",
                                                                                      "attribute_${sensor.id}_${attribute}_drop_value",
-                                                                                     "0", false);
-                                        parent.hubiForm_container(this, container, 1);
-                                       
-
-                                    } else {
-                                        parent.hubiForm_container(this, container, 1); 
+                                                                                     "0", false);                                    
                                     }
-                                } else {
-                                   parent.hubiForm_container(this, container, 1);  
-                                }
-                                
-                               
-                                cnt += 1;
                         }
-                }           
-        }
-       
-        
-    }
-}
+                            
+                        parent.hubiForm_container(this, container, 1);         
+                        cnt += 1;
+                
+                    }//parent.hubiForm           
+            }//attribute
+        }//sensor
+    }//page
+}//function
 
 def deviceSelectionPage() {
     def final_attrs;
@@ -741,11 +730,13 @@ def getChartOptions(){
     sensors.each { sensor ->
         settings["attributes_${sensor.id}"].each { attribute ->
             def type_ = settings["graph_type_${sensor.id}_${attribute}"].toLowerCase();
-            def lineWidth_ = null;
-            
-            def color_ = settings["graph_line_${sensor.id}_${attribute}_color"];
             def axes_ = Integer.parseInt(settings["graph_axis_number_${sensor.id}_${attribute}"]);
-            def opacity_ = settings["a_${sensor.id}_${attribute}_area_opacity"] ? settings["a_${sensor.id}_${attribute}_area_opacity"]/100.0 : null;
+            def stroke_color = settings["var_${sensor.id}_${attribute}_stroke_color"];
+            def stroke_opacity = settings["var_${sensor.id}_${attribute}_stroke_opacity"];
+            def stroke_line_size = settings["var_${sensor.id}_${attribute}_stroke_line_size"];
+            def fill_color = settings["var_${sensor.id}_${attribute}_fill_color"];
+            def fill_opacity = settings["var_${sensor.id}_${attribute}_fill_opacity"];
+           
             switch (type_){
                 case "line":
                     lineWidth_ = settings["attribute_${sensor.id}_${attribute}_line_size"];
@@ -765,10 +756,7 @@ def getChartOptions(){
             }
         
             options.graphOptions.series << ["$count_" : [ "type"            : type_,
-                                                          "lineWidth"       : lineWidth_,
-                                                          "color"           : color_,
                                                           "targetAxisIndex" : axes_,
-                                                          "areaOpacity"     : opacity_,
                                                         ]
                                            ];
             count_ ++;
@@ -781,6 +769,7 @@ def getChartOptions(){
             def axis = Integer.parseInt(settings["graph_axis_number_${sensor.id}_${attribute}"]);
             def text_color = settings["graph_line_${sensor.id}_${attribute}_color"];
             def text_color_transparent = settings["graph_line_${sensor.id}_${attribute}_color_transparent"];
+            
             def line_thickness = settings["attribute_${sensor.id}_${attribute}_line_size"];
             
             
@@ -1060,17 +1049,39 @@ function averageEvents(minTime, maxTime, data, drop_val) {
         if (sum.value == drop_val) sum.value = 0;
         sum.value += it.value / matches.length;
         return sum;
-    }, { date: maxTime, value: drop_val});
+    }, { date: minTime+((maxTime - minTime)/2), value: drop_val});
 }
+
+function maxEvents(minTime, maxTime, data, drop_val) {
+    const matches = data.filter(it => it.date > minTime && it.date <= maxTime);
+    if (matches!= []) 
+        return { date: minTime+((maxTime - minTime)/2), value: Math.max.apply(Math, matches.map(function(o) { return o.value; })) };
+    else
+        return { date: minTime+((maxTime - minTime)/2), value: drop_val }; 
+}
+
+function minEvents(minTime, maxTime, data, drop_val) {
+    const matches = data.filter(it => it.date > minTime && it.date <= maxTime);
+    if (matches!= []) 
+        return { date: minTime+((maxTime - minTime)/2), value: Math.min.apply(Math, matches.map(function(o) { return o.value; })) };
+    else
+        return { date: minTime+((maxTime - minTime)/2), value: drop_val }; 
+}
+
 
 function getStyle(deviceIndex, attribute){
     
-    if (subscriptions.graph_type[deviceIndex][attribute] == "Bar"){
-        let style = subscriptions.bar[deviceIndex][attribute]
-        let opacity = parseFloat(style.fill_opacity)/100.0;
-        return `{ stroke-color:   \${style.stroke_color};  fill-opacity: \${opacity}; stroke-width: \${style.stroke_width} }`
-    }
-    return ``;
+        let style = subscriptions.var[deviceIndex][attribute]
+        let stroke_color = style.stroke_color == null ? "" : style.stroke_color;
+        let stroke_opacity = style.stroke_opacity == null ? "" : parseFloat(style.stroke_opacity)/100.0;
+        let stroke_width = style.stroke_width == null ? "" : style.stroke_width;
+        let fill_color = style.fill_color == null ? "" : style.fill_color;
+        let fill_opacity = style.fill_opacity == null ? "" : parseFloat(style.fill_opacity)/100.0;
+        
+        let returnString = `{ stroke-color: \${stroke_color}; stroke-opacity: \${stroke_opacity}; stroke-width: \${stroke_width}; fill-opacity: \${fill_opacity}; fill-color: \${fill_color} }`
+        console.log(returnString);
+    
+        return returnString;
 }
 
 function drawChart(callback) {
@@ -1107,6 +1118,7 @@ function drawChart(callback) {
     //map the graph data
     Object.entries(graphData).forEach(([deviceIndex, attributes]) => {
         Object.entries(attributes).forEach(([attribute, events]) => {
+            let func = subscriptions.var[deviceIndex][attribute].function;
             current = then;
             if (subscriptions.drop[deviceIndex][attribute].valid){
                 drop_val = parseFloat(subscriptions.drop[deviceIndex][attribute].value);
@@ -1123,7 +1135,11 @@ function drawChart(callback) {
                         drop_val = newEntry.value;
                     }
                 }
-                newEntry = averageEvents(current, current+spacing, events, drop_val);
+                switch (func){
+                    case "Average": newEntry = averageEvents(current, current+spacing, events, drop_val); break;
+                    case "Min":     newEntry = minEvents(current, current+spacing, events, drop_val); break;
+                    case "Max":     newEntry = maxEvents(current, current+spacing, events, drop_val); break;
+                }
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), newEntry.value];
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), getStyle(deviceIndex, attribute)];
                 current += spacing;
@@ -1227,9 +1243,10 @@ def getSubscriptions() {
     def attributes = [:];
     def labels = [:];
     def drop_ = [:];
-    def bar_ = [:];
+    def var_ = [:];
     def graph_type_ = [:];
     def non_num_ = [:];
+    
     sensors.each {sensor->
         ids << sensor.idAsLong;
         
@@ -1245,9 +1262,16 @@ def getSubscriptions() {
         drop_[sensor.id] = [:];
         non_num_[sensor.id] = [:];
         graph_type_[sensor.id] = [:];
-        bar_[sensor.id] = [:];
+        var_[sensor.id] = [:];
         
         settings["attributes_${sensor.id}"].each { attr ->
+            def stroke_color = settings["var_${sensor.id}_${attr}_stroke_color"];
+            def stroke_opacity = settings["var_${sensor.id}_${attr}_stroke_opacity"];
+            def stroke_line_size = settings["var_${sensor.id}_${attr}_stroke_line_size"];
+            def fill_color = settings["var_${sensor.id}_${attr}_fill_color"];
+            def fill_opacity = settings["var_${sensor.id}_${attr}_fill_opacity"];
+            def function = settings["var_${sensor.id}_${attr}_function"];
+            
             if (settings["attribute_${sensor.id}_${attr}_non_number"]==true){
                 startString = settings["attribute_${sensor.id}_${attr}_startString"];
                 endString = settings["attribute_${sensor.id}_${attr}_endString"];
@@ -1268,17 +1292,16 @@ def getSubscriptions() {
             
             graph_type_[sensor.id][attr] = settings["graph_type_${sensor.id}_${attr}"];
             
-            if (settings["graph_type_${sensor.id}_${attr}"] == "Bar"){
-                
-                bar_[sensor.id][attr] = [ stroke_color :  settings["a_${sensor.id}_${attr}_bar_border_color"],
-                                          fill_opacity :  settings["a_${sensor.id}_${attr}_bar_opacity"],
-                                          stroke_width  : settings["a_${sensor.id}_${attr}_bar_border_line_size"]
-                                        ];
-            }
+            var_[sensor.id][attr] = [ stroke_color :   stroke_color,
+                                      stroke_opacity : stroke_opacity,
+                                      stroke_width:    stroke_line_size,
+                                      fill_color:      fill_color,
+                                      fill_opacity:    fill_opacity,
+                                      function:        function
+                                    ];
+        }//settings
             
-        }
-        
-    }
+    } //sensors
     
     def obj = [
         ids: ids,
@@ -1287,7 +1310,7 @@ def getSubscriptions() {
         labels : labels,
         drop : drop_,
         graph_type: graph_type_,
-        bar : bar_,
+        var : var_,
         non_num: non_num_
     ]
     
