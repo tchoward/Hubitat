@@ -127,7 +127,7 @@ def graphSetupPage(){
                             "end": "closed"],
         "switch":          ["start": "on",        
                             "end": "off"],
-        "motion":          ["start": "active", 
+        "motion":          ["start": "inactive",
                             "end": "inactive"],
         "mute":            ["start": "muted", 
                             "end": "unmuted"],
@@ -333,6 +333,44 @@ def graphSetupPage(){
         //Line
         cnt = 1;
         def bar_size_shown = false;
+        
+        //Deal with Global-Specific Settings (i.e bar spacing and plot-point size)
+        def show_tile = false;
+        def show_bar = false;
+        def show_scatter = false;
+        sensors.each { sensor ->        
+                settings["attributes_${sensor.id}"].each { attribute ->              
+                        switch (settings["graph_type_${sensor.id}_${attribute}"]){
+                            case "Bar"      : show_title = true; show_bar = true; break;
+                            case "Scatter"  : show_title = true; show_scatter = true; break;
+                        }
+                    }
+                }
+        if (show_title){
+            parent.hubiForm_section(this,"Overall Settings for Graph Types", 1){
+                container = [];
+                
+                if (show_bar) {
+                    container << parent.hubiForm_slider (this, title: "Bar Graphs:: Relative Width for Bars", 
+                                                               name:  "graph_bar_width",  
+                                                               default: 90, 
+                                                               min: 0,
+                                                               max: 100, 
+                                                               units: "%",
+                                                               submit_on_change: false);
+                }
+                if (show_scatter){
+                     container << parent.hubiForm_slider (this, title: "Scatter Plots:: Plot Point Size", 
+                                                                name:  "graph_scatter_size",  
+                                                                default: 5, 
+                                                                min: 1,
+                                                                max: 60, 
+                                                                units: " points",
+                                                                submit_on_change: false);
+                }
+                parent.hubiForm_container(this, container, 1);
+            }
+        }
 
         sensors.each { sensor ->        
                 settings["attributes_${sensor.id}"].each { attribute ->
@@ -341,7 +379,7 @@ def graphSetupPage(){
                                
                         container = [];
                         input( type: "enum", name: "graph_type_${sensor.id}_${attribute}", title: "<b>Graph Type</b>", defaultValue: "Line", options: ["Line", "Area", "Scatter", "Bar"], submitOnChange: true)
-                        input( type: "enum", name: "var_${sensor.id}_${attribute}_function", title: "<b>Data Point Combination Function</b>", defaultValue: "Average", options: ["Min", "Max", "Average"], submitOnChange: false)
+                        input( type: "enum", name: "var_${sensor.id}_${attribute}_function", title: "<b>Data Point Combination Function</b>", defaultValue: "Average", options: ["Average", "Min", "Max", "Mid"], submitOnChange: false)
                         input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "<b>Graph Axis Side</b>", defaultValue: "0", options: availableAxis);
                         def colorText = "";
                         def fillText = "";
@@ -352,16 +390,17 @@ def graphSetupPage(){
                                 break;
                              case "Area":
                                 colorText = "Line";
-                                fillText = "Area Fill"
+                                fillText = "Fill"
                                 break;
                              case "Bar":
-                                colorText = "Bar Border";
-                                fillText = "Bar Fill"
+                                colorText = "Border";
+                                fillText = "Fill"
                                 break;
                              case "Scatter":
-                                colorText = "Point";
+                                colorText = " Point";
                                 break;
                         }
+                        container <<  parent.hubiForm_sub_section(this, colorText+" Options");
                         
                         container << parent.hubiForm_color(this, colorText, 
                                                                  "var_${sensor.id}_${attribute}_stroke", 
@@ -376,14 +415,16 @@ def graphSetupPage(){
                                                                            units: "%",
                                                                            submit_on_change: false);
                         
-                        container << parent.hubiForm_line_size  (this,  title: colorText+"Thickness",                   
+                        container << parent.hubiForm_line_size  (this,  title: colorText,                   
                                                                             name: "var_${sensor.id}_${attribute}_stroke", 
                                                                             default: 2, min: 1, max: 20);
                         
                         
                         if (graphType == "Bar" || graphType == "Area"){
                             
-                            container << parent.hubiForm_color(this, fillText+" Color", 
+                            container <<  parent.hubiForm_sub_section(this, graphType+" "+fillText+" Options");
+                            
+                            container << parent.hubiForm_color(this, fillText, 
                                                                      "var_${sensor.id}_${attribute}_fill", 
                                                                       parent.hubiTools_rotating_colors(cnt), 
                                                                       false);
@@ -396,24 +437,8 @@ def graphSetupPage(){
                                                                        units: "%",
                                                                        submit_on_change: false);    
                         }
-                            
-                        if (graphType == "Bar"  && !bar_size_shown){
-                            
-                                container << parent.hubiForm_slider (this, title: "Relative Width of ALL Bars", 
-                                                                           name:  "graph_bar_width",  
-                                                                           default: 90, 
-                                                                           min: 0,
-                                                                           max: 100, 
-                                                                           units: "%",
-                                                                           submit_on_change: false);
-                                bar_size_shown = true;
-                        }
-                            
-                        
-                        container << parent.hubiForm_text_input(this,   "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
-                                                                                "graph_name_override_${sensor.id}_${attribute}",
-                                                                                "%deviceName%: %attributeName%", false);
-                        
+                                                 
+                                           
                         startVal = supportedTypes[attribute] ? supportedTypes[attribute].start : "";
                         endVal = supportedTypes[attribute] ? supportedTypes[attribute].end : "";
                                 
@@ -447,6 +472,12 @@ def graphSetupPage(){
                                                                                      "0", false);                                    
                                     }
                         }
+                        
+                        container <<  parent.hubiForm_sub_section(this, "Override Display Name on Graph");
+                        
+                        container << parent.hubiForm_text_input(this,   "<small></i>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
+                                                                                "graph_name_override_${sensor.id}_${attribute}",
+                                                                                "%deviceName%: %attributeName%", false);
                             
                         parent.hubiForm_container(this, container, 1);         
                         cnt += 1;
@@ -1054,16 +1085,25 @@ function averageEvents(minTime, maxTime, data, drop_val) {
 
 function maxEvents(minTime, maxTime, data, drop_val) {
     const matches = data.filter(it => it.date > minTime && it.date <= maxTime);
-    if (matches!= []) 
+if (matches.length != 0) {
         return { date: minTime+((maxTime - minTime)/2), value: Math.max.apply(Math, matches.map(function(o) { return o.value; })) };
-    else
+}    
+else
         return { date: minTime+((maxTime - minTime)/2), value: drop_val }; 
 }
 
 function minEvents(minTime, maxTime, data, drop_val) {
     const matches = data.filter(it => it.date > minTime && it.date <= maxTime);
-    if (matches!= []) 
+   if (matches.length != 0)
         return { date: minTime+((maxTime - minTime)/2), value: Math.min.apply(Math, matches.map(function(o) { return o.value; })) };
+    else
+        return { date: minTime+((maxTime - minTime)/2), value: drop_val }; 
+}
+
+function midEvents(minTime, maxTime, data, drop_val) {
+    const matches = data.filter(it => it.date > minTime && it.date <= maxTime);
+    if (matches.length != 0)
+        return { date: minTime+((maxTime - minTime)/2), value: matches[Math.floor(matches.length/2)].value };
     else
         return { date: minTime+((maxTime - minTime)/2), value: drop_val }; 
 }
@@ -1079,7 +1119,6 @@ function getStyle(deviceIndex, attribute){
         let fill_opacity = style.fill_opacity == null ? "" : parseFloat(style.fill_opacity)/100.0;
         
         let returnString = `{ stroke-color: \${stroke_color}; stroke-opacity: \${stroke_opacity}; stroke-width: \${stroke_width}; fill-opacity: \${fill_opacity}; fill-color: \${fill_color} }`
-        console.log(returnString);
     
         return returnString;
 }
@@ -1137,8 +1176,9 @@ function drawChart(callback) {
                 }
                 switch (func){
                     case "Average": newEntry = averageEvents(current, current+spacing, events, drop_val); break;
-                    case "Min":     newEntry = minEvents(current, current+spacing, events, drop_val); break;
-                    case "Max":     newEntry = maxEvents(current, current+spacing, events, drop_val); break;
+                    case "Min":     newEntry = minEvents(current, current+spacing, events, drop_val);     break;
+                    case "Max":     newEntry = maxEvents(current, current+spacing, events, drop_val);     break;
+                    case "Mid":     newEntry = midEvents(current, current+spacing, events, drop_val);  break;
                 }
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), newEntry.value];
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), getStyle(deviceIndex, attribute)];
@@ -1146,6 +1186,7 @@ function drawChart(callback) {
             }   
         });
     });
+    console.log(accumData);
 
     let parsedGraphData = Object.entries(accumData).map(([date, vals]) => [moment(parseInt(date)).toDate(), ...vals]);
 
