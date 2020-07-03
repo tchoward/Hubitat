@@ -111,13 +111,15 @@ def graphSetupPage(){
                     ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]]; 
     
     def updateEnum = [["-1":"Never"], ["0":"Real Time"], ["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["60000":"1 Minute"],
-                      ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"], ["6400000":"2 Hours"], ["19200000":"6 Hours"],
+                      ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1200000":"20 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"], ["6400000":"2 Hours"], ["19200000":"6 Hours"],
                       ["43200000":"12 Hours"], ["86400000":"1 Day"]];
     
     def timespanEnum = [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]]
      
      def timespanEnum2 = [["60000":"1 Minute"], ["120000":"2 Minutes"], ["300000":"5 Minutes"], ["600000":"10 Minutes"],
-                                                        ["2400000":"30 minutes"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]];
+                          ["2400000":"30 minutes"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]];
+    
+    def updateRateEnum = [["-1":"Never"], ["0":"Real Time"], ["1000":"1 Second"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1200000":"20 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]];
                                 
      def supportedTypes = [
         
@@ -184,8 +186,9 @@ def graphSetupPage(){
         parent.hubiForm_section(this,"General Options", 1)
         {      
             
-            input( type: "enum", name: "graph_update_rate", title: "<b>Select graph update rate</b>", multiple: false, required: true, options: updateEnum, defaultValue: "0")
+            input( type: "enum", name: "graph_update_rate", title: "<b>Select Integration Time</b>", multiple: false, required: true, options: updateEnum, defaultValue: "300000")
             input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: true, options: timespanEnum, defaultValue: "43200000")
+            input( type: "enum", name: "graph_refresh_rate", title: "<b>Select Graph Update Rate</b>", multiple: false, required: true, options: updateRateEnum, defaultValue: "43200000")
             container = [];
             container << parent.hubiForm_color (this, "Graph Background",    "graph_background", "#FFFFFF", false)
             container << parent.hubiForm_switch(this, title: "Smooth Graph Points", name: "graph_smoothing", default: false);
@@ -342,7 +345,6 @@ def graphSetupPage(){
                 settings["attributes_${sensor.id}"].each { attribute ->              
                         switch (settings["graph_type_${sensor.id}_${attribute}"]){
                             case "Bar"      : show_title = true; show_bar = true; break;
-                            case "Scatter"  : show_title = true; show_scatter = true; break;
                         }
                     }
                 }
@@ -359,15 +361,6 @@ def graphSetupPage(){
                                                                units: "%",
                                                                submit_on_change: false);
                 }
-                if (show_scatter){
-                     container << parent.hubiForm_slider (this, title: "Scatter Plots:: Plot Point Size", 
-                                                                name:  "graph_scatter_size",  
-                                                                default: 5, 
-                                                                min: 1,
-                                                                max: 60, 
-                                                                units: " points",
-                                                                submit_on_change: false);
-                }
                 parent.hubiForm_container(this, container, 1);
             }
         }
@@ -378,9 +371,24 @@ def graphSetupPage(){
                     parent.hubiForm_section(this,"${sensor.displayName} - ${attribute}", 1){
                                
                         container = [];
-                        input( type: "enum", name: "graph_type_${sensor.id}_${attribute}", title: "<b>Graph Type</b>", defaultValue: "Line", options: ["Line", "Area", "Scatter", "Bar"], submitOnChange: true)
-                        input( type: "enum", name: "var_${sensor.id}_${attribute}_function", title: "<b>Data Point Combination Function</b>", defaultValue: "Average", options: ["Average", "Min", "Max", "Mid"], submitOnChange: false)
-                        input( type: "enum", name:   "graph_axis_number_${sensor.id}_${attribute}", title: "<b>Graph Axis Side</b>", defaultValue: "0", options: availableAxis);
+                        container <<  parent.hubiForm_sub_section(this, "Plot Options :: "+"${sensor.displayName} - ${attribute}");
+                        
+                        container << parent.hubiForm_enum (this, title:             "Plot Type", 
+                                                                 name:              "graph_type_${sensor.id}_${attribute}",
+                                                                 list:              ["Line", "Area", "Scatter", "Bar"],
+                                                                 default:           "Line",
+                                                                 submit_on_change:  true);
+                        
+                        container << parent.hubiForm_enum (this, title:             "Time Integration Function", 
+                                                                 name:              "var_${sensor.id}_${attribute}_function",
+                                                                 list:              ["Average", "Min", "Max", "Mid"],
+                                                                 default:           "Average");
+                        
+                        container << parent.hubiForm_enum (this, title:             "Axis Side", 
+                                                                 name:              "graph_axis_number_${sensor.id}_${attribute}",
+                                                                 list:              ["Left", "Right"],
+                                                                 default:           "Left");
+                        
                         def colorText = "";
                         def fillText = "";
                         def graphType = settings["graph_type_${sensor.id}_${attribute}"]; 
@@ -389,18 +397,19 @@ def graphSetupPage(){
                                 colorText = "Line";
                                 break;
                              case "Area":
-                                colorText = "Line";
+                                colorText = "Area Line";
                                 fillText = "Fill"
                                 break;
                              case "Bar":
-                                colorText = "Border";
+                                colorText = "Bar Border";
                                 fillText = "Fill"
                                 break;
                              case "Scatter":
-                                colorText = " Point";
+                                colorText = "Border";
+                                fillText = "Fill"
                                 break;
                         }
-                        container <<  parent.hubiForm_sub_section(this, colorText+" Options");
+                        container <<  parent.hubiForm_sub_section(this, colorText+" Options :: "+"${sensor.displayName} - ${attribute}");
                         
                         container << parent.hubiForm_color(this, colorText, 
                                                                  "var_${sensor.id}_${attribute}_stroke", 
@@ -420,9 +429,9 @@ def graphSetupPage(){
                                                                             default: 2, min: 1, max: 20);
                         
                         
-                        if (graphType == "Bar" || graphType == "Area"){
+                        if (graphType == "Bar" || graphType == "Area") {
                             
-                            container <<  parent.hubiForm_sub_section(this, graphType+" "+fillText+" Options");
+                            container <<  parent.hubiForm_sub_section(this, graphType+" "+fillText+" Options :: "+"${sensor.displayName} - ${attribute}");
                             
                             container << parent.hubiForm_color(this, fillText, 
                                                                      "var_${sensor.id}_${attribute}_fill", 
@@ -436,6 +445,50 @@ def graphSetupPage(){
                                                                        max: 100, 
                                                                        units: "%",
                                                                        submit_on_change: false);    
+                        }
+                        if (graphType == "Scatter" || graphType == "Line" || graphType == "Area"){
+                            
+                            if (graphType == "Line" || graphType == "Area"){
+                                container << parent.hubiForm_switch(this, title: "Display Data Points on Line?", name: "var_${sensor.id}_${attribute}_line_plot_points", default: false, submit_on_change: true);
+                            }
+                            
+                            if (settings["var_${sensor.id}_${attribute}_line_plot_points"] || graphType == "Scatter"){
+                                
+                                container <<  parent.hubiForm_sub_section(this, "Plot Point Options :: "+"${sensor.displayName} - ${attribute}");
+                                 
+                                container << parent.hubiForm_enum (this, 
+                                                                   title: "Point Type", 
+                                                                   name:  "var_${sensor.id}_${attribute}_point_type",
+                                                                   list: [ "Circle", "Triangle", "Square", "Diamond", "Star", "Polygon"],
+                                                                   default: "Circle");
+                                                                   
+                                
+                                 container << parent.hubiForm_slider (this, title: "Point Size", 
+                                                                            name:  "var_${sensor.id}_${attribute}_point_size",  
+                                                                            default: 5, 
+                                                                            min: 0,
+                                                                            max: 60, 
+                                                                            units: " points",
+                                                                            submit_on_change: false);
+                                if (graphType == "Area") {
+                                    container << parent.hubiForm_text (this, "<b>*Note, Area Plots use the same fill setting for Points and Area (Above)");
+                                } else {
+                                    container << parent.hubiForm_color(this, "Point Fill", 
+                                                                              "var_${sensor.id}_${attribute}_fill", 
+                                                                              parent.hubiTools_rotating_colors(cnt), 
+                                                                              false);
+                            
+                                     container << parent.hubiForm_slider (this, title: "Point Fill Opacity", 
+                                                                                name:  "var_${sensor.id}_${attribute}_fill_opacity",  
+                                                                                default: 90, 
+                                                                                min: 0,
+                                                                                max: 100, 
+                                                                                units: "%",
+                                                                                submit_on_change: false);
+                                }
+                            } else {
+                                   app.updateSetting ("var_${sensor.id}_${attribute}_point_size", 0); 
+                            }
                         }
                                                  
                                            
@@ -462,18 +515,20 @@ def graphSetupPage(){
                          
                         //Line and Area Graphs can be "Drop-line"
                         } else if (graphType == "Line" || graphType == "Area") {
+                                    
+                                    container <<  parent.hubiForm_sub_section(this, "Drop Line :: "+"${sensor.displayName} - ${attribute}");
                             
-                                    container << parent.hubiForm_switch(this, title: "Display as a Drop Line", name: "attribute_${sensor.id}_${attribute}_drop_line", default: false, submit_on_change: true);
+                                    container << parent.hubiForm_switch(this, title: "Display Missing Data as a Drop Line?", name: "attribute_${sensor.id}_${attribute}_drop_line", default: false, submit_on_change: true);
                                                               
                                     if (settings["attribute_${sensor.id}_${attribute}_drop_line"]==true){
                                         
-                                        container << parent.hubiForm_text_input(this,"Value to drop the Line",
+                                        container << parent.hubiForm_text_input(this,"Value of Missing Data (Drop Line)",
                                                                                      "attribute_${sensor.id}_${attribute}_drop_value",
                                                                                      "0", false);                                    
                                     }
                         }
                         
-                        container <<  parent.hubiForm_sub_section(this, "Override Display Name on Graph");
+                        container <<  parent.hubiForm_sub_section(this, "Override Display Name on Graph :: "+"${sensor.displayName} - ${attribute}");
                         
                         container << parent.hubiForm_text_input(this,   "<small></i>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                                 "graph_name_override_${sensor.id}_${attribute}",
@@ -649,28 +704,6 @@ private getValue(id, attr, val){
     return ret;
 }
 
-private getAllEvents(sensor, attribute, start, end){
-   def resp = [];
-   
-   //Hubitat only gets 1000 events, let's get events one day at a time.
-   def nextDay = start;
-   def currDay = start;
-   use (groovy.time.TimeCategory) {
-           nextDay += 1.day;
-   }
-    while (nextDay < end){
-       resp << sensor.statesBetween(attribute, currDay, nextDay, [max: 1000]);
-       currDay = nextDay;
-       use (groovy.time.TimeCategory) {
-           nextDay += 1.day;
-       }
-    }
-    resp << sensor.statesBetween(attribute, currDay, end, [max: 1000]);
-   
-    return resp;
-    
-}
-
 private buildData() {
     def resp = [:]
     def today = new Date();
@@ -686,7 +719,6 @@ private buildData() {
             settings["attributes_${sensor.id}"].each {attribute ->
                 def respEvents = [];                  
                 respEvents << sensor.statesSince(attribute, then, [max: 10000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
-                //respEvents << getAllEvents(sensor, attribute, then, today).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
                 respEvents = respEvents.flatten();
                 respEvents = respEvents.reverse();
             
@@ -707,6 +739,7 @@ def getChartOptions(){
         "graphReduction": graph_max_points,
         "graphTimespan": Integer.parseInt(graph_timespan),
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
+        "graphRefreshRate" : Integer.parseInt(graph_refresh_rate),
         "graphOptions": [
             "width": graph_static_size ? graph_h_size : "100%",
             "height": graph_static_size ? graph_v_size: "100%",
@@ -740,6 +773,7 @@ def getChartOptions(){
                     ]                
             ],
             "bar": [ "groupWidth" : graph_bar_width+"%", "fill-opacity" : 0.5],
+            "pointSize": graph_scatter_size,
             "legend": !graph_show_legend ? ["position": "none"] : ["position": graph_legend_position,  
                                                                    "alignment": graph_legend_inside_position, 
                                                                    "textStyle": ["fontSize": graph_legend_font, 
@@ -761,12 +795,14 @@ def getChartOptions(){
     sensors.each { sensor ->
         settings["attributes_${sensor.id}"].each { attribute ->
             def type_ = settings["graph_type_${sensor.id}_${attribute}"].toLowerCase();
-            def axes_ = Integer.parseInt(settings["graph_axis_number_${sensor.id}_${attribute}"]);
+            def axes_ = settings["graph_axis_number_${sensor.id}_${attribute}"] == "Left" ? 0 : 1;
             def stroke_color = settings["var_${sensor.id}_${attribute}_stroke_color"];
             def stroke_opacity = settings["var_${sensor.id}_${attribute}_stroke_opacity"];
             def stroke_line_size = settings["var_${sensor.id}_${attribute}_stroke_line_size"];
             def fill_color = settings["var_${sensor.id}_${attribute}_fill_color"];
             def fill_opacity = settings["var_${sensor.id}_${attribute}_fill_opacity"];
+            def point_size = settings["var_${sensor.id}_${attribute}_point_size"];
+            def point_type = settings["var_${sensor.id}_${attribute}_point_type"] != null ? settings["var_${sensor.id}_${attribute}_point_type"].toLowerCase() : "";
            
             switch (type_){
                 case "line":
@@ -788,6 +824,8 @@ def getChartOptions(){
         
             options.graphOptions.series << ["$count_" : [ "type"            : type_,
                                                           "targetAxisIndex" : axes_,
+                                                          "pointSize"       : point_size,
+                                                          "pointShape"      : point_type,
                                                         ]
                                            ];
             count_ ++;
@@ -797,7 +835,7 @@ def getChartOptions(){
     //add colors and thicknesses
     sensors.each { sensor ->
         settings["attributes_${sensor.id}"].each { attribute ->
-            def axis = Integer.parseInt(settings["graph_axis_number_${sensor.id}_${attribute}"]);
+            def axis = settings["graph_axis_number_${sensor.id}_${attribute}"] == "Left" ? 0 : 1;
             def text_color = settings["graph_line_${sensor.id}_${attribute}_color"];
             def text_color_transparent = settings["graph_line_${sensor.id}_${attribute}_color_transparent"];
             
@@ -923,7 +961,7 @@ function parseEvent(event) {
         console.log(value);
         graphData[deviceId][attribute].push({ date: now, value: value });
               
-        if(options.graphUpdateRate === 0) update();
+        if(options.graphRefreshRate === 0) update();
     }
 }
 
@@ -1047,7 +1085,7 @@ async function onLoad() {
     });
 
     //start our update cycle
-    if(options.graphUpdateRate !== -1) {
+    if(options.graphRefreshRate !== -1) {
         //start websocket
         websocket = new WebSocket("ws://" + location.hostname + "/eventsocket");
         websocket.onopen = () => {
@@ -1057,10 +1095,10 @@ async function onLoad() {
             parseEvent(JSON.parse(event.data));
         }
 
-        if(options.graphUpdateRate !== 0) {
+        if(options.graphRefreshRate !== 0) {
             setInterval(() => {
                 update();
-            }, options.graphUpdateRate);
+            }, options.graphRefreshRate);
         }
     }
 
@@ -1118,7 +1156,7 @@ function getStyle(deviceIndex, attribute){
         let fill_color = style.fill_color == null ? "" : style.fill_color;
         let fill_opacity = style.fill_opacity == null ? "" : parseFloat(style.fill_opacity)/100.0;
         
-        let returnString = `{ stroke-color: \${stroke_color}; stroke-opacity: \${stroke_opacity}; stroke-width: \${stroke_width}; fill-opacity: \${fill_opacity}; fill-color: \${fill_color} }`
+        let returnString = `{ stroke-color: \${stroke_color}; stroke-opacity: \${stroke_opacity}; stroke-width: \${stroke_width}; fill-opacity: \${fill_opacity}; fill-color: \${fill_color}; }`
     
         return returnString;
 }
