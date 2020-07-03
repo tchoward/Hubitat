@@ -11,6 +11,7 @@ definition(
 
 //V 1.0 Ordering, Color and Common API Update
 //V 1.8 Smoother sliders, bug fixes
+//V 2.0 Support for Time Graphs
 
 preferences {
     // The parent app preferences are pretty simple: just use the app input for the child app.
@@ -21,7 +22,7 @@ preferences {
 			app(name: "hubiRangeBar", appName: "Hubigraph Range Bar", namespace: "tchoward", title: "Create New Range Bar", multiple: true)
             app(name: "hubiGraphTime", appName: "Hubigraph Time Line", namespace: "tchoward", title: "Create New Time Line", multiple: true)
             app(name: "hubiGauge", appName: "Hubigraph Gauge", namespace: "tchoward", title: "Create New Gauge", multiple: true)
-            app(name: "hubiGauge", appName: "Hubigraph Time Graph", namespace: "tchoward", title: "Create New Time Graph", multiple: true)
+            app(name: "hubiTimeGraph", appName: "Hubigraph Time Graph", namespace: "tchoward", title: "Create New Time Graph", multiple: true)
         }
     }
 }
