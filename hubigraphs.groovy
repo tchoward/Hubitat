@@ -21,6 +21,7 @@ preferences {
 			app(name: "hubiRangeBar", appName: "Hubigraph Range Bar", namespace: "tchoward", title: "Create New Range Bar", multiple: true)
             app(name: "hubiGraphTime", appName: "Hubigraph Time Line", namespace: "tchoward", title: "Create New Time Line", multiple: true)
             app(name: "hubiGauge", appName: "Hubigraph Gauge", namespace: "tchoward", title: "Create New Gauge", multiple: true)
+            app(name: "hubiGauge", appName: "Hubigraph Time Graph", namespace: "tchoward", title: "Create New Time Graph", multiple: true)
         }
     }
 }
@@ -145,6 +146,65 @@ def hubiForm_section(child, title, pos, icon="", Closure code) {
             section(modContent, code);
         }         
 }
+
+def hubiForm_enum(Map map, child){
+         
+        child.call(){
+             	def title = map.title;
+		        def var = map.name;
+                def list = map.list;
+		        def defaultVal = map.default;
+		        def submit_on_change = map.submit_on_change;
+		
+		
+                if (settings[var] == null){
+                    app.updateSetting ("${var}", defaultVal);
+                }
+                def actualVal = settings[var] != null ? settings[var] : defaultVal;
+                def submitOnChange = submit_on_change ? "submitOnChange" : "";
+		 
+                def html_ = """    
+                    <div class="form-group">
+                        <input type="hidden" name="${var}.type" value="enum">
+                        <input type="hidden" name="${var}.multiple" value="false">
+                    </div>
+
+                    <div class="mdl-cell mdl-cell--12-col mdl-textfield mdl-js-textfield" style="" data-upgraded=",MaterialTextfield">
+                    <label for="settings[${var}]" class="control-label">
+                        <b>${title}</b>
+                    </label>
+
+                    
+                        <select id="settings[${var}]" name="settings[${var}]"
+                            class="selectpicker form-control mdl-switch__input ${submitOnChange} SumoUnder" placeholder="Click to set" data-default="${defaultVal}" tabindex="-1">
+                                <option class="optiondefault" value="" style="display: block;">No selection</option>
+                    """
+                    list.each{ item ->
+                        if (actualVal == item) 
+                            selectedString = /selected="selected"/;
+                        else 
+                            selectedString = "";
+                        
+                        html_ += """<option value="${item}" ${selectedString}>${item}</option>"""
+                    }       
+                    html_ += """ 
+                        </select>
+                        
+                        <div class="optWrapper">
+                            <ul class="options">
+                        """
+                        list.each{ item ->
+                            html+= """<li class="opt selected"><label>${item}</label></li>"""
+                        }
+                   html_ += """
+                            </ul>
+                        </div>
+                    </div>
+              
+                """
+                return (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
+        }
+ }
 
 def hubiForm_switch(Map map, child){
          
@@ -277,10 +337,10 @@ def hubiForm_line_size(Map map, child){
         def html_ =
                 """
                 <table style="width:100%">
-                <tr><td><label for="settings[${varLineSize}]" class="control-label"><b>${title} Line Size</b></td>
+                <tr><td><label for="settings[${varLineSize}]" class="control-label"><b>${title} Width</b></td>
                         <td border=1 style="text-align:right;">
 			                <span id="${baseId}_line_size_text" name="testing" >
-				                Line Size: ${settings[varLineSize]} <hr id='${baseId}_line_size_draw' style='background-color:#1A77C9; height:${settings[varLineSize]}px; border: 0;'>
+				                Width: ${settings[varLineSize]} <hr id='${baseId}_line_size_draw' style='background-color:#1A77C9; height:${settings[varLineSize]}px; border: 0;'>
 			                </span>
 			</td>
                         </label>
@@ -298,7 +358,7 @@ def hubiForm_line_size(Map map, child){
 		<script>
                       function ${baseId}_updateLineInput(val) {
                             var text = "";
-                            text += "Line Size: "+val;
+                            text += "Width: "+val;
                             
                             jQuery('#${baseId}_line_size_text').text(text);
                             jQuery('#${baseId}_line_size_draw').remove();
