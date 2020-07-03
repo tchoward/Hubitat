@@ -34,7 +34,7 @@ import groovy.json.*;
 // v 1.2 Complete UI Refactor
 // V 1.5 Ordering, Color and Common API Update
 // V 1.8 Smoother sliders, bug fixes
-    
+// V 2.0 New Version to Support Combo Graphs.  Support for Line Graphs is ended.    
 
 // Credit to Alden Howard for optimizing the code.
 
@@ -188,7 +188,7 @@ def graphSetupPage(){
             
             input( type: "enum", name: "graph_update_rate", title: "<b>Select Integration Time</b>", multiple: false, required: true, options: updateEnum, defaultValue: "300000")
             input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: true, options: timespanEnum, defaultValue: "43200000")
-            input( type: "enum", name: "graph_refresh_rate", title: "<b>Select Graph Update Rate</b>", multiple: false, required: true, options: updateRateEnum, defaultValue: "43200000")
+            input( type: "enum", name: "graph_refresh_rate", title: "<b>Select Graph Update Rate</b>", multiple: false, required: true, options: updateRateEnum, defaultValue: "300000")
             container = [];
             container << parent.hubiForm_color (this, "Graph Background",    "graph_background", "#FFFFFF", false)
             container << parent.hubiForm_switch(this, title: "Smooth Graph Points", name: "graph_smoothing", default: false);
@@ -230,7 +230,7 @@ def graphSetupPage(){
             container << parent.hubiForm_font_size  (this, title: "Horizontal Axis", name: "graph_haxis", default: 9, min: 2, max: 20);
             container << parent.hubiForm_color      (this, "Horizonal Header", "graph_hh", "#C0C0C0", false);
             container << parent.hubiForm_color      (this, "Horizonal Axis", "graph_ha", "#C0C0C0", false);
-            container << parent.hubiForm_text_input (this, "<b>Num Horizontal Gridlines</b><br><small>(Blank for auto)</small>", "graph_h_num_grid", "", false);
+            container << parent.hubiForm_text_input (this, "<b>Num Horizontal Grid-s</b><br><small>(Blank for auto)</small>", "graph_h_num_grid", "", false);
             
             container << parent.hubiForm_switch     (this, title: "Show String Formatting Help", name: "dummy", default: false, submit_on_change: true);
             if (dummy == true){
@@ -718,10 +718,12 @@ private buildData() {
             resp[sensor.id] = [:];
             settings["attributes_${sensor.id}"].each {attribute ->
                 def respEvents = [];                  
-                respEvents << sensor.statesSince(attribute, then, [max: 10000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
+                respEvents << sensor.statesSince(attribute, then, [max: 2000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
+                
+                //respEvents << sensor.statesBetween(attribute, then, now, [max: 10000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
                 respEvents = respEvents.flatten();
                 respEvents = respEvents.reverse();
-            
+                log.debug(respEvents.size);
                 resp[sensor.id][attribute] = respEvents;
             }    
         }
@@ -804,24 +806,9 @@ def getChartOptions(){
             def point_size = settings["var_${sensor.id}_${attribute}_point_size"];
             def point_type = settings["var_${sensor.id}_${attribute}_point_type"] != null ? settings["var_${sensor.id}_${attribute}_point_type"].toLowerCase() : "";
            
-            switch (type_){
-                case "line":
-                    lineWidth_ = settings["attribute_${sensor.id}_${attribute}_line_size"];
-                    
-                break;
-                case "scatter":
-                break;
-                case "bar":
-                    type_ = "bars";
-                    
-                    
-                break;
-                case "area":
-                    lineWidth_ = settings["attribute_${sensor.id}_${attribute}_line_size"];
-                break;
-              
-            }
-        
+            type_ = type_=="bar" ? "bars" : type_;
+               
+               
             options.graphOptions.series << ["$count_" : [ "type"            : type_,
                                                           "targetAxisIndex" : axes_,
                                                           "pointSize"       : point_size,
@@ -839,14 +826,12 @@ def getChartOptions(){
             def text_color = settings["graph_line_${sensor.id}_${attribute}_color"];
             def text_color_transparent = settings["graph_line_${sensor.id}_${attribute}_color_transparent"];
             
-            def line_thickness = settings["attribute_${sensor.id}_${attribute}_line_size"];
+            
             
             
             def annotations = [
                 "targetAxisIndex": axis, 
-                "color": text_color_transparent ? "transparent" : text_color,
-                "stroke": text_color_transparent ? "transparent" : "red",
-                "lineWidth": line_thickness,
+                "color": text_color_transparent ? "transparent" : text_color                
                 
                 
             ];
