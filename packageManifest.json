@@ -53,6 +53,14 @@
       "required": true,
       "oauth": true
     }
+    {
+      "id": "9d94d8af-e592-4896-87cf-661ebcfee7f9",
+      "name": "Hubigraph Time Graph",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_time_graph.groovy",
+      "required": true,
+      "oauth": true
+    }
   ],
   "drivers": [
     {
