@@ -60,6 +60,14 @@
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_time_graph.groovy",
       "required": true,
       "oauth": true
+    },
+    {
+      "id": "55bbc20d-6a40-4744-bfc4-c4903a99ff85",
+      "name": "Hubigraph Heat Map",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_heat_map.groovy",
+      "required": true,
+      "oauth": true
     }
   ],
   "drivers": [
