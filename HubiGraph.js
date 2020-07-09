@@ -1,4 +1,97 @@
 var el_;
+
+function hex2Rgb(hex) {
+
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+function rgb2Hex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+
+function getcolor(colorProfile, value) {
+
+    var position = colorProfile[0].val;
+    var startColor = 0;
+    var endColor = 0;
+
+    if (colorProfile[0].val >= value) {
+        startColor = endColor = colorProfile[0].color;
+        position = 0.0;
+    } else {
+        var idx = 0;
+        while ((idx + 1) < colorProfile.length && value > colorProfile[idx + 1].val) {
+            idx++;
+        }
+        if (idx + 1 == colorProfile.length) {
+            startColor = endColor = colorProfile[idx].color;
+            position = colorProfile[idx].val;
+        } else {
+            startColor = colorProfile[idx].color
+            endColor = colorProfile[idx + 1].color
+            position = (value - colorProfile[idx].val) / (colorProfile[idx + 1].val - colorProfile[idx].val)
+        }
+    }
+
+    let start = hex2Rgb(startColor);
+    let end = hex2Rgb(endColor);
+
+    return (rgb2Hex(start.r - parseInt((start.r - end.r) * position),
+        start.g - parseInt((start.g - end.g) * position),
+        start.b - parseInt((start.b - end.b) * position))
+    );
+
+}
+
+
+function interpolateColor(color1, color2, factor) {
+    if (arguments.length < 3) {
+        factor = 0.5;
+    }
+    var result = color1.slice();
+    for (var i = 0; i < 3; i++) {
+        result[i] = Math.round(result[i] + factor * (color2[i] - color1[i]));
+    }
+    return result;
+}
+
+function getRowColumnsBlank(num) {
+    var rows = (Math.ceil(Math.sqrt(num)));
+    var cols = (Math.ceil(num / rows));
+    var blank = (rows * cols) - num;
+
+    let map = new Map();
+    map.set("rows", rows);
+    map.set("cols", cols);
+    map.set("blank", blank);
+
+    return map;
+
+}
+
+// My function to interpolate between two colors completely, returning an array
+function interpolateColors(color1, color2, steps) {
+    var stepFactor = 1 / (steps - 1),
+        interpolatedColorArray = [];
+
+    color1 = color1.match(/\d+/g).map(Number);
+    color2 = color2.match(/\d+/g).map(Number);
+
+    for (var i = 0; i < steps; i++) {
+        interpolatedColorArray.push(interpolateColor(color1, color2, stepFactor * i));
+    }
+
+    return interpolatedColorArray;
+}
+
+  
+
 function dragOver(e) {
     if (isBefore(_el, e.target))
         e.target.parentNode.insertBefore(_el, e.target);
