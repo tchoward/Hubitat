@@ -12,17 +12,20 @@ definition(
 //V 1.0 Ordering, Color and Common API Update
 //V 1.8 Smoother sliders, bug fixes
 //V 2.0 Support for Time Graphs
+//V 2.1 Support for Heatmaps
 
 preferences {
     // The parent app preferences are pretty simple: just use the app input for the child app.
     page(name: "mainPage", title: "Graph Creator", install: true, uninstall: true,submitOnChange: true) {
         section {
-            app(name: "hubiGraphLine", appName: "Hubigraph Line Graph", namespace: "tchoward", title: "Create New Line Graph", multiple: true)
+            app(name: "hubiGraphLine", appName: "Hubigraph Line Graph", namespace: "tchoward", title: "Create New Line Graph (Deprecated)", multiple: true)
             app(name: "hubiBarGraph", appName: "Hubigraph Bar Graph", namespace: "tchoward", title: "Create New Bar Graph", multiple: true)
 			app(name: "hubiRangeBar", appName: "Hubigraph Range Bar", namespace: "tchoward", title: "Create New Range Bar", multiple: true)
             app(name: "hubiGraphTime", appName: "Hubigraph Time Line", namespace: "tchoward", title: "Create New Time Line", multiple: true)
             app(name: "hubiGauge", appName: "Hubigraph Gauge", namespace: "tchoward", title: "Create New Gauge", multiple: true)
             app(name: "hubiTimeGraph", appName: "Hubigraph Time Graph", namespace: "tchoward", title: "Create New Time Graph", multiple: true)
+            app(name: "hubiHeatMap", appName: "Hubigraph Heat Map", namespace: "tchoward", title: "Create New Heat Map", multiple: true)
+
         }
     }
 }
@@ -53,7 +56,7 @@ def initialize() {
 *********************************************************************************************************************************
 *********************************************************************************************************************************/
 
-def hubiForm_container(child, containers, numPerRow){
+def hubiForm_container(child, containers, numPerRow=1){
     
         child.call(){
                 def html_ = 
@@ -72,13 +75,55 @@ def hubiForm_container(child, containers, numPerRow){
         }
 }
 
+def hubiForm_subcontainer(Map map, child){
+    
+        child.call(){
+                def containers = map.objects;
+                def breakdown = map.breakdown;
+                def html_ = 
+                        """
+                        
+                        <div class = "mdl-grid" style="margin: 0; padding: 0; "> 
+                        """
+                count = 0;
+                containers.each{container->
+                    def sz_12 = 12*breakdown[count];
+                    def sz_8 = 8*breakdown[count];
+                    def sz_4 = 4*breakdown[count];
+                    log.debug(breakdown+"  "+breakdown[count]+" "+space);
+                    html_ += """<div class="mdl-cell mdl-cell--${sz_12.intValue()}-col-desktop mdl-cell--${sz_8.intValue()}-col-tablet mdl-cell--${sz_4.intValue()}-col-phone" style= "justify-content: center;" >"""
+                    html_ += container;
+                    html_ += """</div>"""
+                    
+                    count++;
+                }
+                html_ += """</div>"""
+                        
+                return (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
+        }
+}
+
 def hubiForm_text(child, text){
     child.call(){
-        def html_ = "$text";
+        def html_ = """$text""";
     
         return html_
     }
 }
+
+def hubiForm_text_format(Map map, child){
+    
+    child.call(){
+        def text = map.text;
+        def halign = map.horizontal_align ? "text-align: ${map.horizontal_align};" : ""; 
+        def valign = map.vertical_align ? "vertical-align: ${map.vertical_align}; " : ""; 
+        def size = map.size ? "font-size: ${map.size}px;" : "";
+        def html_ = """<p style="$halign padding-top:20px; $size">$text</p>""";
+    
+        return html_
+    }
+}
+
 
 def hubiForm_page_button(child, title, page, width, icon=""){
         def html_;
