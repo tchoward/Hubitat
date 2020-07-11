@@ -62,6 +62,7 @@ preferences {
        page(name: "mainPage", install: true, uninstall: true)
        page(name: "deviceSelectionPage", nextPage: "graphSetupPage")
        page(name: "graphSetupPage", nextPage: "mainPage")
+       page(name: "longTermStoragePage");
        page(name: "enableAPIPage")
        page(name: "disableAPIPage")
 }
@@ -116,77 +117,19 @@ def graphSetupPage(){
     
     def timespanEnum = [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]]
      
-     def timespanEnum2 = [["60000":"1 Minute"], ["120000":"2 Minutes"], ["300000":"5 Minutes"], ["600000":"10 Minutes"],
+     def timespanEnum2 = [["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["30000":"30 Seconds"], ["60000":"1 Minute"], ["120000":"2 Minutes"], ["300000":"5 Minutes"], ["600000":"10 Minutes"],
                           ["2400000":"30 minutes"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]];
     
     def updateRateEnum = [["-1":"Never"], ["0":"Real Time"], ["1000":"1 Second"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1200000":"20 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]];
                                 
-     def supportedTypes = [
-        
-         "alarm":           ["start": "on",       
-                            "end": "off"],
-        "contact":         ["start": "open",      
-                            "end": "closed"],
-        "switch":          ["start": "on",        
-                            "end": "off"],
-        "motion":          ["start": "inactive",
-                            "end": "inactive"],
-        "mute":            ["start": "muted", 
-                            "end": "unmuted"],
-        "presence":        ["start":"present",
-                            "end":"not present"],
-        "holdableButton":  ["start":"true",
-                            "end":"false"],
-        "carbonMonoxide":  ["start":"detected",
-                            "end":"clear"],
-        "playing":         ["start":"playing", 
-                            "end":"stopped"],
-        "door":            ["start": "open",      
-                            "end": "closed"],
-        "speed":           ["start": "on",        
-                            "end": "off"],
-        "lock":            ["start": "unlocked",        
-                            "end": "locked"],
-        "shock":           ["start": "detected",        
-                            "end": "clear"],
-        "sleepSensor":     ["start": "sleeping",        
-                            "end": "not sleeping"],
-        "smoke":           ["start":"detected",
-                            "end":"clear"],
-        "sound":           ["start":"detected",
-                            "end":"not detected"],
-        "tamper":          ["start":"detected",
-                            "end":"clear"],
-        "valve":           ["start": "open",      
-                            "end": "closed"],
-        "camera":          ["start": "on",        
-                            "end": "off"],
-        "water":           ["start": "wet",        
-                            "end": "dry"],
-        "windowShade":     ["start": "open",      
-                            "end": "closed"],
-        "acceleration":    ["start": "inactive", 
-                            "end": "active"]        
-         ];
-    
     dynamicPage(name: "graphSetupPage") {
         
-        def non_numeric = false;
-        sensors.each { sensor ->        
-            settings["attributes_${sensor.id}"].each { attribute ->
-               if (supportedTypes[attribute] != null) non_numeric = true; 
-            }
-        }
-        
-        if (non_numeric) {
-            app.updateSetting ("graph_max_points", 0);
-        }
-            
+          
       
         parent.hubiForm_section(this,"General Options", 1)
         {      
             
-            input( type: "enum", name: "graph_update_rate", title: "<b>Select Integration Time</b>", multiple: false, required: true, options: updateEnum, defaultValue: "300000")
+            input( type: "enum", name: "graph_update_rate", title: "<b>Select Integration Time</b>", multiple: false, required: true, options: timespanEnum2, defaultValue: "300000")
             input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: true, options: timespanEnum, defaultValue: "43200000")
             input( type: "enum", name: "graph_refresh_rate", title: "<b>Select Graph Update Rate</b>", multiple: false, required: true, options: updateRateEnum, defaultValue: "300000")
             container = [];
@@ -274,8 +217,11 @@ def graphSetupPage(){
             parent.hubiForm_container(this, container, 1); 
          }
 
-        //Left Axis    
-        parent.hubiForm_section(this,"Left Axis", 1, "arrow_back"){  
+        //Left Axis 
+        def formatEnum = [["none": "No Formatting (12345)"], ["decimal":"Decimal (12,345)"], ["short": "Short (12K)"], ["scientific": "Scientific (1e5)"], ["percent": "Percent (1234500%)"], ["long": "Long (12 Thousand)"]];    
+        
+        parent.hubiForm_section(this,"Left Axis", 1, "arrow_back"){ 
+            input( type: "enum", name: "graph_vaxis_1_format", title: "<b>Number Format</b>", multiple: false, required: true, options: formatEnum, defaultValue: "none")
             container = [];
             container << parent.hubiForm_text_input(this,  "<b>Minimum for left axis</b><small>(Blank for auto)</small>", "graph_vaxis_1_min", "", false);
             container << parent.hubiForm_text_input(this,  "<b>Maximum for left axis</b><small>(Blank for auto)</small>", "graph_vaxis_1_max", "", false);   
@@ -291,6 +237,7 @@ def graphSetupPage(){
 
         //Right Axis   
         parent.hubiForm_section(this,"Right Axis", 1, "arrow_forward"){  
+            input( type: "enum", name: "graph_vaxis_2_format", title: "<b>Number Format</b>", multiple: false, required: true, options: formatEnum, defaultValue: "none")
             container = [];
             container << parent.hubiForm_text_input(this,  "<b>Minimum for right axis</b><small>(Blank for auto)</small>", "graph_vaxis_2_min", "", false);
             container << parent.hubiForm_text_input(this,  "<b>Maximum for right axis</b><small>(Blank for auto)</small>", "graph_vaxis_2_max", "", false);   
@@ -490,31 +437,31 @@ def graphSetupPage(){
                                    app.updateSetting ("var_${sensor.id}_${attribute}_point_size", 0); 
                             }
                         }
-                                                 
-                                           
-                        startVal = supportedTypes[attribute] ? supportedTypes[attribute].start : "";
-                        endVal = supportedTypes[attribute] ? supportedTypes[attribute].end : "";
+                            
+                        currentAttribute = null;
+                        sensor.getSupportedAttributes().each{attrib->
+                            if (attrib.name == attribute){
+                                currentAttribute = attrib;        
+                            }
+                        }
+                        if (currentAttribute != null && currentAttribute.dataType == "ENUM"){
+                            possible_values = currentAttribute.getValues();
+                            def count_ = 0;
+                     
+                            possible_values.each{value->
                                 
+                                container << parent.hubiForm_text_input(this, "Value for <mark>$value</mark>",
+                                                                              "attribute_${sensor.id}_${attribute}_${value}",
+                                                                              "100", 
+                                                                               false);
+                                count_++;
+                            }
+                            app.updateSetting ("attribute_${sensor.id}_${attribute}_states", possible_values);
+                        }
                        
-                        //If this is a "non-numeric" attribute
-                        if (startVal != ""){
-                                    app.updateSetting ("attribute_${sensor.id}_${attribute}_non_number", true);
-                                    app.updateSetting ("attribute_${sensor.id}_${attribute}_startString", startVal);
-                                    app.updateSetting ("attribute_${sensor.id}_${attribute}_endString", endVal);
-                                    app.updateSetting ("attribute_${sensor.id}_${attribute}_drop_line", false);
-                                    container << parent.hubiForm_text(this, "<b><mark>This Attribute ($attribute) is non-numerical, please choose values for the states below</mark></b>");
-                                    
-                                    container << parent.hubiForm_text_input(this, "Value for <mark>$startVal</mark>",
-                                                                                  "attribute_${sensor.id}_${attribute}_${startVal}",
-                                                                                  "100", false);
-                                    
-                                    container << parent.hubiForm_text_input(this, "Value for <mark>$endVal</mark>",
-                                                                                  "attribute_${sensor.id}_${attribute}_${endVal}",
-                                                                                  "0", false);
-                                    
-                         
+                        
                         //Line and Area Graphs can be "Drop-line"
-                        } else if (graphType == "Line" || graphType == "Area") {
+                        else if (graphType == "Line" || graphType == "Area") {
                                     
                                     container <<  parent.hubiForm_sub_section(this, "Drop Line :: "+"${sensor.displayName} - ${attribute}");
                             
@@ -606,6 +553,7 @@ def mainPage() {
                     container = [];
                     container << parent.hubiForm_page_button(this, "Select Device/Data", "deviceSelectionPage", "100%", "vibration");
                     container << parent.hubiForm_page_button(this, "Configure Graph", "graphSetupPage", "100%", "poll");
+                    //container << parent.hubiForm_page_button(this, "Long Term Storage", "longTermStoragePage", "100%", "storage");
                     
                     parent.hubiForm_container(this, container, 1); 
                 }
@@ -615,6 +563,15 @@ def mainPage() {
                     
                     parent.hubiForm_container(this, container, 1); 
                 }
+                
+                /*
+                parent.hubiForm_section(this, "Remote Graph URL", 1, "link"){
+                    container = [];
+                    container << parent.hubiForm_text(this, "${state.remoteEndpointURL}graph/?access_token=${state.endpointSecret}");
+                    
+                    parent.hubiForm_container(this, container, 1); 
+                }
+                */
                 
                 if (graph_timespan){
                      parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
@@ -653,6 +610,45 @@ def mainPage() {
             } //else 
         
     } //dynamicPage
+}
+
+def longTermStoragePage(){
+    def resp = [:];
+    def today = new Date();
+    def then = new Date();
+    def events = [];
+    
+    use (groovy.time.TimeCategory) {
+           then -= 2.days;
+    }
+    
+    dynamicPage(name: "longTermStoragePage", title: "") {
+        
+        log.debug(atomicState.test);
+        section() {
+            if(!sensors) {
+                paragraph "Please select Sensors and  before setting up storage"
+            } else {
+                parent.hubiForm_section(this, "Devices Available for Storage", 1, "settings"){
+                    header = ["Sensor","Attribute", "Events in Past 24 Hours"];
+                    container = [];
+                    rows = [];
+                    sensors.each { sensor ->
+                        resp[sensor.id] = [:];
+                        settings["attributes_${sensor.id}"].each {attribute ->
+                            events = sensor.statesSince(attribute, then, [max: 10000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
+                            events = events.flatten();
+                            rows << [sensor.displayName, attribute, events.size];
+                            
+                        }
+                    }
+                    container << parent.hubiForm_table(this, header: header, rows: rows);
+                    parent.hubiForm_container(this, container, 1);
+                }
+                atomicState["test"] =  null;
+            } //else
+        }
+    }
 }
 
 /********************************************************************************************************************************
@@ -699,7 +695,7 @@ private getValue(id, attr, val){
     if (settings["attribute_${id}_${attr}_${val}"]!=null){
         ret = Double.parseDouble(settings["attribute_${id}_${attr}_${val}"]);
     } else {
-        ret = Double.parseDouble(val - reg )
+        ret = Double.parseDouble(val - reg );
     }
     return ret;
 }
@@ -719,11 +715,8 @@ private buildData() {
             settings["attributes_${sensor.id}"].each {attribute ->
                 def respEvents = [];                  
                 respEvents << sensor.statesSince(attribute, then, [max: 2000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
-                
-                //respEvents << sensor.statesBetween(attribute, then, now, [max: 10000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
                 respEvents = respEvents.flatten();
                 respEvents = respEvents.reverse();
-                log.debug(respEvents.size);
                 resp[sensor.id][attribute] = respEvents;
             }    
         }
@@ -743,6 +736,7 @@ def getChartOptions(){
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
         "graphRefreshRate" : Integer.parseInt(graph_refresh_rate),
         "graphOptions": [
+            "tooltip" : ["format" : "short"], 
             "width": graph_static_size ? graph_h_size : "100%",
             "height": graph_static_size ? graph_v_size: "100%",
             "chartArea": [ "width": graph_static_size ? graph_h_size : "80%", "height": graph_static_size ? graph_v_size: "80%"],
@@ -754,7 +748,8 @@ def getChartOptions(){
                       "format":     graph_h_format==""?"":graph_h_format                          
                      ],
             "vAxis": ["textStyle": ["fontSize": graph_vaxis_font, 
-                                    "color": graph_vh_color_transparent ? "transparent" : graph_vh_color], 
+                                    "color": graph_vh_color_transparent ? "transparent" : graph_vh_color, 
+                                    ],
                       "gridlines": ["color": graph_va_color_transparent ? "transparent" : graph_va_color],
                      ],
             "vAxes": [
@@ -763,7 +758,8 @@ def getChartOptions(){
                     "viewWindow": ["min": graph_vaxis_1_min != "" ?  graph_vaxis_1_min : null, 
                                    "max":  graph_vaxis_1_max != "" ?  graph_vaxis_1_max : null],
                     "gridlines": ["count" : graph_vaxis_1_num_lines != "" ? graph_vaxis_1_num_lines : null ],
-                    "minorGridlines": ["count" : 0]
+                    "minorGridlines": ["count" : 0],
+                    "format": graph_vaxis_1_format, 
                    ],
                 
                 1: ["title": graph_show_right_label ? graph_right_label : null,
@@ -771,7 +767,8 @@ def getChartOptions(){
                     "viewWindow": ["min": graph_vaxis_2_min != "" ?  graph_vaxis_2_min : null, 
                                    "max":  graph_vaxis_2_max != "" ?  graph_vaxis_2_max : null],
                     "gridlines": ["count" : graph_vaxis_2_num_lines != "" ? graph_vaxis_2_num_lines : null ],
-                    "minorGridlines": ["count" : 0]
+                    "minorGridlines": ["count" : 0],
+                    "format": graph_vaxis_2_format, 
                     ]                
             ],
             "bar": [ "groupWidth" : graph_bar_width+"%", "fill-opacity" : 0.5],
@@ -813,6 +810,7 @@ def getChartOptions(){
                                                           "targetAxisIndex" : axes_,
                                                           "pointSize"       : point_size,
                                                           "pointShape"      : point_type,
+                                                          "color"           : stroke_color,
                                                         ]
                                            ];
             count_ ++;
@@ -929,18 +927,16 @@ function parseEvent(event) {
     let deviceId = event.deviceId;
 
     //only accept relevent events
+
     if(subscriptions.ids.includes(deviceId) && subscriptions.attributes[deviceId].includes(event.name)) {
         let value = event.value;
+        value = (Math.round(value * 100) / 100).toFixed(2);
         let attribute = event.name;
 
-        non_num = subscriptions.non_num[deviceId][attribute];
+        state = subscriptions.states[deviceId][attribute][value];
          
-        if (non_num.valid){
-            if (value == non_num.start){
-                value = parseFloat(non_num.startVal);
-            } else if (value == non_num.end){
-                value = parseFloat(non_num.endVal);
-            } 
+        if (state != undefined){
+            value = parseFloat(state); 
         }
     
         console.log(value);
@@ -1190,7 +1186,7 @@ function drawChart(callback) {
             
             var newEntry;
             while (current < now){
-                if (subscriptions.non_num[deviceIndex][attribute].valid && events.length > 0){
+                if (subscriptions.states[deviceIndex][attribute] != undefined && events.length > 0){
                     if (drop_val == null){
                         drop_val = events[0].value;
                     } else {
@@ -1268,7 +1264,7 @@ def initializeAppEndpoint() {
             if (accessToken) {
                 state.endpoint = getApiServerUrl()
                 state.localEndpointURL = fullLocalApiServerUrl("")  
-                state.remoteEndpointURL = fullApiServerUrl("")
+                state.remoteEndpointURL = fullApiServerUrl("/graph")
                 state.endpointSecret = accessToken
             }
         }
@@ -1309,7 +1305,7 @@ def getSubscriptions() {
     def drop_ = [:];
     def var_ = [:];
     def graph_type_ = [:];
-    def non_num_ = [:];
+    def states_ = [:];
     
     sensors.each {sensor->
         ids << sensor.idAsLong;
@@ -1324,9 +1320,9 @@ def getSubscriptions() {
         }
         
         drop_[sensor.id] = [:];
-        non_num_[sensor.id] = [:];
         graph_type_[sensor.id] = [:];
         var_[sensor.id] = [:];
+        states_[sensor.id] = [:];
         
         settings["attributes_${sensor.id}"].each { attr ->
             def stroke_color = settings["var_${sensor.id}_${attr}_stroke_color"];
@@ -1336,19 +1332,11 @@ def getSubscriptions() {
             def fill_opacity = settings["var_${sensor.id}_${attr}_fill_opacity"];
             def function = settings["var_${sensor.id}_${attr}_function"];
             
-            if (settings["attribute_${sensor.id}_${attr}_non_number"]==true){
-                startString = settings["attribute_${sensor.id}_${attr}_startString"];
-                endString = settings["attribute_${sensor.id}_${attr}_endString"];
-                non_num_[sensor.id][attr] = [ valid: true,
-                                              start:       startString,
-                                              startVal:    settings["attribute_${sensor.id}_${attr}_${startString}"],
-                                              end:         endString,
-                                              endVal:      settings["attribute_${sensor.id}_${attr}_${endString}"]
-                                            ];  
-            } else {
-                non_num_[sensor.id][attr] = [ valid: false,
-                                              start: "",
-                                              end:   ""]; 
+            if (settings["attribute_${sensor.id}_${attr}_states"]){
+                states_[sensor.id][attr] = [:];  
+                settings["attribute_${sensor.id}_${attr}_states"].each{states->
+                    states_[sensor.id][attr][states] = settings["attribute_${sensor.id}_${attr}_${states}"];
+                }
             }
                                    
             drop_[sensor.id][attr] = [    valid: settings["attribute_${sensor.id}_${attr}_drop_line"],
@@ -1375,7 +1363,7 @@ def getSubscriptions() {
         drop : drop_,
         graph_type: graph_type_,
         var : var_,
-        non_num: non_num_
+        states: states_
     ]
     
     def subscriptions = obj;
