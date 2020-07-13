@@ -90,7 +90,6 @@ def hubiForm_subcontainer(Map map, child){
                     def sz_12 = 12*breakdown[count];
                     def sz_8 = 8*breakdown[count];
                     def sz_4 = 4*breakdown[count];
-                    log.debug(breakdown+"  "+breakdown[count]+" "+space);
                     html_ += """<div class="mdl-cell mdl-cell--${sz_12.intValue()}-col-desktop mdl-cell--${sz_8.intValue()}-col-tablet mdl-cell--${sz_4.intValue()}-col-phone" style= "justify-content: center;" >"""
                     html_ += container;
                     html_ += """</div>"""
@@ -101,6 +100,43 @@ def hubiForm_subcontainer(Map map, child){
                         
                 return (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
         }
+}
+
+def hubiForm_table(Map map, child){
+    
+    child.call(){
+        def header = map.header;
+        def rows = map.rows;
+        def footer = map.footer;
+        
+        def html_ = """
+            <table class="mdl-data-table  mdl-shadow--2dp dataTable" role="grid" data-upgraded=",MaterialDataTable">
+              <thead><tr>
+        """
+        header.each{cell->
+            html_ += """<th class="mdl-data-table__cell--non-numeric">${cell}</th>"""
+        }
+        html+= """</tr></thead><tbody>"""
+        count = 0;
+        rows.each{row->
+           
+            html_ += """<tr role="row" class="odd">""";
+            row.each{cell->
+                html_ += """<td class="mdl-data-table__cell--non-numeric">${cell}</td>""";
+            }
+            html_ += """</tr>""";
+        } //rows
+        html_ += """<tr role="row" class="even">""";
+        footer.each{cell->
+            html_ += """<td class="mdl-data-table__cell--non-numeric">${cell}</td>""";    
+        }
+        html_ += """</tr>""";
+        
+        html_ += """</tbody></table>"""
+        
+        return (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
+            
+    }
 }
 
 def hubiForm_text(child, text){
@@ -271,12 +307,12 @@ def hubiForm_switch(Map map, child){
                                 </div>
                                 <label for="settings[${var}]"
                                         class="mdl-switch mdl-js-switch mdl-js-ripple-effect mdl-js-ripple-effect--ignore-events is-upgraded ${actualVal ? "is-checked" : ""}  
-                                        data-upgraded=",MaterialSwitch,MaterialRipple">
+                                        data-upgraded=",MaterialSwitch,MaterialRipple">    
                                         <input name="checkbox[${var}]" id="settings[${var}]" class="mdl-switch__input 
                                                 ${submitOnChange}"
                                                 type="checkbox" 
                                                 ${actualVal ? "checked" : ""}>                
-                                        <div class="mdl-switch__label">${title}</div>    
+                                        <div class="mdl-switch__label" >${title}</div>   
                                         <div class="mdl-switch__track"></div>
                                         <div class="mdl-switch__thumb">
                                                 <span class="mdl-switch__focus-helper">
@@ -306,7 +342,7 @@ def hubiForm_text_input(child, title, var, defaultVal, submitOnChange){
                 <input type="hidden" name="${var}.multiple" value="false">
                 </div>
                 <label for="settings[${var}]" class="control-label">
-                <b>${title}</b>
+                ${title}
                 </label>
                 <input type="text" name="settings[${var}]" 
                         class="mdl-textfield__input ${submitOnChange == "true" ? "submitOnChange" : ""} " 
