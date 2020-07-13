@@ -129,12 +129,18 @@ def graphSetupPage(){
         parent.hubiForm_section(this,"General Options", 1)
         {      
             
-            input( type: "enum", name: "graph_update_rate", title: "<b>Select Integration Time</b>", multiple: false, required: true, options: timespanEnum2, defaultValue: "300000")
-            input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b>", multiple: false, required: true, options: timespanEnum, defaultValue: "43200000")
-            input( type: "enum", name: "graph_refresh_rate", title: "<b>Select Graph Update Rate</b>", multiple: false, required: true, options: updateRateEnum, defaultValue: "300000")
+            input( type: "enum", name: "graph_update_rate", title: "<b>Select Integration Time</b><br><small>(The amount of time each data point covers)</small>", multiple: false, required: true, options: timespanEnum2, defaultValue: "300000", submitOnChange: true)
+            input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b></br><small>(The amount of time the graph displays)</small>", multiple: false, required: true, options: timespanEnum, defaultValue: "43200000", submitOnChange: true)
+            input( type: "enum", name: "graph_refresh_rate", title: "<b>Select Graph Update Rate</b></br><small>(For panel viewing; the refresh rate of the graph)", multiple: false, required: true, options: updateRateEnum, defaultValue: "300000")
             container = [];
+            points = (int)(Double.parseDouble(graph_timespan)/Double.parseDouble(graph_update_rate))
+            if (points > 2000) {
+                container << parent.hubiForm_text (this, """<span style="color: red; font-weight: bold;">WARNING:</span> <b>${(points)} Points </b>will be generated per Attribute per Graph<br><small>Too many points will cause Hubigraphs to hang or take a long time to generate</small>""");
+            } else {
+                container << parent.hubiForm_text (this, "NOTE: <b>${(points)} Points </b>will be generated per Attribute per Graph");
+            }
             container << parent.hubiForm_color (this, "Graph Background",    "graph_background", "#FFFFFF", false)
-            container << parent.hubiForm_switch(this, title: "Smooth Graph Points", name: "graph_smoothing", default: false);
+            container << parent.hubiForm_switch(this, title: "<b>Smooth Graph Points</b><br><small>(Enable Google Graph Smoothing)</small>", name: "graph_smoothing", default: false);
             container << parent.hubiForm_switch(this, title: "<b>Flip Graph to Vertical?</b><br><small>(Rotate 90 degrees)</small>", name: "graph_y_orientation", default: false);
             container << parent.hubiForm_switch(this, title: "<b>Reverse Data Order?</b><br><small> (Flip data left to Right)</small>", name: "graph_z_orientation", default: false)
               
@@ -145,7 +151,7 @@ def graphSetupPage(){
         parent.hubiForm_section(this,"Graph Title", 1)
         {    
             container = [];
-            container << parent.hubiForm_switch(this, title: "Show Title on Graph", name: "graph_show_title", default: false, submit_on_change: true);
+            container << parent.hubiForm_switch(this, title: "<b>Show Title on Graph</b>", name: "graph_show_title", default: false, submit_on_change: true);
             if (graph_show_title==true) {
                 container << parent.hubiForm_text_input (this, "Graph Title", "graph_title", "Graph Title", false);
                 container << parent.hubiForm_font_size  (this, title: "Title", name: "graph_title", default: 9, min: 2, max: 20);
@@ -173,9 +179,15 @@ def graphSetupPage(){
             container << parent.hubiForm_font_size  (this, title: "Horizontal Axis", name: "graph_haxis", default: 9, min: 2, max: 20);
             container << parent.hubiForm_color      (this, "Horizonal Header", "graph_hh", "#C0C0C0", false);
             container << parent.hubiForm_color      (this, "Horizonal Axis", "graph_ha", "#C0C0C0", false);
-            container << parent.hubiForm_text_input (this, "<b>Num Horizontal Grid-s</b><br><small>(Blank for auto)</small>", "graph_h_num_grid", "", false);
+            container << parent.hubiForm_text_input (this, "<b>Num Horizontal Gridlines</b><small> (Blank for auto)</small>", "graph_h_num_grid", "", false);
             
-            container << parent.hubiForm_switch     (this, title: "Show String Formatting Help", name: "dummy", default: false, submit_on_change: true);
+            container << parent.hubiForm_text_input (this, "<b>Horizontal Axis Format<b>", "graph_h_format", "", true);
+            if (graph_h_format){
+                today = new Date();
+                paragraph "<i><small><b>Horizontal Axis Sample:</b> ${today.format(graph_h_format)}</small></i>"
+            }
+             
+            container << parent.hubiForm_switch     (this, title: "Show String Formatting Help", name: "dummy", default: false, submit_on_change: true);           
             if (dummy == true){
                 val = [];
                 val <<"<b>Name"; val << "Format" ; val <<"Result</b>"; 
@@ -198,13 +210,8 @@ def graphSetupPage(){
                 container << parent.hubiForm_cell(this, val, 3); 
                 container << parent.hubiForm_text(this, """<b><small>Example: "EEEE, MMM d, Y hh:mm:ss a" <br>= "Monday, June 2, 2020 08:21:33 AM</small></b>""")
             }
-            container << parent.hubiForm_text_input (this, "Horizontal Axis Format", "graph_h_format", "", true);
             parent.hubiForm_container(this, container, 1); 
-            if (graph_h_format){
-                today = new Date();
-                paragraph "<i><small><b>Horizontal Axis Sample:</b> ${today.format(graph_h_format)}</small></i>"
-            }
-           
+          
          }
             
         //Vertical Axis
@@ -218,14 +225,14 @@ def graphSetupPage(){
          }
 
         //Left Axis 
-        def formatEnum = [["none": "No Formatting (12345)"], ["decimal":"Decimal (12,345)"], ["short": "Short (12K)"], ["scientific": "Scientific (1e5)"], ["percent": "Percent (1234500%)"], ["long": "Long (12 Thousand)"]];    
+        def formatEnum = [["":       "No Formatting  ::: 12345"], ["decimal":"Decimal ::: 12,345"], ["short": "Short ::: 12K"], ["scientific": "Scientific ::: 1e5"], ["percent": "Percent ::: 1234500%"], ["long": "Long ::: 12 Thousand"]];    
         
         parent.hubiForm_section(this,"Left Axis", 1, "arrow_back"){ 
-            input( type: "enum", name: "graph_vaxis_1_format", title: "<b>Number Format</b>", multiple: false, required: true, options: formatEnum, defaultValue: "none")
+            input( type: "enum", name: "graph_vaxis_1_format", title: "<b>Number Format</b>", multiple: false, required: true, options: formatEnum, defaultValue: "")
             container = [];
-            container << parent.hubiForm_text_input(this,  "<b>Minimum for left axis</b><small>(Blank for auto)</small>", "graph_vaxis_1_min", "", false);
-            container << parent.hubiForm_text_input(this,  "<b>Maximum for left axis</b><small>(Blank for auto)</small>", "graph_vaxis_1_max", "", false);   
-            container << parent.hubiForm_text_input (this, "<b>Num Vertical Gridlines</b><br><small>(Blank for auto)</small>", "graph_vaxis_1_num_lines", "", false);
+            container << parent.hubiForm_text_input(this,  "<b>Minimum for left axis</b><small> (Blank for auto)</small>", "graph_vaxis_1_min", "", false);
+            container << parent.hubiForm_text_input(this,  "<b>Maximum for left axis</b><small> (Blank for auto)</small>", "graph_vaxis_1_max", "", false);   
+            container << parent.hubiForm_text_input (this, "<b>Num Vertical Gridlines</b><small> (Blank for auto)</small>", "graph_vaxis_1_num_lines", "", false);
             container << parent.hubiForm_switch     (this, title: "<b>Show Left Axis Label on Graph</b>", name: "graph_show_left_label", default: false, submit_on_change: true);
             if (graph_show_left_label==true){
                 container << parent.hubiForm_text_input (this, "<b>Input Left Axis Label</b>", "graph_left_label", "Left Axis Label", false);
@@ -237,11 +244,11 @@ def graphSetupPage(){
 
         //Right Axis   
         parent.hubiForm_section(this,"Right Axis", 1, "arrow_forward"){  
-            input( type: "enum", name: "graph_vaxis_2_format", title: "<b>Number Format</b>", multiple: false, required: true, options: formatEnum, defaultValue: "none")
+            input( type: "enum", name: "graph_vaxis_2_format", title: "<b>Number Format</b>", multiple: false, required: true, options: formatEnum, defaultValue: "")
             container = [];
-            container << parent.hubiForm_text_input(this,  "<b>Minimum for right axis</b><small>(Blank for auto)</small>", "graph_vaxis_2_min", "", false);
-            container << parent.hubiForm_text_input(this,  "<b>Maximum for right axis</b><small>(Blank for auto)</small>", "graph_vaxis_2_max", "", false);   
-            container << parent.hubiForm_text_input (this, "<b>Num Vertical Gridlines</b><br><small>(Blank for auto)</small>", "graph_vaxis_2_num_lines", "", false);
+            container << parent.hubiForm_text_input(this,  "<b>Minimum for right axis</b><small> (Blank for auto)</small>", "graph_vaxis_2_min", "", false);
+            container << parent.hubiForm_text_input(this,  "<b>Maximum for right axis</b><small> (Blank for auto)</small>", "graph_vaxis_2_max", "", false);   
+            container << parent.hubiForm_text_input (this, "<b>Num Vertical Gridlines</b><small> (Blank for auto)</small>", "graph_vaxis_2_num_lines", "", false);
             container << parent.hubiForm_switch     (this, title: "<b>Show Right Axis Label on Graph</b>", name: "graph_show_right_label", default: false, submit_on_change: true);
             if (graph_show_right_label==true){
                 container << parent.hubiForm_text_input (this, "<b>Input right Axis Label</b>", "graph_right_label", "Right Axis Label", false);
@@ -256,7 +263,7 @@ def graphSetupPage(){
             container = [];
             def legendPosition = [["top": "Top"], ["bottom":"Bottom"], ["in": "Inside Top"]];
             def insidePosition = [["start": "Left"], ["center": "Center"], ["end": "Right"]];
-            container << parent.hubiForm_switch(this, title: "Show Legend on Graph", name: "graph_show_legend", default: false, submit_on_change: true);
+            container << parent.hubiForm_switch(this, title: "<b>Show Legend on Graph</b>", name: "graph_show_legend", default: false, submit_on_change: true);
             if (graph_show_legend==true){
                 container << parent.hubiForm_font_size  (this, title: "Legend", name: "graph_legend", default: 9, min: 2, max: 20);
                 container << parent.hubiForm_color      (this, "Legend", "graph_legend", "#000000", false);
@@ -318,7 +325,7 @@ def graphSetupPage(){
                     parent.hubiForm_section(this,"${sensor.displayName} - ${attribute}", 1){
                                
                         container = [];
-                        container <<  parent.hubiForm_sub_section(this, "Plot Options :: "+"${sensor.displayName} - ${attribute}");
+                        container <<  parent.hubiForm_sub_section(this, "Plot Options");
                         
                         container << parent.hubiForm_enum (this, title:             "Plot Type", 
                                                                  name:              "graph_type_${sensor.id}_${attribute}",
@@ -356,7 +363,7 @@ def graphSetupPage(){
                                 fillText = "Fill"
                                 break;
                         }
-                        container <<  parent.hubiForm_sub_section(this, colorText+" Options :: "+"${sensor.displayName} - ${attribute}");
+                        container <<  parent.hubiForm_sub_section(this, colorText+" Options");
                         
                         container << parent.hubiForm_color(this, colorText, 
                                                                  "var_${sensor.id}_${attribute}_stroke", 
@@ -378,7 +385,7 @@ def graphSetupPage(){
                         
                         if (graphType == "Bar" || graphType == "Area") {
                             
-                            container <<  parent.hubiForm_sub_section(this, graphType+" "+fillText+" Options :: "+"${sensor.displayName} - ${attribute}");
+                            container <<  parent.hubiForm_sub_section(this, graphType+" "+fillText+" Options");
                             
                             container << parent.hubiForm_color(this, fillText, 
                                                                      "var_${sensor.id}_${attribute}_fill", 
@@ -395,13 +402,14 @@ def graphSetupPage(){
                         }
                         if (graphType == "Scatter" || graphType == "Line" || graphType == "Area"){
                             
+                            container <<  parent.hubiForm_sub_section(this, "Data Points");
+                            
                             if (graphType == "Line" || graphType == "Area"){
-                                container << parent.hubiForm_switch(this, title: "Display Data Points on Line?", name: "var_${sensor.id}_${attribute}_line_plot_points", default: false, submit_on_change: true);
+                                container << parent.hubiForm_switch(this, title: "<b>Display Data Points on Line?</b>", name: "var_${sensor.id}_${attribute}_line_plot_points", default: false, submit_on_change: true);
                             }
                             
                             if (settings["var_${sensor.id}_${attribute}_line_plot_points"] || graphType == "Scatter"){
                                 
-                                container <<  parent.hubiForm_sub_section(this, "Plot Point Options :: "+"${sensor.displayName} - ${attribute}");
                                  
                                 container << parent.hubiForm_enum (this, 
                                                                    title: "Point Type", 
@@ -439,14 +447,18 @@ def graphSetupPage(){
                         }
                             
                         currentAttribute = null;
+                        enumType = false;
                         sensor.getSupportedAttributes().each{attrib->
                             if (attrib.name == attribute){
-                                currentAttribute = attrib;        
+                                currentAttribute = attrib;
+                                if (attrib.dataType == "ENUM") enumType = true;
                             }
                         }
-                        if (currentAttribute != null && currentAttribute.dataType == "ENUM"){
+                        
+                        if (enumType == true){
                             possible_values = currentAttribute.getValues();
                             def count_ = 0;
+                            container <<  parent.hubiForm_sub_section(this, """Numerical values for "$attribute" states""");
                      
                             possible_values.each{value->
                                 
@@ -457,25 +469,82 @@ def graphSetupPage(){
                                 count_++;
                             }
                             app.updateSetting ("attribute_${sensor.id}_${attribute}_states", possible_values);
-                        }
                        
+                        }  
+                        
+                        if (enumType == false){
+                            container <<  parent.hubiForm_sub_section(this, """Custom State Values for "$attribute" """ );
+                            container << parent.hubiForm_switch(this, title: "<b>Set Custom State Values?</b><br><small>(For custom drivers w/ non-numeric values)</small>", 
+                                                                      name: "attribute_${sensor.id}_${attribute}_custom_states", 
+                                                                      default: false, 
+                                                                      submit_on_change: true);
+                            
+                            if (settings["attribute_${sensor.id}_${attribute}_custom_states"] == true){
+                                                                             
+                                    container << parent.hubiForm_text_input(this,"<b>Number of Custom States</b>",
+                                                                                 "attribute_${sensor.id}_${attribute}_num_custom_states",
+                                                                                 "2", "true");
+                                
+                                    for (i=0; i<Integer.parseInt(settings["attribute_${sensor.id}_${attribute}_num_custom_states"]); i++){
+                                        subcontainer = [];
+        
+                                        subcontainer << parent.hubiForm_text_input(this, "<b>State #"+(i+1)+"</b>",
+                                                                                         "attribute_${sensor.id}_${attribute}_custom_state_${i}",
+                                                                                          "",
+                                                                                          "true");
+                
+                                        if (settings["attribute_${sensor.id}_${attribute}_custom_state_${i}"])
+                                                subcontainer << parent.hubiForm_text_input(this, '<b>Value for "<mark>'+settings["attribute_${sensor.id}_${attribute}_custom_state_${i}"]+'</mark></b>"',
+                                                                                                 "attribute_${sensor.id}_${attribute}_custom_state_${i}_value",
+                                                                                                  "0",
+                                                                                                  "true");
+                                                        
+                                         container << parent.hubiForm_subcontainer(this, objects: subcontainer, breakdown: [0.5, 0.5]); 
+                                        
+                                    }  
+                                
+                                    //Update Settings
+                                    
+                                    possible_values = [];
+                                    for (i=0; i<Integer.parseInt(settings["attribute_${sensor.id}_${attribute}_num_custom_states"]); i++){
+                                        val = settings["attribute_${sensor.id}_${attribute}_custom_state_${i}"].replaceAll("\\s","");
+                                        possible_values << val;
+                                        app.updateSetting ("attribute_${sensor.id}_${attribute}_${val}", settings["attribute_${sensor.id}_${attribute}_custom_state_${i}_value"]);
+                                    }
+                                    app.updateSetting ("attribute_${sensor.id}_${attribute}_states", possible_values);
+                                
+                                    log.debug(possible_values);
+                                
+                            } else {
+                                if (settings["attribute_${sensor.id}_${attribute}_states"]){
+                                    possible_values = settings["attribute_${sensor.id}_${attribute}_states"];
+                                    possible_values.each{val->
+                                        app.updateSetting ("attribute_${sensor.id}_${attribute}_${val}", 0);
+                                    }
+                                    app.updateSetting ("attribute_${sensor.id}_${attribute}_states", 0);
+                                }
+                            }
+
+                        }
                         
                         //Line and Area Graphs can be "Drop-line"
-                        else if (graphType == "Line" || graphType == "Area") {
+                        if ((graphType == "Line" || graphType == "Area") && enumType==false) {
                                     
-                                    container <<  parent.hubiForm_sub_section(this, "Drop Line :: "+"${sensor.displayName} - ${attribute}");
+                                    container <<  parent.hubiForm_sub_section(this, "Drop Line");
                             
-                                    container << parent.hubiForm_switch(this, title: "Display Missing Data as a Drop Line?", name: "attribute_${sensor.id}_${attribute}_drop_line", default: false, submit_on_change: true);
+                                    container << parent.hubiForm_switch(this, title: "<b>Display Missing Data as a Drop Line?</b>", name: "attribute_${sensor.id}_${attribute}_drop_line", default: false, submit_on_change: true);
                                                               
                                     if (settings["attribute_${sensor.id}_${attribute}_drop_line"]==true){
                                         
-                                        container << parent.hubiForm_text_input(this,"Value of Missing Data (Drop Line)",
+                                        container << parent.hubiForm_text_input(this,"<b>Value of Missing Data</b>",
                                                                                      "attribute_${sensor.id}_${attribute}_drop_value",
                                                                                      "0", false);                                    
                                     }
                         }
                         
-                        container <<  parent.hubiForm_sub_section(this, "Override Display Name on Graph :: "+"${sensor.displayName} - ${attribute}");
+                        
+                        
+                        container <<  parent.hubiForm_sub_section(this, "Override Display Name on Graph");
                         
                         container << parent.hubiForm_text_input(this,   "<small></i>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                                 "graph_name_override_${sensor.id}_${attribute}",
@@ -597,7 +666,7 @@ def mainPage() {
                    parent.hubiForm_section(this, "Hubigraph Application", 1, "settings"){
                         container = [];
                         container << parent.hubiForm_sub_section(this, "Application Name");
-                        container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Bar Graph", "false");
+                        container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Time Graph", "false");
                         container << parent.hubiForm_sub_section(this, "Debugging");
                         container << parent.hubiForm_switch(this, title: "Enable Debug Logging?", name: "debug", default: false);
                         container << parent.hubiForm_sub_section(this, "Disable Oauth Authorization");
@@ -619,7 +688,7 @@ def longTermStoragePage(){
     def events = [];
     
     use (groovy.time.TimeCategory) {
-           then -= 2.days;
+           then -= 1.days;
     }
     
     dynamicPage(name: "longTermStoragePage", title: "") {
@@ -627,22 +696,31 @@ def longTermStoragePage(){
         log.debug(atomicState.test);
         section() {
             if(!sensors) {
-                paragraph "Please select Sensors and  before setting up storage"
+                paragraph "Please select Sensors and Graph Options Before setting up storage"
             } else {
                 parent.hubiForm_section(this, "Devices Available for Storage", 1, "settings"){
-                    header = ["Sensor","Attribute", "Events in Past 24 Hours"];
+                    header = ["Sensor","Attribute", "Events in Past 24 Hours", "Database Query Time", "Estimated Size of Data Per Day"];
                     container = [];
                     rows = [];
+                    def total_time = 0;
+                    def total_bytes = 0;
                     sensors.each { sensor ->
                         resp[sensor.id] = [:];
                         settings["attributes_${sensor.id}"].each {attribute ->
+                            def start = new Date();
                             events = sensor.statesSince(attribute, then, [max: 10000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
+                            //events = sensor.events();
                             events = events.flatten();
-                            rows << [sensor.displayName, attribute, events.size];
-                            
+                            def end = new Date();
+                            time = (end.getTime() - start.getTime())/1000.0;
+                            bytes = (events.size*128.0)/1024.0
+                            rows << [sensor.displayName, attribute, events.size, time+" seconds", bytes+" Kb"];
+                            total_time += time;
+                            total_bytes += bytes;
                         }
                     }
-                    container << parent.hubiForm_table(this, header: header, rows: rows);
+                    footer =  ["Total", "", "", total_time+" seconds", total_bytes+" Kb"];
+                    container << parent.hubiForm_table(this, header: header, rows: rows, footer: footer);
                     parent.hubiForm_container(this, container, 1);
                 }
                 atomicState["test"] =  null;
@@ -692,6 +770,8 @@ def initialize() {
 
 private getValue(id, attr, val){
     def reg = ~/[a-z,A-Z]+/;
+    
+    val = val.replaceAll("\\s","");
     if (settings["attribute_${id}_${attr}_${val}"]!=null){
         ret = Double.parseDouble(settings["attribute_${id}_${attr}_${val}"]);
     } else {
@@ -760,6 +840,7 @@ def getChartOptions(){
                     "gridlines": ["count" : graph_vaxis_1_num_lines != "" ? graph_vaxis_1_num_lines : null ],
                     "minorGridlines": ["count" : 0],
                     "format": graph_vaxis_1_format, 
+                    
                    ],
                 
                 1: ["title": graph_show_right_label ? graph_right_label : null,
@@ -811,6 +892,8 @@ def getChartOptions(){
                                                           "pointSize"       : point_size,
                                                           "pointShape"      : point_type,
                                                           "color"           : stroke_color,
+                                                          "opacity"         : stroke_opacity,
+                                                          
                                                         ]
                                            ];
             count_ ++;
@@ -930,16 +1013,16 @@ function parseEvent(event) {
 
     if(subscriptions.ids.includes(deviceId) && subscriptions.attributes[deviceId].includes(event.name)) {
         let value = event.value;
-        value = (Math.round(value * 100) / 100).toFixed(2);
+        value = isNaN(value) ? value.replace(/ /g,'') : (Math.round(value * 100) / 100).toFixed(2);
         let attribute = event.name;
 
         state = subscriptions.states[deviceId][attribute][value];
          
         if (state != undefined){
-            value = parseFloat(state); 
+            value = parseFloat(state);
+            
         }
     
-        console.log(value);
         graphData[deviceId][attribute].push({ date: now, value: value });
               
         if(options.graphRefreshRate === 0) update();
