@@ -107,6 +107,23 @@ def call(Closure code) {
 *********************************************************************************************************************************
 *********************************************************************************************************************************/
 
+def getEvents(sensor, attribute, num){
+     def resp = [:]
+     def today = new Date();
+     def then = new Date();
+    
+     use (groovy.time.TimeCategory) {
+           then -= 2.days;
+     }
+     
+  
+     def respEvents = [];                  
+     respEvents << sensor.statesSince(attribute, then, [max: 200]){ it.value };
+     respEvents = respEvents.flatten();
+     respEvents = respEvents.unique();          
+     return respEvents;  
+}
+
 def graphSetupPage(){
     def fontEnum = [["1":"1"], ["2":"2"], ["3":"3"], ["4":"4"], ["5":"5"], ["6":"6"], ["7":"7"], ["8":"8"], ["9":"9"], ["10":"10"], 
                     ["11":"11"], ["12":"12"], ["13":"13"], ["14":"14"], ["15":"15"], ["16":"16"], ["17":"17"], ["18":"18"], ["19":"19"], ["20":"20"]]; 
@@ -121,7 +138,9 @@ def graphSetupPage(){
                           ["2400000":"30 minutes"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]];
     
     def updateRateEnum = [["-1":"Never"], ["0":"Real Time"], ["1000":"1 Second"], ["60000":"1 Minute"], ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1200000":"20 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"]];
-                                
+                 
+    
+    
     dynamicPage(name: "graphSetupPage") {
         
           
@@ -479,6 +498,10 @@ def graphSetupPage(){
                                                                       submit_on_change: true);
                             
                             if (settings["attribute_${sensor.id}_${attribute}_custom_states"] == true){
+                                
+                                    if (!settings["attribute_${sensor.id}_${attribute}_num_custom_states"]){
+                                        
+                                    }
                                     
                                     container << parent.hubiForm_text_input(this,"<b>Number of Custom States</b>",
                                                                                  "attribute_${sensor.id}_${attribute}_num_custom_states",
@@ -591,6 +614,7 @@ def deviceSelectionPage() {
                 }
             }
         }
+        
     }
 }
 
@@ -1025,16 +1049,19 @@ function parseEvent(event) {
     
 
     if(subscriptions.ids.includes(deviceId) && subscriptions.attributes[deviceId].includes(event.name)) {
-        let value = event.value;
-        value = isNaN(value) ? value.replace(/ /g,'') : (Math.round(value * 100) / 100).toFixed(2);
+        
+        let value = isNaN(event.value) ? event.value.replace(/ /g,'') : (Math.round(event.value * 100) / 100).toFixed(2);
+        
         let attribute = event.name;
 
-        state = subscriptions.states[deviceId][attribute][value];
+        let state = isNaN(value) ? subscriptions.states[deviceId][attribute][value] : undefined;
          
         if (state != undefined){
             value = parseFloat(state);
         }
-    
+        
+        console.log("Got: "+attribute+"= "+value);
+
         graphData[deviceId][attribute].push({ date: now, value: value });
               
         if(options.graphRefreshRate === 0) update();
