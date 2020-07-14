@@ -171,7 +171,7 @@ def graphSetupPage(){
             container = [];
             container << parent.hubiForm_switch(this, title: "<b>Show Title on Graph</b>", name: "graph_show_title", default: false, submit_on_change: true);
             if (graph_show_title==true) {
-                container << parent.hubiForm_text_input (this, "Graph Title", "graph_title", "Graph Title", false);
+                container << parent.hubiForm_text_input (this, "<b>Graph Title</b>", "graph_title", "Graph Title", false);
                 container << parent.hubiForm_font_size  (this, title: "Title", name: "graph_title", default: 9, min: 2, max: 20);
                 container << parent.hubiForm_color      (this, "Title", "graph_title", "#000000", false);
                 container << parent.hubiForm_switch     (this, title: "Graph Title Inside Graph?", name: "graph_title_inside", default: false);
@@ -199,35 +199,40 @@ def graphSetupPage(){
             container << parent.hubiForm_color      (this, "Horizonal Axis", "graph_ha", "#C0C0C0", false);
             container << parent.hubiForm_text_input (this, "<b>Num Horizontal Gridlines</b><small> (Blank for auto)</small>", "graph_h_num_grid", "", false);
             
-            container << parent.hubiForm_text_input (this, "<b>Horizontal Axis Format<b>", "graph_h_format", "", true);
+            container << parent.hubiForm_text_input (this, "<b>Horizontal Axis Format<b>", "graph_h_format", "", "true");
             if (graph_h_format){
                 today = new Date();
-                paragraph "<i><small><b>Horizontal Axis Sample:</b> ${today.format(graph_h_format)}</small></i>"
+                container << parent.hubiForm_text(this, """<i><small><b>Horizontal Axis Sample:</b> ${today.format(graph_h_format)}</small></i>""");
             }
              
             container << parent.hubiForm_switch     (this, title: "Show String Formatting Help", name: "dummy", default: false, submit_on_change: true);           
             if (dummy == true){
-                val = [];
-                val <<"<b>Name"; val << "Format" ; val <<"Result</b>"; 
-                val <<"<small>Year"; val << "Y"; val << "2020"; 
-                val <<"Month Number"; val << "M"; val << "12"; 
-                val <<"Month Name "; val << "MMM"; val << "Feb"; 
-                val <<"Month Full Name"; val << "MMMM"; val << "February"; 
-                val <<"Day of Month"; val << "d"; val << "February"; 
-                val <<"Day of Week"; val << "EEE"; val << "Mon"; 
-                val <<"Day of Week"; val << "EEEE"; val << "Monday"; 
-                val <<"Period"; val << "a"; val << "AM/PM"; 
-                val <<"Hour (12)"; val << "h"; val << "1..12"; 
-                val <<"Hour (12)"; val << "hh"; val << "01..12"; 
-                val <<"Hour (24)"; val << "H"; val << "1..23"; 
-                val <<"Hour (24)"; val << "HH"; val << "01..23"; 
-                val <<"Minute"; val << "m"; val << "1..59"; 
-                val <<"Minute"; val << "mm"; val << "01..59"; 
-                val <<"Seconds"; val << "s"; val << "1..59"; 
-                val <<"Seconds"; val << "ss"; val << "01..59 </small>"
-                container << parent.hubiForm_cell(this, val, 3); 
-                container << parent.hubiForm_text(this, """<b><small>Example: "EEEE, MMM d, Y hh:mm:ss a" <br>= "Monday, June 2, 2020 08:21:33 AM</small></b>""")
+                rows = [];
+                header = ["<small>Name",           "Format", "Result"];
+                rows <<  ["Year",           "Y",      "2020"]; 
+                rows << ["Month Number",    "M",      "12"]; 
+                rows << ["Month Name ",     "MMM",    "Feb"]; 
+                rows << ["Month Full Name", "MMMM",   "February"]; 
+                rows << ["Day of Month",     "d",     "February"]; 
+                rows << ["Day of Week",      "EEE",   "Mon"]; 
+                rows << ["Day of Week",      "EEEE",  "Monday"]; 
+                rows << ["Period",           "a",     "AM/PM"]; 
+                rows << ["Hour (12)",        "h",     "1..12"]; 
+                rows << ["Hour (12)",        "hh",    "01..12"]; 
+                rows << ["Hour (24)",        "H",     "1..23"]; 
+                rows << ["Hour (24)",        "HH",    "01..23"]; 
+                rows << ["Minute",           "m",     "1..59"]; 
+                rows << ["Minute",           "mm",    "01..59"]; 
+                rows << ["Seconds",          "s",     "1..59"]; 
+                rows << ["Seconds",          "ss",     "01..59 <small>"];
+                   
+                 
+               container << parent.hubiForm_table(this, header: header, rows: rows);
+               container << parent.hubiForm_text(this, """<b><small>Example: "EEEE, MMM d, Y hh:mm:ss a" <br>= "Monday, June 2, 2020 08:21:33 AM</small></b>""")
             }
+                 
+            
+            
             parent.hubiForm_container(this, container, 1); 
           
          }
@@ -343,6 +348,7 @@ def graphSetupPage(){
                     parent.hubiForm_section(this,"${sensor.displayName} - ${attribute}", 1){
                                
                         container = [];
+                        
                         container <<  parent.hubiForm_sub_section(this, "Plot Options");
                         
                         container << parent.hubiForm_enum (this, title:             "Plot Type", 
@@ -381,6 +387,7 @@ def graphSetupPage(){
                                 fillText = "Fill"
                                 break;
                         }
+                        
                         container <<  parent.hubiForm_sub_section(this, colorText+" Options");
                         
                         container << parent.hubiForm_color(this, colorText, 
@@ -645,6 +652,7 @@ def mainPage() {
             def container = [];
             if (!state.endpoint) {
                 parent.hubiForm_section(this, "Please set up OAuth API", 1, "report"){
+                    
                     href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
                  }    
             } else {
