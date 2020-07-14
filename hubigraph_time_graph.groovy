@@ -128,12 +128,11 @@ def graphSetupPage(){
       
         parent.hubiForm_section(this,"General Options", 1)
         {      
-            
             input( type: "enum", name: "graph_update_rate", title: "<b>Select Integration Time</b><br><small>(The amount of time each data point covers)</small>", multiple: false, required: true, options: timespanEnum2, defaultValue: "300000", submitOnChange: true)
             input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b></br><small>(The amount of time the graph displays)</small>", multiple: false, required: true, options: timespanEnum, defaultValue: "43200000", submitOnChange: true)
             input( type: "enum", name: "graph_refresh_rate", title: "<b>Select Graph Update Rate</b></br><small>(For panel viewing; the refresh rate of the graph)", multiple: false, required: true, options: updateRateEnum, defaultValue: "300000")
             container = [];
-            points = (int)(Double.parseDouble(graph_timespan)/Double.parseDouble(graph_update_rate))
+            points = graph_update_rate ? (int)(Double.parseDouble(graph_timespan)/Double.parseDouble(graph_update_rate)) : 280;
             if (points > 2000) {
                 container << parent.hubiForm_text (this, """<span style="color: red; font-weight: bold;">WARNING:</span> <b>${(points)} Points </b>will be generated per Attribute per Graph<br><small>Too many points will cause Hubigraphs to hang or take a long time to generate</small>""");
             } else {
@@ -480,26 +479,31 @@ def graphSetupPage(){
                                                                       submit_on_change: true);
                             
                             if (settings["attribute_${sensor.id}_${attribute}_custom_states"] == true){
-                                                                             
+                                    
                                     container << parent.hubiForm_text_input(this,"<b>Number of Custom States</b>",
                                                                                  "attribute_${sensor.id}_${attribute}_num_custom_states",
                                                                                  "2", "true");
                                 
-                                    for (i=0; i<Integer.parseInt(settings["attribute_${sensor.id}_${attribute}_num_custom_states"]); i++){
+                                    def numStates = Integer.parseInt(settings["attribute_${sensor.id}_${attribute}_num_custom_states"]);
+                                
+                                    for (def i=0; i<numStates; i++){
                                         subcontainer = [];
-        
-                                        subcontainer << parent.hubiForm_text_input(this, "<b>State #"+(i+1)+"</b>",
+                                                                              
+                                        subcontainer << parent.hubiForm_text_input(this, "<b>State #"+(i)+"</b>",
                                                                                          "attribute_${sensor.id}_${attribute}_custom_state_${i}",
                                                                                           "",
                                                                                           "true");
                 
-                                        if (settings["attribute_${sensor.id}_${attribute}_custom_state_${i}"])
-                                                subcontainer << parent.hubiForm_text_input(this, '<b>Value for "<mark>'+settings["attribute_${sensor.id}_${attribute}_custom_state_${i}"]+'</mark></b>"',
-                                                                                                 "attribute_${sensor.id}_${attribute}_custom_state_${i}_value",
-                                                                                                  "0",
-                                                                                                  "true");
-                                                        
-                                         container << parent.hubiForm_subcontainer(this, objects: subcontainer, breakdown: [0.5, 0.5]); 
+                                        if (settings["attribute_${sensor.id}_${attribute}_custom_state_${i}"]){
+                                            
+                                                                           
+                                            subcontainer << parent.hubiForm_text_input(this, '<b>Value for "<mark>'+settings["attribute_${sensor.id}_${attribute}_custom_state_${i}"]+'</mark></b>"',
+                                                                                              "attribute_${sensor.id}_${attribute}_custom_state_${i}_value",
+                                                                                              "0",
+                                                                                              "true");
+                                                
+                                        }
+                                        container << parent.hubiForm_subcontainer(this, objects: subcontainer, breakdown: [0.5, 0.5]); 
                                         
                                     }  
                                 
@@ -507,13 +511,15 @@ def graphSetupPage(){
                                     
                                     possible_values = [];
                                     for (i=0; i<Integer.parseInt(settings["attribute_${sensor.id}_${attribute}_num_custom_states"]); i++){
-                                        val = settings["attribute_${sensor.id}_${attribute}_custom_state_${i}"].replaceAll("\\s","");
-                                        possible_values << val;
-                                        app.updateSetting ("attribute_${sensor.id}_${attribute}_${val}", settings["attribute_${sensor.id}_${attribute}_custom_state_${i}_value"]);
+                                        if (settings["attribute_${sensor.id}_${attribute}_custom_state_${i}"] &&
+                                            settings["attribute_${sensor.id}_${attribute}_custom_state_${i}_value"]){
+                                                val = settings["attribute_${sensor.id}_${attribute}_custom_state_${i}"].replaceAll("\\s","");
+                                                possible_values << val;
+                                                app.updateSetting ("attribute_${sensor.id}_${attribute}_${val}", settings["attribute_${sensor.id}_${attribute}_custom_state_${i}_value"]);
+                                        }
                                     }
-                                    app.updateSetting ("attribute_${sensor.id}_${attribute}_states", possible_values);
+                                    if (possible_values != []) app.updateSetting ("attribute_${sensor.id}_${attribute}_states", possible_values);
                                 
-                                    log.debug(possible_values);
                                 
                             } else {
                                 if (settings["attribute_${sensor.id}_${attribute}_states"]){
@@ -528,7 +534,7 @@ def graphSetupPage(){
                         }
                         
                         //Line and Area Graphs can be "Drop-line"
-                        if ((graphType == "Line" || graphType == "Area") && enumType==false) {
+                        if ((graphType == "Line" || graphType == "Area") && enumType==false && settings["attribute_${sensor.id}_${attribute}_custom_states"] == false) {
                                     
                                     container <<  parent.hubiForm_sub_section(this, "Drop Line");
                             
@@ -771,11 +777,17 @@ def initialize() {
 private getValue(id, attr, val){
     def reg = ~/[a-z,A-Z]+/;
     
+    orig = val;
     val = val.replaceAll("\\s","");
     if (settings["attribute_${id}_${attr}_${val}"]!=null){
         ret = Double.parseDouble(settings["attribute_${id}_${attr}_${val}"]);
     } else {
-        ret = Double.parseDouble(val - reg );
+        try { 
+            ret = Double.parseDouble(val - reg );
+        } catch (e) {
+            log.debug ("Bad value in Parse: "+orig);
+            ret = null;   
+        }
     }
     return ret;
 }
@@ -984,14 +996,14 @@ function getOptions() {
     return jQuery.get("${state.localEndpointURL}getOptions/?access_token=${state.endpointSecret}", (data) => {
         options = data;
         console.log("Got Options");
-        console.log(options);
+        //console.log(options);
     });
 }
 
 function getSubscriptions() {
     return jQuery.get("${state.localEndpointURL}getSubscriptions/?access_token=${state.endpointSecret}", (data) => {
         console.log("Got Subscriptions");
-        console.log(data);
+        //console.log(data);
         subscriptions = data;
         
     });
@@ -1000,7 +1012,7 @@ function getSubscriptions() {
 function getGraphData() {
     return jQuery.get("${state.localEndpointURL}getData/?access_token=${state.endpointSecret}", (data) => {
         console.log("Got Graph Data");
-        console.log(data);
+        //console.log(data);
         graphData = data;
     });
 }
@@ -1010,6 +1022,7 @@ function parseEvent(event) {
     let deviceId = event.deviceId;
 
     //only accept relevent events
+    
 
     if(subscriptions.ids.includes(deviceId) && subscriptions.attributes[deviceId].includes(event.name)) {
         let value = event.value;
@@ -1020,7 +1033,6 @@ function parseEvent(event) {
          
         if (state != undefined){
             value = parseFloat(state);
-            
         }
     
         graphData[deviceId][attribute].push({ date: now, value: value });
@@ -1255,6 +1267,7 @@ function drawChart(callback) {
     let spacing = options.graphUpdateRate;
     var current;
     var drop_val;
+    var newEntry;
     
     //map the graph data
     Object.entries(graphData).forEach(([deviceIndex, attributes]) => {
@@ -1267,7 +1280,6 @@ function drawChart(callback) {
                 drop_val = null;
             }
             
-            var newEntry;
             while (current < now){
                 if (subscriptions.states[deviceIndex][attribute] != undefined && events.length > 0){
                     if (drop_val == null){
@@ -1288,7 +1300,6 @@ function drawChart(callback) {
             }   
         });
     });
-    console.log(accumData);
 
     let parsedGraphData = Object.entries(accumData).map(([date, vals]) => [moment(parseInt(date)).toDate(), ...vals]);
 
