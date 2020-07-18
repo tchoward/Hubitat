@@ -114,7 +114,7 @@ def hubiForm_table(Map map, child){
               <thead><tr>
         """
         header.each{cell->
-            html_ += """<th class="mdl-data-table__cell--non-numeric">${cell}</th>"""
+            html_ += """<th class="mdl-data-table__cell--non-numeric ">${cell}</th>"""
         }
         html+= """</tr></thead><tbody>"""
         count = 0;
@@ -180,6 +180,8 @@ def hubiForm_page_button(child, title, page, width, icon=""){
         }
         return html_;
 }
+
+
 
 def hubiForm_section(child, title, pos, icon="", Closure code) {
 	
@@ -618,6 +620,7 @@ def hubiForm_sub_section(child, myText=""){
                 def newText = myText.replaceAll( /'/, '’' ).replace("'", "’").replace("`", "’")
                 def html_ = 
                         """
+                       
                         <div class="mdl-layout__header" style="display: block; min-height: 0;">
                                 <div class="mdl-layout__header-row" style="height: 48px;">
                                 <span class="mdl-layout__title" style="margin-left: -32px; font-size: 9px; width: auto;">
@@ -636,7 +639,7 @@ def hubiForm_cell(child, containers, numPerRow){
         child.call(){
                 def html_ = 
                         """
-                        <div class = "mdl-grid" style="margin: 0; padding: 0;"> 
+                        <div class = "mdl-grid mdl-grid--no-spacing mdl-shadow--4dp" style="margin-top: 0px !important; margin: 0px; padding: 0px 0px;"> 
                         """
                 containers.each{container->
                         html_ += """<div class="mdl-cell mdl-cell--${12/numPerRow}-col-desktop mdl-cell--${8/numPerRow}-col-tablet mdl-cell--${4/numPerRow}-col-phone">"""
