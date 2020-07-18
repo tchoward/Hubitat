@@ -35,6 +35,7 @@ import groovy.json.*;
 // V 1.5 Ordering, Color and Common API Update
 // V 1.8 Smoother sliders, bug fixes
 // V 2.0 New Version to Support Combo Graphs.  Support for Line Graphs is ended.    
+// V 2.1 Long Term Storage Enabled
 
 // Credit to Alden Howard for optimizing the code.
 
@@ -132,7 +133,7 @@ def graphSetupPage(){
                       ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1200000":"20 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"], ["6400000":"2 Hours"], ["19200000":"6 Hours"],
                       ["43200000":"12 Hours"], ["86400000":"1 Day"]];
     
-    def timespanEnum = [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]]
+    def timespanEnum = [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"], ["2419200000":"2 Weeks"], ["1814400000":"3 Weeks"], ["2419200000":"1 Month"]]
      
      def timespanEnum2 = [["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["30000":"30 Seconds"], ["60000":"1 Minute"], ["120000":"2 Minutes"], ["300000":"5 Minutes"], ["600000":"10 Minutes"],
                           ["2400000":"30 minutes"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]];
@@ -151,7 +152,7 @@ def graphSetupPage(){
             input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b></br><small>(The amount of time the graph displays)</small>", multiple: false, required: true, options: timespanEnum, defaultValue: "43200000", submitOnChange: true)
             input( type: "enum", name: "graph_refresh_rate", title: "<b>Select Graph Update Rate</b></br><small>(For panel viewing; the refresh rate of the graph)", multiple: false, required: true, options: updateRateEnum, defaultValue: "300000")
             container = [];
-            points = graph_update_rate ? (int)(Double.parseDouble(graph_timespan)/Double.parseDouble(graph_update_rate)) : 280;
+            points = graph_update_rate ? (long)(Double.parseDouble(graph_timespan)/Double.parseDouble(graph_update_rate)) : 280;
             if (points > 2000) {
                 container << parent.hubiForm_text (this, """<span style="color: red; font-weight: bold;">WARNING:</span> <b>${(points)} Points </b>will be generated per Attribute per Graph<br><small>Too many points will cause Hubigraphs to hang or take a long time to generate</small>""");
             } else {
@@ -660,7 +661,7 @@ def mainPage() {
                     container = [];
                     container << parent.hubiForm_page_button(this, "Select Device/Data", "deviceSelectionPage", "100%", "vibration");
                     container << parent.hubiForm_page_button(this, "Configure Graph", "graphSetupPage", "100%", "poll");
-                    //container << parent.hubiForm_page_button(this, "Long Term Storage", "longTermStoragePage", "100%", "storage");
+                    container << parent.hubiForm_page_button(this, "Long Term Storage", "longTermStoragePage", "100%", "storage");
                     
                     parent.hubiForm_container(this, container, 1); 
                 }
@@ -671,14 +672,24 @@ def mainPage() {
                     parent.hubiForm_container(this, container, 1); 
                 }
                 
-                /*
-                parent.hubiForm_section(this, "Remote Graph URL", 1, "link"){
-                    container = [];
-                    container << parent.hubiForm_text(this, "${state.remoteEndpointURL}graph/?access_token=${state.endpointSecret}");
+                
+                if (lts){
+                    parent.hubiForm_section(this, "Long Term Storage", 1, "calendar"){
+                        container = [];
+                        sensors.each { sensor ->
+                            settings["attributes_${sensor.id}"].each {attribute ->
+                                if (atomicState["history_${sensor.id}_${attribute}"]){
+                                    data = atomicState["history_${sensor.id}_${attribute}"];
+                                    container << parent.hubiForm_text(this, "<b>${sensor.displayName} - ${attribute}</b><br><small>${new Date(data[0].date)}<br>${new Date(data[data.size-1].date)}<br>${data.size} Events </small>");
+                                                       
+                                }
+                            }
+                        }
                     
-                    parent.hubiForm_container(this, container, 1); 
+                        parent.hubiForm_container(this, container, 1);
+                    }
                 }
-                */
+                
                 
                 if (graph_timespan){
                      parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
@@ -731,37 +742,77 @@ def longTermStoragePage(){
     
     dynamicPage(name: "longTermStoragePage", title: "") {
         
-        log.debug(atomicState.test);
+        def total_bytes = 0;
+        
+        //log.debug(atomicState.test);
         section() {
             if(!sensors) {
                 paragraph "Please select Sensors and Graph Options Before setting up storage"
             } else {
-                parent.hubiForm_section(this, "Devices Available for Storage", 1, "settings"){
-                    header = ["Sensor","Attribute", "Events in Past 24 Hours", "Database Query Time", "Estimated Size of Data Per Day"];
-                    container = [];
-                    rows = [];
-                    def total_time = 0;
-                    def total_bytes = 0;
-                    sensors.each { sensor ->
-                        resp[sensor.id] = [:];
+                          
+                sensors.each { sensor ->
+                    resp[sensor.id] = [:];
                         settings["attributes_${sensor.id}"].each {attribute ->
                             def start = new Date();
                             events = sensor.statesSince(attribute, then, [max: 10000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
                             //events = sensor.events();
                             events = events.flatten();
-                            def end = new Date();
-                            time = (end.getTime() - start.getTime())/1000.0;
                             bytes = (events.size*128.0)/1024.0
-                            rows << [sensor.displayName, attribute, events.size, time+" seconds", bytes+" Kb"];
-                            total_time += time;
                             total_bytes += bytes;
+                    }
+                }
+                    
+                parent.hubiForm_section(this, "Storage Options", 1, "memory"){
+                    def timeEnum = ["1 Day", "1 Week", "2 Weeks", "3 Weeks", "1 Month", "2 Months", "Indefinite"];
+                    def updateEnum = ["1:05 am", "2:30 am", "3:45 am", "4:55 am"];
+                    
+                    container = [];
+                    container << parent.hubiForm_switch(this, title: "<b>Utilize Long Term Storage for Above Sensors</b>", 
+                                                              name: "lts", 
+                                                              default: false, 
+                                                              submit_on_change: true);
+                            
+                    if (lts == true){                         
+                        container << parent.hubiForm_enum(this, title: "Time of Storage to Maintain",
+                                                                name: "lts_time",
+                                                                list: timeEnum,
+                                                                default: "1 Week",
+                                                                submit_on_change: true); 
+                        
+                        container << parent.hubiForm_enum(this, title: "Time to Refresh/Maintain Storage",
+                                                                name: "lts_update",
+                                                                list: updateEnum,
+                                                                default: "2:30 am",
+                                                                submit_on_change: false);
+                        
+                        def factor = getDays(lts_time);
+                        
+                        factor = (total_bytes*factor);
+                        
+                        if (factor < 1024){
+                             factor = factor.setScale(1, BigDecimal.ROUND_DOWN);
+                             factorString = factor+" Kb";
+                        } else {
+                             factor = factor/1024;
+                             factor = factor.setScale(2, BigDecimal.ROUND_DOWN);
+                             factorString = factor+" Mb";
+                        }
+                        
+                        container << parent.hubiForm_text(this, "Estimated Storage Needed: "+factorString);
+
+               
+                    } else {
+                        sensors.each { sensor ->
+                            settings["attributes_${sensor.id}"].each {attribute ->
+                                atomicState["history_${sensor.id}_${attribute}"] = null;
+                            }
                         }
                     }
-                    footer =  ["Total", "", "", total_time+" seconds", total_bytes+" Kb"];
-                    container << parent.hubiForm_table(this, header: header, rows: rows, footer: footer);
                     parent.hubiForm_container(this, container, 1);
-                }
-                atomicState["test"] =  null;
+                }  
+                
+
+
             } //else
         }
     }
@@ -772,6 +823,23 @@ def longTermStoragePage(){
 ****************************************** END PAGES ********************************************************************************
 *********************************************************************************************************************************
 *********************************************************************************************************************************/
+def longTermStorageUpdate(){
+    buildData();
+}
+
+def getDays(str){
+
+    switch (str){
+        case "1 Day":      return 1; break;
+        case "1 Week":     return 7; break;
+        case "2 Weeks":    return 14; break;
+        case "3 Weeks":    return 21; break;
+        case "1 Month":    return 30; break;
+        case "2 Months":   return 60; break;
+        case "Indefinite": return 0; break;
+    }    
+    
+}
 
 def installed() {
     initialize()
@@ -800,6 +868,15 @@ def updated() {
         parent.hubiTool_create_tile(this);
     }
     
+    if (lts){
+        switch (lts_update){
+            case "1:05 am": schedule("0 05 01 * * ?", longTermStorageUpdate); break;
+            case "2:30 am": schedule("0 30 02 * * ?", longTermStorageUpdate); break;
+            case "3:45 am": schedule("0 45 04 * * ?", longTermStorageUpdate); break;
+            case "4:55 am": schedule("0 55 04 * * ?", longTermStorageUpdate); break;    
+        }
+    }
+    
 }
 
 def initialize() {
@@ -824,24 +901,51 @@ private getValue(id, attr, val){
     return ret;
 }
 
+private cleanupData(data){
+    def then = new Date();
+    use (groovy.time.TimeCategory) {
+           then -= getDays(lts_time);
+    }
+    then_milliseconds = then.getTime();
+    
+    return data.findAll{ it.date >= then_milliseconds };
+}
+
 private buildData() {
     def resp = [:]
-    def today = new Date();
+    
+    def graph_time;
     def then = new Date();
     
     use (groovy.time.TimeCategory) {
-           then -= Integer.parseInt(graph_timespan).milliseconds;
+           val =  Double.parseDouble(graph_timespan)/1000.0;
+           then -= ((int)val).seconds;
+           graph_time = then.getTime();
     }
     
     if(sensors) {
         sensors.each { sensor ->
             resp[sensor.id] = [:];
             settings["attributes_${sensor.id}"].each {attribute ->
-                def respEvents = [];                  
-                respEvents << sensor.statesSince(attribute, then, [max: 2000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
-                respEvents = respEvents.flatten();
-                respEvents = respEvents.reverse();
-                resp[sensor.id][attribute] = respEvents;
+                def newData = [];  
+                //if this exists in storage
+                if (atomicState["history_${sensor.id}_${attribute}"]) {
+                    oldData = atomicState["history_${sensor.id}_${attribute}"];
+                    then = new Date(oldData[oldData.size-1].date);
+                } else {
+                     oldData = [];   
+                }
+                            
+                newData << sensor.statesSince(attribute, then, [max: 2000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
+                newData = newData.flatten();
+                oldData += newData.reverse();
+                
+                         
+                resp[sensor.id][attribute] = oldData.findAll{ it.date > graph_time}; 
+                
+                if (lts){
+                    atomicState["history_${sensor.id}_${attribute}"] = cleanupData(oldData);
+                } else atomicState["history_${sensor.id}_${attribute}"] = null;
             }    
         }
     }
@@ -856,7 +960,7 @@ def getChartOptions(){
     
     def options = [
         "graphReduction": graph_max_points,
-        "graphTimespan": Integer.parseInt(graph_timespan),
+        "graphTimespan": Long.parseLong(graph_timespan),
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
         "graphRefreshRate" : Integer.parseInt(graph_refresh_rate),
         "graphOptions": [
@@ -1068,7 +1172,7 @@ function parseEvent(event) {
             value = parseFloat(state);
         }
         
-        console.log("Got: "+attribute+"= "+value);
+        //console.log("Got: "+attribute+"= "+value);
 
         graphData[deviceId][attribute].push({ date: now, value: value });
               
@@ -1280,7 +1384,6 @@ function drawChart(callback) {
     dataTable.addColumn({ label: 'Date', type: 'datetime', });
 
     let colNums = {};
-
     let i = 0;
     subscriptions.ids.forEach((deviceId) => {
         subscriptions.attributes[deviceId].forEach((attr) => {    
@@ -1303,13 +1406,22 @@ function drawChart(callback) {
     var current;
     var drop_val;
     var newEntry;
+    var next;
+    //adjust for days 
+    if (options.graphUpdateRate >= 86400000){
+        let d = new Date(then);
+        d.setHours(0, 0, 0, 0);
+        then = d.getTime();
+    }
     
+    console.info(subscriptions);
+    console.info(then+" "+spacing);
     //map the graph data
     Object.entries(graphData).forEach(([deviceIndex, attributes]) => {
         Object.entries(attributes).forEach(([attribute, events]) => {
             let func = subscriptions.var[deviceIndex][attribute].function;
             current = then;
-            if (subscriptions.drop[deviceIndex][attribute].valid){
+            if (subscriptions.drop[deviceIndex][attribute].valid == "true"){
                 drop_val = parseFloat(subscriptions.drop[deviceIndex][attribute].value);
             } else {
                 drop_val = null;
@@ -1323,12 +1435,14 @@ function drawChart(callback) {
                         drop_val = newEntry.value;
                     }
                 }
+                next = current+spacing;
                 switch (func){
-                    case "Average": newEntry = averageEvents(current, current+spacing, events, drop_val); break;
-                    case "Min":     newEntry = minEvents(current, current+spacing, events, drop_val);     break;
-                    case "Max":     newEntry = maxEvents(current, current+spacing, events, drop_val);     break;
-                    case "Mid":     newEntry = midEvents(current, current+spacing, events, drop_val);  break;
+                    case "Average": newEntry = averageEvents(current, next, events, drop_val); break;
+                    case "Min":     newEntry = minEvents(current, next, events, drop_val);     break;
+                    case "Max":     newEntry = maxEvents(current, next, events, drop_val);     break;
+                    case "Mid":     newEntry = midEvents(current, next, events, drop_val);  break;
                 }
+                
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), newEntry.value];
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), getStyle(deviceIndex, attribute)];
                 current += spacing;
@@ -1461,15 +1575,21 @@ def getSubscriptions() {
             def fill_opacity = settings["var_${sensor.id}_${attr}_fill_opacity"];
             def function = settings["var_${sensor.id}_${attr}_function"];
             
-            if (settings["attribute_${sensor.id}_${attr}_states"]){
+            
+            if (settings["attribute_${sensor.id}_${attr}_states"] && settings["attribute_${sensor.id}_${attr}_custom_states"] == true){
                 states_[sensor.id][attr] = [:];  
                 settings["attribute_${sensor.id}_${attr}_states"].each{states->
                     states_[sensor.id][attr][states] = settings["attribute_${sensor.id}_${attr}_${states}"];
                 }
             }
-                                   
-            drop_[sensor.id][attr] = [    valid: settings["attribute_${sensor.id}_${attr}_drop_line"],
-                                          value: settings["attribute_${sensor.id}_${attr}_drop_value"]];
+            
+            drop_valid = false;
+            if (settings["attribute_${sensor.id}_${attr}_drop_line"] == true)
+                drop_valid = true;    
+            
+            drop_[sensor.id][attr] = [    valid: drop_valid  ? "true" : "false",
+                                          value: drop_valid ? settings["attribute_${sensor.id}_${attr}_drop_value"] : "null"
+                                      ];
             
             graph_type_[sensor.id][attr] = settings["graph_type_${sensor.id}_${attr}"];
             
