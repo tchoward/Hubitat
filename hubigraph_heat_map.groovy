@@ -917,7 +917,7 @@ function getDataList(){
           }
           
         
-          data.push({name: name, value: cur_.toFixed(subscriptions.decimals), str: stats_});
+          data.push({name: name, value: cur_, str: stats_});
       });
 
     return data;
