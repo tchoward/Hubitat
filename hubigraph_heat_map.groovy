@@ -369,6 +369,7 @@ def graphSetupPage(){
                 container << parent.hubiForm_font_size (this, title: "Annotation", name: "annotation", default: 16, min: 2, max: 40);
                 container << parent.hubiForm_color     (this, "Annotation", "annotation",  "#FFFFFF", false);
                 container << parent.hubiForm_color     (this, "Annotation Aura", "annotation_aura", "#000000", false);
+                container << parent.hubiForm_slider    (this, title: "Number Decimal Places", name: "graph_decimals",  default: 1, min: 0, max: 4, units: " decimal places"); 
                 container << parent.hubiForm_switch    (this, title: "Bold Annotation", name: "annotation_bold", default:false);
                 container << parent.hubiForm_switch    (this, title: "Italic Annotation", name: "annotation_bold", default:false);
             }
@@ -566,9 +567,15 @@ def getChartOptions(){
                            "top": 10, 
                            "bottom": 10 ],
             "legend" : [ "position" : "none" ],
-            "hAxis": [ "textPosition": 'none' ],
-            "vAxis": [ "textPosition": 'none' ],
+            "hAxis": [ "textPosition": "none", 
+                       "gridlines" : [ "count" : "0" ]
+                     ],
+         
+            "vAxis": [ "textPosition": "none",
+                       "gridlines" : [ "count" : "0" ]
+                     ],
             "annotations" : [    "alwaysOutside": false,
+                                 "position" : "center",
                                  "textStyle": [
       					            "fontSize": annotation_font,
       					            "bold":     annotation_bold,
@@ -910,7 +917,7 @@ function getDataList(){
           }
           
         
-          data.push({name: name, value: cur_, str: stats_});
+          data.push({name: name, value: cur_.toFixed(subscriptions.decimals), str: stats_});
       });
 
     return data;
@@ -954,20 +961,24 @@ function drawChart(callback) {
     let color = 0;
     let width = subscriptions.line_thickness;
     let line_color = subscriptions.line_color;
+    let fill_opacity = 1.0;
     for (i=0; i<rows; i++){
       	tempArray = [];
       	tempArray.push("Row"+i);
         for (j=0; j<cols; j++){
-            tempArray.push(10);
+            
             if (idx>= numElements) {
-                value = 0.0
+                tempArray.push(0);
+                value = ''
                 str = '';
                 color = options.graphOptions.backgroundColor;
-                line_color = subscriptions.line_color;;
-                opacity = 1.0;
-                width = subscriptions.line_thickness;
+                line_color = subscriptions.line_color;
+                opacity = 0.0;
+                width = 0;
+                fill_opacity = 0.0;
                 attr = '';
             } else {
+                tempArray.push(10);
                 value = data[idx].value;
                 str = data[idx].str;
                 color = getcolor(colorProfile, value);
@@ -975,13 +986,13 @@ function drawChart(callback) {
                 opacity = 1.0;
                 width = subscriptions.line_thickness;
                 if (subscriptions.show_annotations){
-                    attr = parseFloat(value);
+                    attr = parseFloat(value).toFixed(subscriptions.decimals);
                 } else {
                     attr = '';
                 }
             }
             
-        	tempArray.push('stroke-color: '+line_color+'; stroke-opacity: '+opacity+'; stroke-width: '+width+'; color: '+color);
+        	tempArray.push('stroke-color: '+line_color+'; stroke-opacity: '+opacity+'; stroke-width: '+width+'; color: '+color+'; fill-opacity: '+fill_opacity );
             tempArray.push(str);
             tempArray.push(attr);     
             idx++;
@@ -990,8 +1001,7 @@ function drawChart(callback) {
     }
     var dataTable = google.visualization.arrayToDataTable(dataArray);
     
-    //if (options.graphType == 1) {
-        chart = new google.visualization.BarChart(document.getElementById("timeline"));
+    chart = new google.visualization.BarChart(document.getElementById("timeline"));
     //} else {
     //    chart = new google.visualization.ColumnChart(document.getElementById("timeline"));
     //}
@@ -1127,6 +1137,7 @@ def getSubscriptions() {
     def order = parseJson(graph_order);
    
     def subscriptions = [
+        "decimals" : graph_decimals,
         "count" : count_,
         "sensors": sensors_fmt,
         "ids": _ids,
