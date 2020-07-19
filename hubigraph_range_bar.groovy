@@ -714,22 +714,35 @@ function drawChart(callback) {
                                                                                                        { type: 'number', label: 'e' }, 	{ role: "style" }, { role: "tooltip" }, { role: "annotation" },
                                                                 ]]);
 
+    let globalMax = options.graphHigh;
+    let globalMin = options.graphLow;
     subscriptions.order.forEach(orderStr => {
         const splitStr = orderStr.split('_');
         const deviceId = splitStr[1];
         const attr = splitStr[2];
         const event = graphData[deviceId][attr];
-        var max_ = event.max > options.graphHigh ? options.graphHigh : event.max;
-        var min_ = event.min < options.graphLow ? options.graphLow : event.min;
+        globalMax = globalMax < event.max ? event.max : globalMax;
+        globalMin = globalMin > event.min ? event.min : globalMin;
+    });
+    globalMax = globalMax < 0 ? 0 : globalMax;
+    globalMin = globalMin > 0 ? 0 : globalMin;
+    console.log (globalMin+" "+globalMax);
+
+    subscriptions.order.forEach(orderStr => {
+        const splitStr = orderStr.split('_');
+        const deviceId = splitStr[1];
+        const attr = splitStr[2];
+        const event = graphData[deviceId][attr];
+        var max_ = event.max;
+        var min_ = event.min;
         var cur_ = parseFloat(event.current);
         
-        var L = parseFloat(options.graphLow);
-        var H = parseFloat(options.graphHigh);
+        var L = parseFloat(globalMin);
+        var H = parseFloat(globalMax);
         var Mi = min_;
         var Ma = max_;
-        var C1 = cur_ - (0.5*(( H - L ) * 0.01));  //the bar is 1% high
-        var C2 = cur_ + (0.5*(( H - L ) * 0.01));  //the bar is 1% high
-
+        var C1 = cur_ - (0.5*(( options.graphHigh - options.graphLow ) * 0.01));  //the bar is 1% high
+        var C2 = cur_ + (0.5*(( options.graphHigh - options.graphLow ) * 0.01));  //the bar is 1% highglobalMa
 
         var na, nb, nc, nd, ne;
         var a, b, c, d, e;
