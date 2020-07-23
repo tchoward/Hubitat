@@ -36,6 +36,7 @@ import groovy.json.*;
 // V 1.8 Smoother sliders, bug fixes
 // V 2.0 New Version to Support Combo Graphs.  Support for Line Graphs is ended.    
 // V 2.1 Long Term Storage Enabled
+// V 2.2 Current Value Overlays
 
 // Credit to Alden Howard for optimizing the code.
 
@@ -297,9 +298,42 @@ def graphSetupPage(){
             } else {
                  parent.hubiForm_container(this, container, 1); 
             }
-           
 
         }
+        
+        parent.hubiForm_section(this, "Current Value Overlay", 1){
+            def horizonalAlignmentEnum = ["Left", "Middle", "Right"];
+            def veticalAlignmentEnum = ["Top", "Middle", "Bottom"];
+            container = [];
+            container << parent.hubiForm_switch     (this, title: "<b>Show Current Values on Graph?</b>", name: "show_overlay", default: false, submit_on_change: true);
+            if (show_overlay == true){
+                container << parent.hubiForm_color      (this, "Background", "overlay_background", "#000000", false);
+                container << parent.hubiForm_slider     (this, title: "Background Opacity", 
+                                                               name:  "overlay_background_opacity",  
+                                                               default: 90, 
+                                                               min: 0,
+                                                               max: 100, 
+                                                               units: "%",
+                                                               submit_on_change: false);
+                
+               container << parent.hubiForm_font_size  (this, title: "Device", name: "overlay", default: 12, min: 2, max: 40);
+               container << parent.hubiForm_color      (this, "Device Text", "overlay_text", "#FFFFFF", false);
+                
+               container << parent.hubiForm_enum (this, title:    "Horizontal Placement", 
+                                                        name:     "overlay_horizontal_placement",
+                                                        list:     horizonalAlignmentEnum,
+                                                        default:  "Right");
+                
+                container << parent.hubiForm_enum (this, title:    "Vertical Placement", 
+                                                         name:     "overlay_vertical_placement",
+                                                         list:     veticalAlignmentEnum,
+                                                         default:  "Top");
+
+                
+            }
+            parent.hubiForm_container(this, container, 1); 
+        }
+        
         state.num_devices = 0;
         sensors.each { sensor ->
                 settings["attributes_${sensor.id}"].each { attribute ->
@@ -586,6 +620,10 @@ def graphSetupPage(){
                         container << parent.hubiForm_text_input(this,   "<small></i>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                                 "graph_name_override_${sensor.id}_${attribute}",
                                                                                 "%deviceName%: %attributeName%", false);
+                        
+                        container << parent.hubiForm_text_input(this,   "<b>Units for Pretty Display</b>",
+                                                                        "units_${sensor.id}_${attribute}",
+                                                                        "", false);
                             
                         parent.hubiForm_container(this, container, 1);         
                         cnt += 1;
@@ -892,7 +930,7 @@ private getValue(id, attr, val){
         ret = Double.parseDouble(settings["attribute_${id}_${attr}_${val}"]);
     } else {
         try { 
-            ret = Double.parseDouble(val - reg );
+            ret = Double.parseDouble(val - reg);
         } catch (e) {
             log.debug ("Bad value in Parse: "+orig);
             ret = null;   
@@ -963,6 +1001,10 @@ def getChartOptions(){
         "graphTimespan": Long.parseLong(graph_timespan),
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
         "graphRefreshRate" : Integer.parseInt(graph_refresh_rate),
+        "overlays": [   "display_overlays" : show_overlay,
+                            "horizontal_alignment" : overlay_horizontal_placement,
+                            "vertical_alignment" : overlay_vertical_placement
+                        ],
         "graphOptions": [
             "tooltip" : ["format" : "short"], 
             "width": graph_static_size ? graph_h_size : "100%",
@@ -1014,7 +1056,7 @@ def getChartOptions(){
             "interpolateNulls": true, //for null vals on our chart
             "orientation" : graph_y_orientation == true ? "vertical" : "horizontal",
             "reverseCategories" : graph_x_orientation,
-            "series": [:]
+            "series": [:],
             
         ]
     ];
@@ -1076,9 +1118,23 @@ def getDrawType(){
    return "google.visualization.LineChart" 
 }
 
-void removeLastChar(str) {
+def removeLastChar(str) {
     str.subSequence(0, str.length() - 1)
     str
+}
+
+def getRGBA(hex, opacity){
+    
+    def c = hex-"#";
+    c = c.toUpperCase();
+    i = Integer.parseInt(c, 16);
+    
+    r = (i & 0xFF0000) >> 16;
+    g = (i & 0xFF00) >> 8;
+    b = (i & 0xFF);
+    o = opacity/100.0;
+    s = sprintf("rgba( %d, %d, %d, %.2f)", r, g, b, o); 
+    return s;
 }
 
 def getLineGraph() {
@@ -1132,7 +1188,7 @@ function getOptions() {
     return jQuery.get("${state.localEndpointURL}getOptions/?access_token=${state.endpointSecret}", (data) => {
         options = data;
         console.log("Got Options");
-        //console.log(options);
+        console.log(options);
     });
 }
 
@@ -1175,6 +1231,8 @@ function parseEvent(event) {
         //console.log("Got: "+attribute+"= "+value);
 
         graphData[deviceId][attribute].push({ date: now, value: value });
+
+        updateOverlay(deviceId, attribute, value);
               
         if(options.graphRefreshRate === 0) update();
     }
@@ -1201,16 +1259,37 @@ async function onLoad() {
             .loaderContainer {
                 position: fixed;
                 z-index: 100;
-
                 width: 100%;
                 height: 100%;
-
-                background-color: white;
-                
+                background-color: white;                
                 display: flex;
                 flex-flow: column nowrap;
                 justify-content: center;
                 align-items: middle;
+            }
+            .overlay {
+               box-sizing: border-box;
+               padding: ${overlay_font ? (overlay_font.toInteger()/2): 12}px ${overlay_font}px;
+               position: absolute;
+               background-color: ${overlay_background_color ? getRGBA(overlay_background_color, overlay_background_opacity) : ""};
+               top: 50px;   
+               left: 100px;
+               text-align: center;
+            }
+            .overlay-title {
+               font-size: ${overlay_font}px;
+               text-align: left;
+               color: ${overlay_text_color};
+               font-family: Arial, Helvetica, sans-serif;
+               
+            }
+            .overlay-number {
+               font-size: ${overlay_font}px;
+               font-weight: 900;
+               text-align: right;
+               padding: 0px 0px 0px ${overlay_font}px;
+               color: ${overlay_text_color};
+               font-family: Arial, Helvetica, sans-serif;
             }
 
             .dotsContainer {
@@ -1403,6 +1482,7 @@ function drawChart(callback) {
     let accumData = {};
     let then = now - options.graphTimespan;
     let spacing = options.graphUpdateRate;
+    let overlay = 10;
     var current;
     var drop_val;
     var newEntry;
@@ -1446,7 +1526,7 @@ function drawChart(callback) {
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), newEntry.value];
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), getStyle(deviceIndex, attribute)];
                 current += spacing;
-            }   
+            }
         });
     });
 
@@ -1469,20 +1549,90 @@ function drawChart(callback) {
     //if we have a callback
     if(callback) google.visualization.events.addListener(chart, 'ready', callback);
 
+    if (options.overlays.display_overlays) google.visualization.events.addListener(chart, 'ready', placeMarker.bind(chart, dataTable));
+
     chart.draw(dataTable, graphOptions);
+    
 }
 
-google.charts.setOnLoadCallback(onLoad);
-window.onBeforeUnload = onBeforeUnload;
+function updateOverlay(deviceId, attribute, value){
+    console.log(deviceId+" "+attribute+" "+value);
+    let searchString = "#overlay-"+deviceId+"_"+attribute+"-number";
+    let val = parseFloat(value).toFixed(1)+" "+subscriptions.var[deviceId][attribute].units;
+    console.log(searchString);
+    jQuery(searchString).text(val);
+}
 
-        </script>
+function placeMarker(dataTable) {
+        var cli = this.getChartLayoutInterface();
+        var chartArea = cli.getChartAreaBoundingBox();
+        let width = jQuery('#graph-overlay').outerWidth();
+        let height = jQuery('#graph-overlay').outerHeight();
+        let overlay = options.overlays;
+
+        console.debug("Width =", width);
+        console.debug(chartArea);
+        console.debug(cli);
+        
+
+        switch (overlay.vertical_alignment){
+            case "Top":     document.querySelector('.overlay').style.top = Math.floor(chartArea.top) + "px"; + "px"; break;
+            case "Middle":   document.querySelector('.overlay').style.top = Math.floor(chartArea.height/2+chartArea.top-height/2) + "px"; + "px"; break;
+            case "Bottom":    document.querySelector('.overlay').style.top = Math.floor(chartArea.height+chartArea.top-height) + "px"; + "px"; break;
+
+        }
+        switch (overlay.horizontal_alignment){
+            case "Left":     document.querySelector('.overlay').style.left = Math.floor(chartArea.left) + "px"; break;
+            case "Middle":   document.querySelector('.overlay').style.left = Math.floor(chartArea.width/2-(width/2)+chartArea.left) + "px"; break;
+            case "Right":    document.querySelector('.overlay').style.left = Math.floor(chartArea.width+chartArea.left-width) + "px"; break;
+
+        }
+       
+                
+
+        //document.querySelector('.overlay').style.width = Math.floor(chartArea.width*0.25) + "px";
+        //document.querySelector('.overlay').style.height = Math.floor(chartArea.height*0.25) + "px";
+      };
+
+        google.charts.setOnLoadCallback(onLoad);
+        window.onBeforeUnload = onBeforeUnload;
+
+      </script>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
       </head>
       <body style="${fullSizeStyle}">
-        <div id="timeline" style="${fullSizeStyle}" align="center"></div>
+      <div id="timeline" style="${fullSizeStyle}" align="center"></div>
+    """
+    if (show_overlay==true) html+= getOverlay();
+    
+    html+= """
+        
       </body>
        
     </html>
     """
+    
+    return html;
+}
+
+
+
+def getOverlay(){
+ 
+    def html = """<div id="graph-overlay" class="overlay"><table style="width:100%">"""
+                 
+    sensors.each { sensor ->
+        settings["attributes_${sensor.id}"].each { attribute ->
+            val = getValue(sensor.id, attribute, sensor.currentState(attribute).getValue());
+            units = settings["units_${sensor.id}_${attribute}"] ? settings["units_${sensor.id}_${attribute}"] : "";
+            name = settings["graph_name_override_${sensor.id}_${attribute}"];
+            name = name.replaceAll("%deviceName%", sensor.displayName).replaceAll("%attributeName%", attribute);
+            str = sprintf("%.1f%s", val, units);
+            html += """<tr><td class="overlay-title" id="overlay-${sensor.id}_${attribute}-name">${name}</td>
+                           <td class="overlay-number" id="overlay-${sensor.id}_${attribute}-number">${str}</td></tr>"""
+        }
+    }
+    html += """</div>"""
     
     return html;
 }
@@ -1550,6 +1700,7 @@ def getSubscriptions() {
     def graph_type_ = [:];
     def states_ = [:];
     
+    
     sensors.each {sensor->
         ids << sensor.idAsLong;
         
@@ -1568,6 +1719,7 @@ def getSubscriptions() {
         states_[sensor.id] = [:];
         
         settings["attributes_${sensor.id}"].each { attr ->
+            
             def stroke_color = settings["var_${sensor.id}_${attr}_stroke_color"];
             def stroke_opacity = settings["var_${sensor.id}_${attr}_stroke_opacity"];
             def stroke_line_size = settings["var_${sensor.id}_${attr}_stroke_line_size"];
@@ -1598,7 +1750,8 @@ def getSubscriptions() {
                                       stroke_width:    stroke_line_size,
                                       fill_color:      fill_color,
                                       fill_opacity:    fill_opacity,
-                                      function:        function
+                                      function:        function, 
+                                      units:           settings["units_${sensor.id}_${attr}"],
                                     ];
         }//settings
             
