@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html>
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+<link rel="stylesheet" href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css">
+<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<head>
+<style>
+:root{
+  --test : "mdi-weather-partly-rainy"
+  
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin;
+  grid-template-rows: 30vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin;
+  grid-gap: 0px;
+  background-color: #000000;
+  align-items: center;
+}
+
+.grid-container > div {
+  background-color: rgba(0, 0, 0, 0.8);
+  text-align: center;
+  color: #FFFFFF;
+}
+
+.weather_icon {
+  grid-row-start: 1;
+  grid-row-end: 3;
+  grid-column-start: 13;
+  grid-column-end: 24;
+  font-size: 10vmin;
+  padding-top: 0vmin !important; 
+  padding-left: 00vmin !important;
+  text-align: center !important;
+}
+.current_condition1 {
+  grid-row-start:2;
+  grid-row-end: 2;
+  grid-column-start: 13;
+  grid-column-end: 24;
+  font-size: 5vmin;
+  text-align: center !important;
+  line-height: 1;
+}
+.current_condition2 {
+  grid-row-start: 3;
+  grid-row-end: 3;
+  grid-column-start: 13;
+  grid-column-end: 24;
+  font-size: 5vmin;
+  text-align: center !important;
+  line-height: 1;
+  
+}
+
+.current_temp {
+  font-weight: 900;
+  grid-row-start: 1;
+  grid-row-end: 1;
+  grid-column-start: 2;
+  grid-column-end: 12;
+  font-size: 20vmin;
+  text-align: center !important;
+  padding-top: 10vmin !important; 
+
+}
+
+.real_feel{
+  grid-row-start: 3;
+  grid-row-end: 3;
+  grid-column-start: 2;
+  grid-column-end: 12;
+  font-size: 5vmin;
+  text-align: center !important;
+  
+}
+
+.low{
+  grid-row-start: 4;
+  grid-row-end: 4;
+  grid-column-start: 3;
+  grid-column-end: 7;
+  font-size: 5vmin;
+  text-align: center !important;
+}
+.high{
+  grid-row-start: 4;
+  grid-row-end: 4;
+  grid-column-start: 7;
+  grid-column-end: 12;
+  font-size: 5vmin;
+  text-align: center !important;
+
+}
+
+.precipitation_title{
+  grid-row-start: 6;
+  grid-row-end: 6;
+  grid-column-start: 2;
+  grid-column-end: 9;
+  font-size: 4vmin;
+  text-align: left !important;
+  line-height: 1; 
+  border-bottom: 1px solid white;
+}
+
+.forecast_precipitation{
+  grid-row-start: 7;
+  grid-row-end: 7;
+  grid-column-start: 2;
+  grid-column-end: 9;
+  font-size: 4vmin;
+  text-align: left !important;
+}
+
+.current_precipitation{
+  grid-row-start: 8;
+  grid-row-end: 8;
+  grid-column-start: 2;
+  grid-column-end: 9;
+  font-size: 4vmin;
+  text-align: left !important;
+}
+
+.wind_title{
+  grid-row-start: 6;
+  grid-row-end: 6;
+  grid-column-start: 10;
+  grid-column-end: 17;
+  font-size: 4vmin;
+  text-align: left !important;
+  line-height: 1;
+  border-bottom: 1px solid white;
+  
+}
+
+.current_wind{
+  grid-row-start:7;
+  grid-row-end: 7;
+  grid-column-start: 10;
+  grid-column-end: 17;
+  font-size: 4vmin;
+  text-align: left !important;
+}
+.current_wind_gust{
+  grid-row-start: 8;
+  grid-row-end: 8;
+  grid-column-start: 10;
+  grid-column-end: 17;
+  font-size: 4vmin;
+  text-align: left !important;
+}
+.current_wind_direction{
+  grid-row-start: 9;
+  grid-row-end: 9;
+  grid-column-start: 10;
+  grid-column-end: 17;
+  font-size: 4vmin;
+  text-align: left !important;
+}
+
+.pressure_title{
+  grid-row-start: 6;
+  grid-row-end: 6;
+  grid-column-start: 18;
+  grid-column-end: 25;
+  font-size: 4vmin;
+  text-align: left !important;
+  line-height: 1;
+  border-bottom: 1px solid white;
+}
+
+.current_pressure{
+  grid-row-start: 7;
+  grid-row-end: 7;
+  grid-column-start: 18;
+  grid-column-end: 25;
+  font-size: 4vmin;
+  text-align: left !important;
+}
+.current_pressure_direction{
+  grid-row-start: 8;
+  grid-row-end: 8;
+  grid-column-start: 18;
+  grid-column-end: 25;
+  font-size: 4vmin;
+  text-align: left !important;
+}
+
+
+
+.current_humidity{
+  grid-row-start: 11;
+  grid-row-end: 11;
+  grid-column-start: 2;
+  grid-column-end: 8;
+  font-size: 4vmin;
+  text-align: center !important;
+  line-height: 1;
+}
+
+.alert_lightning{
+  grid-row-start: 11;
+  grid-row-end: 11;
+  grid-column-start: 20;
+  grid-column-end: 26;
+  font-size: 4vmin;
+  text-align: center !important;
+  line-height: 1;
+}
+
+
+
+
+
+
+</style>
+</head>
+<body>
+
+
+<div class="grid-container">
+  <div class="weather_icon"><span id="weather_icon" class="mdi mdi-weather-partly-rainy" style="font-size:2em" onclick="change()"></span></div>
+  <div id="current_temp" class="current_temp">100°</div>
+  <div class="low"><span id = "low" class="mdi mdi-arrow-down-thick">23°</span></div>
+  <div class="high"><span id = "high" class="mdi mdi-arrow-up-thick">89°</span></div>  
+  <div class="real_feel"><span id="real_feel" class="mdi mdi-home-thermometer-outline"> Feels Like: 87°</span></div>  
+
+  <div class="forecast_precipitation mdi mdi-cloud-question"><span id="forecast_precipitation"> 1.25"</span></div>
+  <div class="precipitation_title"><span class="mdi mdi-umbrella-outline"> Rainfall</span></div>
+  <div class="current_precipitation"><span class="mdi mdi-calendar-today"> 0.25"</span></div>
+  
+  <div class="pressure_title" ><span class="mdi mdi-gauge"> Pressure</span></div>
+  <div class="current_pressure"><span id="current_pressure" class="mdi mdi-gauge"> 1001 hPa</span></div>
+  <div class="current_pressure_direction"><span id="current_pressure_direction" class="mdi mdi-arrow-up-thick"> Rising</span></div>  
+  
+  <div class="current_humidity"><span class="mdi mdi-water-percent"> 48%</span></div>  
+  <div class="alert_lightning"><span class="mdi mdi-flash-alert-outline"> 2 min</span></div>  
+  <div class="current_condition1"> <span id="current_condition1">Thunderstorms </span></div>
+  <div class="current_condition2"> <span id="current_condition2">Light Rain</span></div>
+
+  <div class="wind_title"><span class="mdi mdi-weather-windy-variant"> Wind</span></div>
+  <div class="current_wind mdi mdi-tailwind"><span id = "current_wind"> 4 mph</span></div>
+  <div class="current_wind_gust mdi mdi-weather-windy"><span id = "current_wind_gust"> 45 mph</span></div>  
+  <div class="current_wind_direction mdi mdi-compass-outline"><span id = "current_wind_direction"> N </span></div>  
+
+</div>
+
+<script>
+
+function setCondition(condition){
+
+	let icon = "mdi-weather-sunny-off";
+  let text1 = "UNKNOWN";
+  let text2 = "";
+  
+  console.log(condition);
+  
+	switch (condition){
+  	case "thunderstorm with light rain":
+    	icon = 	"mdi-weather-lightning-rainy";
+      text1 = "THUNDERSTORMS";
+      text2 = "LIGHT RAIN";
+      break;
+		case "thunderstorm with rain":
+    	icon = 	"mdi-weather-lightning-rainy";
+      text1 = "THUNDERSTORMS";
+      text2 = "RAIN";
+      break;
+		case "thunderstorm with heavy rain":
+    	icon = 	"mdi-weather-lightning-rainy";
+      text1 = "THUNDERSTORMS"
+      text2 = "HEAVY RAIN";
+      break;
+		case "light thunderstorm":
+    	icon = 	"mdi-weather-lightning";
+      text1 = "LIGHT";
+      text2 = "THUNDERSTORMS";
+      break;
+		case "thunderstorm":
+    	icon = 	"mdi-weather-lightning";
+      text1 = "THUNDERSTORMS";
+      break;
+		case "heavy thunderstorm":
+    	icon = 	"mdi-weather-lightning";
+      text1 = "HEAVY";
+      text2 = "THUNDERSTORMS";
+      break;
+		case "ragged thunderstorm":	
+    	icon = 	"mdi-weather-lightning";
+      text1 = "SCATTERED";
+      text2 = "THUNDERSTORMS";
+      break;
+		case "thunderstorm with light drizzle":
+    	icon = 	"mdi-weather-lightning-rainy";
+      text1 = "THUNDERSTORMS";
+      text2 = "LIGHT DRIZZLE";
+      break;
+		case "thunderstorm with drizzle":	
+    	icon = 	"mdi-weather-lightning-rainy";
+      text1 = "THUNDERSTORMS";
+      text2 = "DRIZZLE";
+      break;
+		case "thunderstorm with heavy drizzle":
+    	icon = 	"mdi-weather-lightning-rainy"
+      text1 = "THUNDERSTORMS"
+      text2 = "HEAVY DRIZZLE";
+      break;
+		case "light intensity drizzle":
+    	icon = 	"mdi-weather-partly-rainy";
+      text1 = "LIGHT";
+      text2 = "DRIZZLE";
+      break;
+		case "drizzle":
+    	icon = 	"mdi-weather-partly-rainy";
+      text1 = "DRIZZLE";
+      break;
+		case "heavy intensity drizzle":
+    	icon = 	"mdi-weather-partly-rainy";
+      text1 = "HEAVY";
+      text2 = "DRIZZLE";
+      break;
+		case "light intensity drizzle rain":
+    	icon = 	"mdi-weather-partly-rainy";
+      text1 = "LIGHT";
+      text2 = "DRIZZLE";
+      break;
+		case "drizzle rain":
+    	icon = 	"mdi-weather-partly-rainy";
+      text1 = "DRIZZLE";
+      break;
+		case "heavy intensity drizzle rain":	
+    	icon = 	"mdi-weather-rainy";
+      text1 = "RAIN";
+      break;
+		case "shower rain and drizzle":
+    	icon = "mdi-weather-rainy";
+      text1 = "RAIN";
+      break;
+		case "heavy shower rain and drizzle":
+    	icon = "mdi-weather-pouring";
+      text1 = "SHOWERS";
+      break;
+		case "shower drizzle":	
+    	icon = "mdi-weather-rainy";
+      text1 = "SHOWERS";
+      break;
+		case "light rain":
+    	icon = 	"mdi-weather-rainy";
+      text1 = "LIGHT";
+      text2 = "RAIN";
+      break;
+		case "moderate rain":	
+    	icon = "mdi-weather-pouring";
+      text1 = "MODERATE";
+      text2 = "RAIN";
+      break;
+		case "heavy intensity rain":	
+    	icon = "mdi-weather-pouring";
+      text1 = "HEAVY";
+      text2 = "RAIN";
+      break;
+		case "very heavy rain":
+    	icon = "mdi-weather-pouring";
+      text1 = "VERY HEAVY";
+      text2 = "RAIN";
+      break;
+		case "extreme rain":	
+    	icon = "mdi-weather-pouring";
+      text1 = "INTENSE";
+      text2 = "RAIN";
+      break;
+		case "freezing rain":	
+    	icon = "mdi-weather-snowy-rainy";
+      text1 = "FREEZING";
+      text2 = "RAIN";
+      break;
+		case "light intensity shower rain":	 
+    	icon = 	"mdi-weather-rainy";
+      text1 = "LIGHT";
+      text2 = "SHOWERS";
+      break;
+		case "shower rain":	
+    	icon = 	"mdi-weather-rainy";
+      text1 = "SHOWERS";
+      break;
+		case "heavy intensity shower rain":	
+    	icon = "mdi-weather-pouring";
+      text1 = "HEAVY"
+      text2 = "SHOWERS";
+      break;
+		case "ragged shower rain":	
+    	icon = "mdi-weather-partly-rainy";
+     	text1 = "SCATTERED";
+      text2 = "SHOWERS";
+      break;
+		case "light snow":
+    	icon = "mdi-weather-snowy";
+      text1 = "LIGHT";
+      text2 = "SNOW";
+      break;
+		case "Snow":
+    	icon = "mdi-weather-snowy";
+      text1 = "SNOW";
+      break;
+		case "Heavy snow":
+    	icon = "mdi-weather-snowy-heavy";
+      text1 = "HEAVY SNOW";
+      break;
+		case "Sleet":
+    	icon = "mdi-weather-hail";
+      text1 = "SLEET";
+      break;
+		case "Light shower sleet":	
+    	icon = "mdi-weather-hail";
+      text1 = "LIGHT SLEET";
+      break;
+		case "Shower sleet":
+    	icon = "mdi-weather-hail";
+      text1 = "SLEET";
+      text2 = "SHOWERS";
+      break;
+		case "Light rain and snow":	 
+    	icon = "mdi-weather-snowy-rainy";
+      text1 = "LIGHT"
+      text2 = "RAIN & SNOW";
+      break;
+		case "Rain and snow":	 
+    	icon = "mdi-weather-snowy-rainy";
+      text1 = "RAIN & SNOW";
+      break;
+		case "Light shower snow":	 
+    	icon = "mdi-weather-partly-snowy";
+      text1 = "LIGHT RAIN"
+      text2 = "SNOW SHOWERS";
+      break;
+		case "Shower snow":	
+    	icon = "mdi-weather-partly-snowy";
+      text1 = "SNOW SHOWERS";
+      break;
+		case "Heavy shower snow":	 
+    	icon = "mdi-weather-partly-snowy";
+      text1 = "HEAVY";
+      text2 = "SNOW SHOWERS";
+      break;
+		case "mist":
+    	icon = "mdi-weather-fog";
+      text1 = "MIST";
+      break;
+		case "Smoke":	 
+    	icon = "mdi-weather-fog";
+      text1 = "SMOKE";
+      break;
+		case "Haze":
+    	icon = "mdi-weather-hazy";
+      text1 = "HAZE";
+      break;
+		case "sand dust whirls":	 
+    	icon = "mdi-weather-tornado";
+      text1 = "DUST WHIRLS";
+      break;
+		case "fog":	
+    	icon = "mdi-weather-fog";
+      text1 = "FOG";
+      break;
+		case "sand":	
+    	icon = "mdi-weather-fog";
+      text1 = "SAND";
+      break;
+		case "dust":	
+    	icon = "mdi-weather-fog";
+      text1 = "DUST";
+      break;
+		case "volcanic ash":	
+    	icon = "mdi-weather-fog";
+      text1 = "VOCANIC ASH";
+      break;
+		case "squalls":
+    	icon = "mdi-weather-tornado";
+      text1 = "SQUALLS";
+      break;
+		case "tornado":
+    	icon = "mdi-weather-tornado";
+      text1 = "TORNADO";
+      break;
+		case "clear sky":		
+    	icon = "mdi-weather-sunny";
+      text1 = "SUNNY";
+      break;
+		case "few clouds":
+    	icon = "mdi-weather-partly-cloudy";
+      text1 = "FEW CLOUDS";
+      break;
+		case "scattered clouds":
+    	icon = "mdi-weather-partly-cloudy";
+      text1 = "SCATTERED";
+      text2 = "CLOUDS";
+      break;
+		case "broken clouds":
+    	icon = "mdi-weather-cloudy";
+      text1 = "BROKEN CLOUDS";
+      break;
+ 		case "overcast clouds":
+    	icon = "mdi-weather-cloudy";
+      text1 = "OVERCAST"
+      text2 = "CLOUDS";
+      break;
+    }
+    
+		let el = document.getElementById('weather_icon');
+    el.className = 'mdi '+icon;
+    
+    el = document.getElementById('current_condition1');
+    el.textContent = text1;
+    
+    el = document.getElementById('current_condition2');
+    el.textContent = text2;
+}
+ 
+ function setValue(val, str, unit) {
+ 		let el = document.getElementById(str);
+    
+    console.log("Setting: "+str+" "+val+unit)
+    el.textContent = val.toFixed()+unit;
+ }
+ 
+ function setString(val, str) {
+ 		let el = document.getElementById(str);
+    el.textContent = ' '+val;
+ }
+ 
+ function setRealFeel(temp){
+ 		 let el = document.getElementById('real_feel');
+     el.textContent = "Feels Like: "+temp.toFixed()+"°";
+ }
+ 
+ function getWeather() {
+ 		const apiKey = "f06d50f56deb8cfa989bf122cac36693";
+    
+    const url = `https://api.openweathermap.org/data/2.5/onecall?lat=38.747277&lon=-77.700569&exclude=hourly,%20minutely&appid=${apiKey}&units=imperial`;
+
+   fetch(url)
+  	.then(response => response.json())
+  	.then(data => {
+    	console.log(data.daily[0]);
+    	setValue(data.current.temp, 'current_temp', '°');
+      setValue(data.daily[0].temp.min, 'low', '°');
+      setValue(data.daily[0].temp.max, 'high', '°');
+      setRealFeel(data.current.feels_like);
+      setCondition(data.current.weather[0].description);
+      
+      setString(data.current.wind_speed.toFixed()+' mph', 'current_wind');
+      //'+data.current.wind_deg + '°', 'current_wind');
+      if (data.current.wind_gust != undefined) 
+      	setString(data.current.wind_gust.toFixed()+' mph', 'current_wind_gust');
+      else
+     		setString(data.current.wind_speed.toFixed()+' mph', 'current_wind_gust');
+     
+      let rainValue = data.daily[0].rain/25.4;
+      console.log(rainValue.toFixed(2));
+      setString(rainValue.toFixed(2)+'"', 'forecast_precipitation')
+        
+
+  	})
+  	.catch(() => {
+   	 msg.textContent = "Please search for a valid city 😩";
+  	});
+}
+
+
+
+function change(){    
+    getWeather();
+	}
+</script>
+
+
+</body>
+</html>
