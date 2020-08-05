@@ -15,7 +15,7 @@
 .grid-container {
   display: grid;
   grid-template-columns: 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin;
-  grid-template-rows: 30vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin 5vmin;
+  grid-template-rows: 30vmin 5vmin 5vmin 7vmin 3vmin 7vmin 6vmin 6vmin 6vmin 5vmin 5vmin 5vmin;
   grid-gap: 0px;
   background-color: #000000;
   align-items: center;
@@ -54,10 +54,9 @@
   font-size: 5vmin;
   text-align: center !important;
   line-height: 1;
-  
 }
 
-.current_temp {
+.current_temperature {
   font-weight: 900;
   grid-row-start: 1;
   grid-row-end: 1;
@@ -69,7 +68,7 @@
 
 }
 
-.real_feel{
+.current_feels_like{
   grid-row-start: 3;
   grid-row-end: 3;
   grid-column-start: 2;
@@ -79,7 +78,7 @@
   
 }
 
-.low{
+.forecast_low{
   grid-row-start: 4;
   grid-row-end: 4;
   grid-column-start: 3;
@@ -87,14 +86,13 @@
   font-size: 5vmin;
   text-align: center !important;
 }
-.high{
+.forecast_high{
   grid-row-start: 4;
   grid-row-end: 4;
   grid-column-start: 7;
   grid-column-end: 12;
   font-size: 5vmin;
   text-align: center !important;
-
 }
 
 .precipitation_title{
@@ -108,7 +106,7 @@
   border-bottom: 1px solid white;
 }
 
-.forecast_precipitation{
+.forecast_precipitation_chance{
   grid-row-start: 7;
   grid-row-end: 7;
   grid-column-start: 2;
@@ -117,9 +115,18 @@
   text-align: left !important;
 }
 
-.current_precipitation{
+.forecast_precipitation{
   grid-row-start: 8;
   grid-row-end: 8;
+  grid-column-start: 2;
+  grid-column-end: 9;
+  font-size: 4vmin;
+  text-align: left !important;
+}
+
+.current_precipitation{
+  grid-row-start: 9;
+  grid-row-end: 9;
   grid-column-start: 2;
   grid-column-end: 9;
   font-size: 4vmin;
@@ -138,7 +145,7 @@
   
 }
 
-.current_wind{
+.current_wind_speed{
   grid-row-start:7;
   grid-row-end: 7;
   grid-column-start: 10;
@@ -182,6 +189,7 @@
   font-size: 4vmin;
   text-align: left !important;
 }
+
 .current_pressure_direction{
   grid-row-start: 8;
   grid-row-end: 8;
@@ -191,25 +199,43 @@
   text-align: left !important;
 }
 
-
-
 .current_humidity{
   grid-row-start: 11;
   grid-row-end: 11;
-  grid-column-start: 2;
-  grid-column-end: 8;
+  grid-column-start: 3;
+  grid-column-end: 7;
   font-size: 4vmin;
-  text-align: center !important;
+  text-align: left !important;
   line-height: 1;
 }
 
-.alert_lightning{
+.sunset{
   grid-row-start: 11;
   grid-row-end: 11;
-  grid-column-start: 20;
+  grid-column-start: 21;
   grid-column-end: 26;
+  font-size: 3vmin;
+  text-align: left !important;
+  line-height: 1;
+}
+
+.sunrise{
+  grid-row-start: 11;
+  grid-row-end: 11;
+  grid-column-start: 17;
+  grid-column-end: 21;
+  font-size: 3vmin;
+  text-align: left !important;
+  line-height: 1;
+}
+
+.current_dewpoint{
+  grid-row-start: 11;
+  grid-row-end: 11;
+  grid-column-start: 7;
+  grid-column-end: 18;
   font-size: 4vmin;
-  text-align: center !important;
+  text-align: left !important;
   line-height: 1;
 }
 
@@ -220,46 +246,61 @@
 
 </style>
 </head>
-<body>
+<body onload="getWeather()">
 
 
 <div class="grid-container">
-  <div class="weather_icon"><span id="weather_icon" class="mdi mdi-weather-partly-rainy" style="font-size:2em" onclick="change()"></span></div>
-  <div id="current_temp" class="current_temp">100°</div>
-  <div class="low"><span id = "low" class="mdi mdi-arrow-down-thick">23°</span></div>
-  <div class="high"><span id = "high" class="mdi mdi-arrow-up-thick">89°</span></div>  
-  <div class="real_feel"><span id="real_feel" class="mdi mdi-home-thermometer-outline"> Feels Like: 87°</span></div>  
+  <div class="weather_icon"><span id="weather_icon" class="mdi mdi-alert-circle" style="font-size:2em"></span></div>
+  <div id="current_temperature" class="current_temperature">--°</div>
+  <div class="forecast_low"><span id = "forecast_low" class="mdi mdi-arrow-down-thick">--°</span></div>
+  <div class="forecast_high"><span id = "forecast_high" class="mdi mdi-arrow-up-thick">--°</span></div>  
+  <div class="current_feels_like">
+      <span class="mdi mdi-home-thermometer-outline">Feels Like: </span>
+      <span id="current_feels_like">--°</span>
+  </div>  
 
-  <div class="forecast_precipitation mdi mdi-cloud-question"><span id="forecast_precipitation"> 1.25"</span></div>
   <div class="precipitation_title"><span class="mdi mdi-umbrella-outline"> Rainfall</span></div>
-  <div class="current_precipitation"><span class="mdi mdi-calendar-today"> 0.25"</span></div>
+    <div class="forecast_precipitation mdi mdi-ruler">
+      <span id="forecast_precipitation"> --.-"</span>
+    </div>
+    <div class="current_precipitation">
+      <span id="current_precipitation" class="mdi mdi-calendar-today"> --.-"</span>
+    </div>
+    <div class="forecast_precipitation_chance">
+      <span id="forecast_precipitation_chance" class="mdi mdi-cloud-question"> --%</span>
+    </div>
   
   <div class="pressure_title" ><span class="mdi mdi-gauge"> Pressure</span></div>
-  <div class="current_pressure"><span id="current_pressure" class="mdi mdi-gauge"> 1001 hPa</span></div>
-  <div class="current_pressure_direction"><span id="current_pressure_direction" class="mdi mdi-arrow-up-thick"> Rising</span></div>  
+    <div class="current_pressure">
+      <span id="current_pressure" class="mdi mdi-thermostat"> ---- hPa</span>
+    </div>
+    <div class = "current_pressure_direction">
+      <span id="pressure_icon" class= "mdi mdi-arrow-up-thick"></span>
+      <span id="current_pressure_direction"> -------</span>
+    </div>  
   
-  <div class="current_humidity"><span class="mdi mdi-water-percent"> 48%</span></div>  
-  <div class="alert_lightning"><span class="mdi mdi-flash-alert-outline"> 2 min</span></div>  
-  <div class="current_condition1"> <span id="current_condition1">Thunderstorms </span></div>
-  <div class="current_condition2"> <span id="current_condition2">Light Rain</span></div>
+  <div class="current_humidity"><span id="current_humidity" class="mdi mdi-water-percent"> --%</span></div>  
+  <div class="current_dewpoint"><span id="current_dewpoint"> -------</span></div>  
+  <div class="current_condition1"> <span id="current_condition1">------- </span></div>
+  <div class="current_condition2"> <span id="current_condition2">------- </span></div>
 
   <div class="wind_title"><span class="mdi mdi-weather-windy-variant"> Wind</span></div>
-  <div class="current_wind mdi mdi-tailwind"><span id = "current_wind"> 4 mph</span></div>
-  <div class="current_wind_gust mdi mdi-weather-windy"><span id = "current_wind_gust"> 45 mph</span></div>  
-  <div class="current_wind_direction mdi mdi-compass-outline"><span id = "current_wind_direction"> N </span></div>  
-
+    <div class="current_wind_speed mdi mdi-tailwind"><span id = "current_wind_speed"> -- mph</span></div>
+    <div class="current_wind_gust mdi mdi-weather-windy"><span id = "current_wind_gust"> -- mph</span></div>  
+    <div class="current_wind_direction mdi mdi-compass-outline"><span id = "current_wind_direction"> --</span></div> 
+  
+  <div class="sunrise"><span id="sunrise" class="mdi mdi-weather-sunset-up"> -:-- am</span></div>   
+  <div class="sunset"><span id="sunset" class="mdi mdi-weather-sunset-down"> -:-- pm</span></div>  
 </div>
 
 <script>
 
 function setCondition(condition){
 
-	let icon = "mdi-weather-sunny-off";
+ 	let icon = "mdi-weather-sunny-off";
   let text1 = "UNKNOWN";
   let text2 = "";
-  
-  console.log(condition);
-  
+   
 	switch (condition){
   	case "thunderstorm with light rain":
     	icon = 	"mdi-weather-lightning-rainy";
@@ -511,7 +552,7 @@ function setCondition(condition){
       break;
     }
     
-		let el = document.getElementById('weather_icon');
+    let el = document.getElementById('weather_icon');
     el.className = 'mdi '+icon;
     
     el = document.getElementById('current_condition1');
@@ -521,54 +562,202 @@ function setCondition(condition){
     el.textContent = text2;
 }
  
- function setValue(val, str, unit) {
+ function setValue(val, str) {
  		let el = document.getElementById(str);
+    el.textContent = val;
+ }
+ 
+ function getWindDirection(direction){
+	if (direction > 348.75 || direction < 11.25) return "N";
+  if (direction >= 11.25 && direction < 33.75) return "NNE";
+ 	if (direction >= 33.75 && direction < 56.25) return "NE";
+ 	if (direction >= 56.25 && direction < 78.7) return "ENE";
+ 	if (direction >= 78.75 && direction < 101.25) return "E";
+ 	if (direction >= 101.25 && direction < 123.75) return "ESE";
+ 	if (direction >= 123.75 && direction < 146.25) return "SE";
+ 	if (direction >= 146.25 && direction < 168.75) return "SSE";
+ 	if (direction >= 168.75 && direction < 191.25) return "S";
+ 	if (direction >= 191.25 && direction < 213.75) return "SSW";
+ 	if (direction >= 213.75 && direction < 236.25) return "SW";
+ 	if (direction >= 236.25 && direction < 258.75) return "WSW";
+ 	if (direction >= 258.75 && direction < 281.25) return "W";
+ 	if (direction >= 281.25 && direction < 303.75) return "WNW";
+ 	if (direction >= 303.75 && direction < 326.25) return "NW";
+ 	if (direction >= 326.25 && direction < 348.75) return "NNW";
+}
+ 
+ function setWeatherTile(weather){
+
+ 	weather.forEach((value,key) => {
+  		let val = value;
+  		console.log(key+" "+value);
+  		let unit = "";
+  		switch (key){
+      	case "current_temperature":
+				case "forecast_high":
+				case "forecast_low":
+        case "current_feels_like":
+        	unit = "°"; 
+          break;
+       case "current_wind_speed":
+			 case "current_wind_gust":
+       		unit = " mph";
+          break;
+			case "current_wind_direction":
+      		console.log(value);
+      		val = getWindDirection(value);
+          break;
+			case "forecast_precipitation":
+      case "current_precipitation":
+      		unit = '"';
+          break;
+      case "current_pressure":
+      		unit = ' hPa';
+          break;
+      case "current_humidity":
+      case "forecast_precipitation_chance":
+      		unit = '%';
+          break;
+      }
+     
+     if (key == "current_description"){
+     		setCondition(val);
+     } else if (key == "current_pressure_direction"){
+        console.log("Here 3");
+     		setPressure(val);
+     } else {
+    		setValue(" "+val+unit, key);
+
+     }
+  
+  });
+ 
+ }
+ 
+ function toInches(val){
+ 	val = val/25.4;
+  return val.toFixed(2);
+ }
+ 
+ function getTime(secs){
+ 	let date = new Date(secs*1000);
+  return date.toLocaleTimeString([], {timeStyle: 'short'});
+ }
+ 
+ function getDewPoint(temp){
+ 
+ 	if (temp < 50) return "Dry ("+temp.toFixed()+"°)";
+  else if (temp < 55) return "Pleasent ("+temp.toFixed()+"°)";
+  else if (temp < 60) return "Comfortable ("+temp.toFixed()+"°)";
+  else if (temp < 65) return "Sticky ("+temp.toFixed()+"°)";
+  else if (temp < 70) return "Uncomfortable ("+temp.toFixed()+"°)";
+  else if (temp < 75) return "Opressive ("+temp.toFixed()+"°)";
+  else return "Miserable ("+temp.toFixed()+"°)";
+ 
+ }
+ 
+ function setPressure(diff){
+ 		let icon = '';
+    let text = '';
     
-    console.log("Setting: "+str+" "+val+unit)
-    el.textContent = val.toFixed()+unit;
- }
+    console.log("Diff :"+diff)
+ 		if (diff == 0) {
+    	text = 'Steady';
+      icon = 'mdi-arrow-right-thick';
+    } else if (diff < 0) {
+    	text = 'Falling';
+      icon = 'mdi-arrow-down-thick';
+    } else if (diff > 0) {
+    	text = 'Falling';
+      icon = 'mdi-arrow-up-thick';
+    }
  
- function setString(val, str) {
- 		let el = document.getElementById(str);
-    el.textContent = ' '+val;
- }
- 
- function setRealFeel(temp){
- 		 let el = document.getElementById('real_feel');
-     el.textContent = "Feels Like: "+temp.toFixed()+"°";
+ 		console.log(icon+" "+text);
+ 		let el = document.getElementById('pressure_icon');
+    el.className = 'current_pressure_direction mdi '+icon;
+    
+    el = document.getElementById('current_pressure_direction');
+    el.textContent = text;
  }
  
  function getWeather() {
  		const apiKey = "f06d50f56deb8cfa989bf122cac36693";
     
-    const url = `https://api.openweathermap.org/data/2.5/onecall?lat=38.747277&lon=-77.700569&exclude=hourly,%20minutely&appid=${apiKey}&units=imperial`;
-
-   fetch(url)
+    const url = `https://api.openweathermap.org/data/2.5/onecall?lat=38.747277&lon=-77.700569&exclude=minutely,hourly&appid=${apiKey}&units=imperial`;
+   
+	fetch(url)
   	.then(response => response.json())
   	.then(data => {
-    	console.log(data.daily[0]);
-    	setValue(data.current.temp, 'current_temp', '°');
-      setValue(data.daily[0].temp.min, 'low', '°');
-      setValue(data.daily[0].temp.max, 'high', '°');
-      setRealFeel(data.current.feels_like);
-      setCondition(data.current.weather[0].description);
-      
-      setString(data.current.wind_speed.toFixed()+' mph', 'current_wind');
-      //'+data.current.wind_deg + '°', 'current_wind');
+    	let weather = new Map();
+    	//console.log(data);
+      weather.set('current_temperature', data.current.temp.toFixed());
+      weather.set('forecast_high', data.daily[0].temp.max.toFixed());
+      weather.set('forecast_low', data.daily[0].temp.min.toFixed());
+      weather.set('current_feels_like', data.current.feels_like.toFixed());
+    	weather.set('current_description', data.current.weather[0].description);
+      weather.set('current_wind_speed', data.current.wind_speed.toFixed());
       if (data.current.wind_gust != undefined) 
-      	setString(data.current.wind_gust.toFixed()+' mph', 'current_wind_gust');
+      	weather.set('current_wind_gust', data.current.wind_gust.toFixed());
       else
-     		setString(data.current.wind_speed.toFixed()+' mph', 'current_wind_gust');
-     
-      let rainValue = data.daily[0].rain/25.4;
-      console.log(rainValue.toFixed(2));
-      setString(rainValue.toFixed(2)+'"', 'forecast_precipitation')
+     		weather.set('current_wind_gust', data.current.wind_speed.toFixed());
+   
+      weather.set('current_wind_direction', data.current.wind_deg);
+      if (data.daily[0].rain != undefined)
+      	weather.set('forecast_precipitation', toInches(data.daily[0].rain));
+      else
+      	weather.set('forecast_precipitation', "0.00");
+      
+      weather.set('forecast_precipitation_chance', data.daily[0].pop*100)
         
-
+      weather.set('current_pressure', data.current.pressure.toFixed()); 
+      weather.set('current_humidity', data.current.humidity.toFixed());
+      weather.set('sunrise', getTime(data.current.sunrise));
+      weather.set('sunset', getTime(data.current.sunset));
+      weather.set('current_dewpoint', getDewPoint(data.current.dew_point));
+			
+      setWeatherTile(weather);
   	})
   	.catch(() => {
    	 msg.textContent = "Please search for a valid city 😩";
   	});
+
+
+    let now = new Date();
+    now.setHours(0,0,0,0);
+    let secs = now.getTime()/1000.0
+    secs = secs.toFixed();
+       
+    const url2 = `https://api.openweathermap.org/data/2.5/onecall/timemachine?lat=38.747277&lon=-77.700569&dt=${secs}&appid=${apiKey}`;
+     
+      fetch(url2)
+ 			 	.then(response => response.json())
+  			.then(data => {
+        		console.log(data);
+        		let weather2 = new Map();
+      			let total_rain = 0.0;
+            data.hourly.forEach((val) =>{
+            	if (val.rain != undefined) {
+              	total_rain += val.rain["1h"];
+              }
+            })
+            weather2.set('current_precipitation', toInches(total_rain));
+            console.log("Here");
+            let num = data.hourly.length;
+            if (num > 1) {
+            	weather2.set('current_pressure_direction', 0);
+            } else {
+            	let diff = data.hourly[num-1].pressure - data.hourly[num-2].pressure;
+              console.log("Diff:"+diff)
+              weather2.set('current_pressure_direction', diff);
+            } 
+
+					  setWeatherTile(weather2);
+						
+  			})
+  		
+      	.catch(() => {
+   	 			msg.textContent = "Please search for a valid city 😩";
+  			});
 }
 
 
