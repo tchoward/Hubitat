@@ -1,149 +1,552 @@
-<!DOCTYPE html>
-<html>
-<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
-<link rel="stylesheet" href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css">
-<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-<head>
-<style>
-:root{
-  --test : "mdi-weather-partly-rainy"
+import groovy.json.*;
+/**
+ *  Hubigraph Line Graph Child App
+ *
+ *  Copyright 2020, but let's behonest, you'll copy it
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ *
+ */
+
+// Hubigraph Weather Tile Changelog
+// V0.01 - Proof of Concept (Minimal Functionality)
+
+// Credit to Alden Howard for optimizing the code.
+
+ 
+def ignoredEvents() { return [ 'lastReceive' , 'reachable' , 
+                         'buttonReleased' , 'buttonPressed', 'lastCheckinDate', 'lastCheckin', 'buttonHeld' ] }
+
+def version() { return "v1.0" }
+
+definition(
+    name: "Hubigraph Weather Tile",
+    namespace: "tchoward",
+    author: "Thomas Howard",
+    description: "Hubigraph Weather Tile",
+    category: "",
+    parent: "tchoward:Hubigraphs",
+    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
+    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
+    iconX3Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
+)
+
+
+preferences {
+    section ("test"){
+       page(name: "mainPage", install: true, uninstall: true)
+       page(name: "deviceSelectionPage", nextPage: "mainPage")
+       page(name: "tileSetupPage", nextPage: "mainPage")
+       page(name: "enableAPIPage")
+       page(name: "disableAPIPage")
+}
+   
+
+    mappings {
+        path("/graph/") {
+            action: [
+                GET: "getTile"
+            ]
+        }
+    
+        path("/getData/") {
+            action: [
+                GET: "getData"
+            ]
+        }
+        
+        path("/getOptions/") {
+            action: [
+                GET: "getOptions"
+            ]
+        }
+        
+        path("/getSubscriptions/") {
+            action: [
+                GET: "getSubscriptions"
+            ]
+        }
+    }
+}
+
+def call(Closure code) {
+    code.setResolveStrategy(Closure.DELEGATE_ONLY);
+    code.setDelegate(this);
+    code.call();
+}
+
+/********************************************************************************************************************************
+*********************************************************************************************************************************
+****************************************** PAGES ********************************************************************************
+*********************************************************************************************************************************
+*********************************************************************************************************************************/
+
+def getEvents(sensor, attribute, num){
+     def resp = [:]
+     def today = new Date();
+     def then = new Date();
+    
+     use (groovy.time.TimeCategory) {
+           then -= 2.days;
+     }
+     
   
+     def respEvents = [];                  
+     respEvents << sensor.statesSince(attribute, then, [max: 200]){ it.value };
+     respEvents = respEvents.flatten();
+     respEvents = respEvents.unique();          
+     return respEvents;  
 }
 
-.grid-container {
-  display: grid;
-  grid-template-columns: 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin 4vmin;
-  grid-template-rows: 30vmin 5vmin 5vmin 7vmin 3vmin 7vmin 6vmin 6vmin 6vmin 5vmin 5vmin 5vmin;
-  grid-gap: 0px;
-  background-color: #000000;
-  align-items: center;
+def tileSetupPage(){
+      
+    def updateEnum = [["60000":"1 Minute"],["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1200000":"20 Minutes"], ["1800000":"Half Hour"], 
+                      ["3600000":"1 Hour"], ["6400000":"2 Hours"], ["19200000":"6 Hours"], ["43200000":"12 Hours"], ["86400000":"1 Day"]];
+    
+    def unitEnum = [["imperial":"Imperial (°F, mph, in, hPa)"], ["metric":"Metric (°C, m/sec, mm, mmHg)"]];
+    
+    def location = getLocation();
+    app.updateSetting ("location", location);
+    
+    dynamicPage(name: "tileSetupPage") {      
+      
+        parent.hubiForm_section(this,"General Options", 1)
+        {      
+            input( type: "enum", name: "tile_refresh_rate", title: "<b>Select Graph Update Rate</b>", multiple: false, required: true, options: updateEnum, defaultValue: "300000");
+            input( type: "enum", name: "tile_units", title: "<b>Select Units</b>", multiple: false, required: true, options: unitEnum, defaultValue: "imperial");
+            container = [];
+            container << parent.hubiForm_text_input (this, "<b>Open Weather Map Key</b>", "tile_key", "", false);
+            container << parent.hubiForm_text_input (this, "<b>Latitude</b>", "latitude", location.latitude, false);
+            container << parent.hubiForm_text_input (this, "<b>Longitude</b>", "longitude", location.longitude, false);
+            container << parent.hubiForm_color(this, "Background", 
+                                                     "background", 
+                                                     "#000000", 
+                                                     false);
+            container << parent.hubiForm_color(this, "Text", 
+                                                     "text", 
+                                                     "#FFFFFF", 
+                                                     false);
+                         
+            parent.hubiForm_container(this, container, 1);     
+        }   
+            
+    }//page
+}//function
+
+def deviceSelectionPage() {
+    def final_attrs;
+    
+       
+    dynamicPage(name: "deviceSelectionPage") {
+         parent.hubiForm_section(this,"Device Selection", 1){
+             container = [];
+             container << parent.hubiForm_text(this, "Ability to replace OpenWeatherMap data with Device data Coming Soon...");
+             parent.hubiForm_container(this, container, 1);     
+
+        }      
+    }
 }
 
-.grid-container > div {
-  background-color: rgba(0, 0, 0, 0.8);
-  text-align: center;
-  color: #FFFFFF;
+def disableAPIPage() {
+    dynamicPage(name: "disableAPIPage") {
+        section() {
+            if (state.endpoint) {
+                revokeAccessToken();
+                state.endpoint = null
+            }
+            paragraph "Token revoked. Click done to continue."
+        }
+    }
 }
 
-.weather_icon {
-  grid-row-start: 1;
-  grid-row-end: 3;
-  grid-column-start: 13;
-  grid-column-end: 24;
-  font-size: 10vmin;
-  padding-top: 0vmin !important; 
-  padding-left: 00vmin !important;
-  text-align: center !important;
-}
-.current_condition1 {
-  grid-row-start:2;
-  grid-row-end: 2;
-  grid-column-start: 13;
-  grid-column-end: 24;
-  font-size: 5vmin;
-  text-align: center !important;
-  line-height: 1;
-}
-.current_condition2 {
-  grid-row-start: 3;
-  grid-row-end: 3;
-  grid-column-start: 13;
-  grid-column-end: 24;
-  font-size: 5vmin;
-  text-align: center !important;
-  line-height: 1;
+def enableAPIPage() {
+    dynamicPage(name: "enableAPIPage", title: "") {
+        section() {
+            if(!state.endpoint) initializeAppEndpoint();
+            paragraph "Token created. Click done to continue."
+        }
+    }
 }
 
-.current_temperature {
-  font-weight: 900;
-  grid-row-start: 1;
-  grid-row-end: 1;
-  grid-column-start: 2;
-  grid-column-end: 12;
-  font-size: 20vmin;
-  text-align: center !important;
-  padding-top: 10vmin !important; 
-
+def mainPage() {
+    dynamicPage(name: "mainPage") {        
+       
+            def container = [];
+            if (!state.endpoint) {
+                parent.hubiForm_section(this, "Please set up OAuth API", 1, "report"){
+                    
+                    href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
+                 }    
+            } else {
+               parent.hubiForm_section(this, "Graph Options", 1, "tune"){
+                    container = [];
+                    container << parent.hubiForm_page_button(this, "Select Device/Data", "deviceSelectionPage", "100%", "vibration");
+                    container << parent.hubiForm_page_button(this, "Configure Tile", "tileSetupPage", "100%", "poll");              
+                    parent.hubiForm_container(this, container, 1); 
+                }
+                
+                parent.hubiForm_section(this, "Local Graph URL", 1, "link"){
+                    container = [];
+                    container << parent.hubiForm_text(this, "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
+                    
+                    parent.hubiForm_container(this, container, 1); 
+                }
+                
+                  
+                
+                if (tile_key){
+                     parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
+                         container = [];
+                         container << parent.hubiForm_graph_preview(this)
+                         
+                         parent.hubiForm_container(this, container, 1); 
+                     } //graph_timespan
+            
+                    parent.hubiForm_section(this, "Hubigraph Tile Installation", 2, "apps"){
+                        container = [];
+                             
+                        container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
+                        if (install_device==true){ 
+                             container << parent.hubiForm_text_input(this, "Name for HubiGraph Tile Device", "device_name", "Hubigraph Tile", "false");
+                        }
+                        parent.hubiForm_container(this, container, 1); 
+                    }
+                } 
+             
+            
+               if (state.endpoint){
+                   parent.hubiForm_section(this, "Hubigraph Application", 1, "settings"){
+                        container = [];
+                        container << parent.hubiForm_sub_section(this, "Application Name");
+                        container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Time Graph", "false");
+                        container << parent.hubiForm_sub_section(this, "Debugging");
+                        container << parent.hubiForm_switch(this, title: "Enable Debug Logging?", name: "debug", default: false);
+                        container << parent.hubiForm_sub_section(this, "Disable Oauth Authorization");
+                        container << parent.hubiForm_page_button(this, "Disable API", "disableAPIPage", "100%", "cancel");  
+                       
+                        parent.hubiForm_container(this, container, 1); 
+                    }
+               }
+       
+            } //else 
+        
+    } //dynamicPage
 }
 
-.current_feels_like{
-  grid-row-start: 3;
-  grid-row-end: 3;
-  grid-column-start: 2;
-  grid-column-end: 12;
-  font-size: 5vmin;
-  text-align: center !important;
-  
+/********************************************************************************************************************************
+*********************************************************************************************************************************
+****************************************** END PAGES ********************************************************************************
+*********************************************************************************************************************************
+*********************************************************************************************************************************/
+def getDays(str){
+
+    switch (str){
+        case "1 Day":      return 1; break;
+        case "1 Week":     return 7; break;
+        case "2 Weeks":    return 14; break;
+        case "3 Weeks":    return 21; break;
+        case "1 Month":    return 30; break;
+        case "2 Months":   return 60; break;
+        case "Indefinite": return 0; break;
+    }    
+    
 }
 
-.forecast_low{
-  grid-row-start: 4;
-  grid-row-end: 4;
-  grid-column-start: 3;
-  grid-column-end: 7;
-  font-size: 5vmin;
-  text-align: center !important;
-}
-.forecast_high{
-  grid-row-start: 4;
-  grid-row-end: 4;
-  grid-column-start: 7;
-  grid-column-end: 12;
-  font-size: 5vmin;
-  text-align: center !important;
+def installed() {
+    initialize()
 }
 
-.precipitation_title{
-  grid-row-start: 6;
-  grid-row-end: 6;
-  grid-column-start: 2;
-  grid-column-end: 9;
-  font-size: 4vmin;
-  text-align: left !important;
-  line-height: 1; 
-  border-bottom: 1px solid white;
+def uninstalled() {
+    if (state.endpoint) {
+        try {
+            revokeAccessToken()
+        }
+        catch (e) {
+            log.warn "Unable to revoke API access token: $e"
+        }
+    }
+    removeChildDevices(getChildDevices());
 }
 
-.forecast_precipitation_chance{
-  grid-row-start: 7;
-  grid-row-end: 7;
-  grid-column-start: 2;
-  grid-column-end: 9;
-  font-size: 4vmin;
-  text-align: left !important;
+private removeChildDevices(delete) {
+	delete.each {deleteChildDevice(it.deviceNetworkId)}
 }
 
-.forecast_precipitation{
-  grid-row-start: 8;
-  grid-row-end: 8;
-  grid-column-start: 2;
-  grid-column-end: 9;
-  font-size: 4vmin;
-  text-align: left !important;
+def updated() {
+    app.updateLabel(app_name);
+    
+    if (install_device == true){
+        parent.hubiTool_create_tile(this);
+    }
+    
+    if (lts){
+        switch (lts_update){
+            case "1:05 am": schedule("0 05 01 * * ?", longTermStorageUpdate); break;
+            case "2:30 am": schedule("0 30 02 * * ?", longTermStorageUpdate); break;
+            case "3:45 am": schedule("0 45 04 * * ?", longTermStorageUpdate); break;
+            case "4:55 am": schedule("0 55 04 * * ?", longTermStorageUpdate); break;    
+        }
+    }
+    
 }
 
-.current_precipitation{
-  grid-row-start: 9;
-  grid-row-end: 9;
-  grid-column-start: 2;
-  grid-column-end: 9;
-  font-size: 4vmin;
-  text-align: left !important;
+def initialize() {
+   updated();
 }
 
-.wind_title{
-  grid-row-start: 6;
-  grid-row-end: 6;
-  grid-column-start: 10;
-  grid-column-end: 17;
-  font-size: 4vmin;
-  text-align: left !important;
-  line-height: 1;
-  border-bottom: 1px solid white;
-  
+private getValue(id, attr, val){
+    def reg = ~/[a-z,A-Z]+/;
+    
+    orig = val;
+    val = val.replaceAll("\\s","");
+    if (settings["attribute_${id}_${attr}_${val}"]!=null){
+        ret = Double.parseDouble(settings["attribute_${id}_${attr}_${val}"]);
+    } else {
+        try { 
+            ret = Double.parseDouble(val - reg);
+        } catch (e) {
+            log.debug ("Bad value in Parse: "+orig);
+            ret = null;   
+        }
+    }
+    return ret;
 }
+
+private cleanupData(data){
+    def then = new Date();
+    use (groovy.time.TimeCategory) {
+           then -= getDays(lts_time);
+    }
+    then_milliseconds = then.getTime();
+    
+    return data.findAll{ it.date >= then_milliseconds };
+}
+
+private buildData() {
+    def resp = [:]
+    
+    def graph_time;
+    def then = new Date();
+    
+    use (groovy.time.TimeCategory) {
+           val =  Double.parseDouble(graph_timespan)/1000.0;
+           then -= ((int)val).seconds;
+           graph_time = then.getTime();
+    }
+    
+    if(sensors) {
+        sensors.each { sensor ->
+            resp[sensor.id] = [:];
+            settings["attributes_${sensor.id}"].each {attribute ->
+                def newData = [];  
+                //if this exists in storage
+                if (atomicState["history_${sensor.id}_${attribute}"]) {
+                    oldData = atomicState["history_${sensor.id}_${attribute}"];
+                    then = new Date(oldData[oldData.size-1].date);
+                } else {
+                     oldData = [];   
+                }
+                            
+                newData << sensor.statesSince(attribute, then, [max: 2000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
+                newData = newData.flatten();
+                oldData += newData.reverse();
+                
+                         
+                resp[sensor.id][attribute] = oldData.findAll{ it.date > graph_time}; 
+                
+                if (lts){
+                    atomicState["history_${sensor.id}_${attribute}"] = cleanupData(oldData);
+                } else atomicState["history_${sensor.id}_${attribute}"] = null;
+            }    
+        }
+    }
+    return resp;
+}
+
+def getTileOptions(){  
+    
+    def options = [
+        "tile_units": tile_units,
+    ];
+        
+    return options;
+}
+        
+def getDrawType(){
+   return "google.visualization.LineChart" 
+}
+
+def removeLastChar(str) {
+    str.subSequence(0, str.length() - 1)
+    str
+}
+
+def getRGBA(hex, opacity){
+    
+    def c = hex-"#";
+    c = c.toUpperCase();
+    i = Integer.parseInt(c, 16);
+    
+    r = (i & 0xFF0000) >> 16;
+    g = (i & 0xFF00) >> 8;
+    b = (i & 0xFF);
+    o = opacity/100.0;
+    s = sprintf("rgba( %d, %d, %d, %.2f)", r, g, b, o); 
+    return s;
+}
+
+def defineHTML_Header(){
+    def html = """
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <link rel="stylesheet" href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css">
+    
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    """
+    return html;
+}
+
+def defineHTML_CSS(){
+    def html = """
+        .grid-container {
+      display: grid;
+      grid-template-columns: 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw;
+      grid-template-rows: 30vh 6vh 6vh 8vh 3vh 8vh 7vh 7vh 7vh 6vh 6vh 6vh;
+      grid-gap: 0px;
+      align-items: center;
+      background-color: ${background_color};
+    }
+
+    .grid-container > div {
+      text-align: center;
+      color: ${text_color};
+    }
+
+    .weather_icon {
+      grid-row-start: 1;
+      grid-row-end: 3;
+      grid-column-start: 13;
+      grid-column-end: 24;
+      font-size: 10vmin;
+      padding-top: 0vmin !important; 
+      padding-left: 00vmin !important;
+      text-align: center !important;
+    }
+
+    .current_condition1 {
+      grid-row-start:2;
+      grid-row-end: 2;
+      grid-column-start: 13;
+      grid-column-end: 24;
+      font-size: 5vmin;
+      text-align: center !important;
+      line-height: 1;
+    }
+
+    .current_condition2 {
+      grid-row-start: 3;
+      grid-row-end: 3;
+      grid-column-start: 13;
+      grid-column-end: 24;
+      font-size: 5vmin;
+      text-align: center !important;
+      line-height: 1;
+    }
+
+    .current_temperature {
+      font-weight: 900;
+      grid-row-start: 1;
+      grid-row-end: 1;
+      grid-column-start: 2;
+      grid-column-end: 12;
+      font-size: 20vmin;
+      text-align: center !important;
+      padding-top: 10vmin !important; 
+    }
+
+    .current_feels_like{
+      grid-row-start: 3;
+      grid-row-end: 3;
+      grid-column-start: 2;
+      grid-column-end: 12;
+      font-size: 5vmin;
+      text-align: center !important;  
+    }
+
+    .forecast_low{
+      grid-row-start: 4;
+      grid-row-end: 4;
+      grid-column-start: 3;
+      grid-column-end: 7;
+      font-size: 5vmin;
+      text-align: center !important;
+    }
+
+    .forecast_high{
+      grid-row-start: 4;
+      grid-row-end: 4;
+      grid-column-start: 7;
+      grid-column-end: 12;
+      font-size: 5vmin;
+      text-align: center !important;
+    }
+
+    .precipitation_title{
+      grid-row-start: 6;
+      grid-row-end: 6;
+      grid-column-start: 2;
+      grid-column-end: 9;
+      font-size: 4vmin;
+      text-align: left !important;
+      line-height: 1; 
+      border-bottom: 1px solid ${text_color};
+    }
+
+    .forecast_precipitation_chance{
+      grid-row-start: 7;
+      grid-row-end: 7;
+      grid-column-start: 2;
+      grid-column-end: 9;
+      font-size: 4vmin;
+      text-align: left !important;
+    }
+
+    .forecast_precipitation{
+      grid-row-start: 8;
+      grid-row-end: 8;
+      grid-column-start: 2;
+      grid-column-end: 9;
+      font-size: 4vmin;
+      text-align: left !important;
+    }
+
+    .current_precipitation{
+      grid-row-start: 9;
+      grid-row-end: 9;
+      grid-column-start: 2;
+      grid-column-end: 9;
+      font-size: 4vmin;
+      text-align: left !important;
+    }
+
+    .wind_title{
+      grid-row-start: 6;
+      grid-row-end: 6;
+      grid-column-start: 10;
+      grid-column-end: 17;
+      font-size: 4vmin;
+      text-align: left !important;
+      line-height: 1;
+      border-bottom: 1px solid ${text_color}; 
+    }
 
 .current_wind_speed{
   grid-row-start:7;
@@ -178,7 +581,7 @@
   font-size: 4vmin;
   text-align: left !important;
   line-height: 1;
-  border-bottom: 1px solid white;
+  border-bottom: 1px solid ${text_color};
 }
 
 .current_pressure{
@@ -239,428 +642,577 @@
   line-height: 1;
 }
 
+    """
+    return html
+}
 
+def defineHTML_Tile(){
+    def html = """
+    
+    <div class="grid-container">
+    <div class="weather_icon">
+        <span id="weather_icon" class="mdi mdi-alert-circle" style="font-size:2em">
+        </span>
+    </div>
+    <div id="current_temperature" class="current_temperature">--°</div>
 
+    <div class="forecast_low">
+        <span id="forecast_low" class="mdi mdi-arrow-down-thick">--°</span>
+    </div>
+    <div class="forecast_high">
+        <span id="forecast_high" class="mdi mdi-arrow-up-thick">--°</span>
+    </div>
 
+    <div class="current_feels_like">
+        <span class="mdi mdi-home-thermometer-outline">Feels Like: </span>
+        <span id="current_feels_like">--°</span>
+    </div>
 
-
-</style>
-</head>
-<body onload="getWeather()">
-
-
-<div class="grid-container">
-  <div class="weather_icon"><span id="weather_icon" class="mdi mdi-alert-circle" style="font-size:2em"></span></div>
-  <div id="current_temperature" class="current_temperature">--°</div>
-  <div class="forecast_low"><span id = "forecast_low" class="mdi mdi-arrow-down-thick">--°</span></div>
-  <div class="forecast_high"><span id = "forecast_high" class="mdi mdi-arrow-up-thick">--°</span></div>  
-  <div class="current_feels_like">
-      <span class="mdi mdi-home-thermometer-outline">Feels Like: </span>
-      <span id="current_feels_like">--°</span>
-  </div>  
-
-  <div class="precipitation_title"><span class="mdi mdi-umbrella-outline"> Rainfall</span></div>
+    <div class="precipitation_title">
+        <span class="mdi mdi-umbrella-outline"> Rainfall</span>
+    </div>
     <div class="forecast_precipitation mdi mdi-ruler">
-      <span id="forecast_precipitation"> --.-"</span>
+        <span id="forecast_precipitation"> --.-"</span>
     </div>
     <div class="current_precipitation">
-      <span id="current_precipitation" class="mdi mdi-calendar-today"> --.-"</span>
+        <span id="current_precipitation" class="mdi mdi-calendar-today"> --.-"</span>
     </div>
     <div class="forecast_precipitation_chance">
-      <span id="forecast_precipitation_chance" class="mdi mdi-cloud-question"> --%</span>
+        <span id="forecast_precipitation_chance" class="mdi mdi-cloud-question"> --%</span>
     </div>
-  
-  <div class="pressure_title" ><span class="mdi mdi-gauge"> Pressure</span></div>
+
+    <div class="pressure_title">
+        <span class="mdi mdi-gauge"> Pressure</span>
+    </div>
     <div class="current_pressure">
-      <span id="current_pressure" class="mdi mdi-thermostat"> ---- hPa</span>
+        <span id="current_pressure" class="mdi mdi-thermostat"> ---- hPa</span>
     </div>
-    <div class = "current_pressure_direction">
-      <span id="pressure_icon" class= "mdi mdi-arrow-up-thick"></span>
-      <span id="current_pressure_direction"> -------</span>
-    </div>  
-  
-  <div class="current_humidity"><span id="current_humidity" class="mdi mdi-water-percent"> --%</span></div>  
-  <div class="current_dewpoint"><span id="current_dewpoint"> -------</span></div>  
-  <div class="current_condition1"> <span id="current_condition1">------- </span></div>
-  <div class="current_condition2"> <span id="current_condition2">------- </span></div>
+    <div class="current_pressure_direction">
+        <span id="pressure_icon" class="mdi mdi-arrow-up-thick"></span>
+        <span id="current_pressure_direction"> -------</span>
+    </div>
 
-  <div class="wind_title"><span class="mdi mdi-weather-windy-variant"> Wind</span></div>
-    <div class="current_wind_speed mdi mdi-tailwind"><span id = "current_wind_speed"> -- mph</span></div>
-    <div class="current_wind_gust mdi mdi-weather-windy"><span id = "current_wind_gust"> -- mph</span></div>  
-    <div class="current_wind_direction mdi mdi-compass-outline"><span id = "current_wind_direction"> --</span></div> 
-  
-  <div class="sunrise"><span id="sunrise" class="mdi mdi-weather-sunset-up"> -:-- am</span></div>   
-  <div class="sunset"><span id="sunset" class="mdi mdi-weather-sunset-down"> -:-- pm</span></div>  
-</div>
+    <div class="current_humidity">
+        <span id="current_humidity" class="mdi mdi-water-percent"> --%</span>
+    </div>
+    <div class="current_dewpoint">
+        <span id="current_dewpoint"> -------</span>
+    </div>
+    <div class="current_condition1"> 
+        <span id="current_condition1">------- </span>
+    </div>
+    <div class="current_condition2"> 
+        <span id="current_condition2">------- </span>
+    </div>
 
-<script>
+    <div class="wind_title">
+        <span class="mdi mdi-weather-windy-variant"> Wind</span>
+    </div>
+    <div class="current_wind_speed mdi mdi-tailwind">
+        <span id="current_wind_speed"> -- mph</span>
+    </div>
+    <div class="current_wind_gust mdi mdi-weather-windy">
+        <span id="current_wind_gust"> -- mph</span>
+    </div>
+    <div class="current_wind_direction mdi mdi-compass-outline">
+        <span id="current_wind_direction"> --</span>
+    </div>
 
-function setCondition(condition){
-
- 	let icon = "mdi-weather-sunny-off";
-  let text1 = "UNKNOWN";
-  let text2 = "";
+    <div class="sunrise">
+        <span id="sunrise" class="mdi mdi-weather-sunset-up"> -:-- am</span>
+    </div>
+    <div class="sunset">
+        <span id="sunset" class="mdi mdi-weather-sunset-down"> -:-- pm</span>
+    </div>
+    </div>
+"""
+    return html;
    
-	switch (condition){
-  	case "thunderstorm with light rain":
-    	icon = 	"mdi-weather-lightning-rainy";
-      text1 = "THUNDERSTORMS";
-      text2 = "LIGHT RAIN";
-      break;
-		case "thunderstorm with rain":
-    	icon = 	"mdi-weather-lightning-rainy";
-      text1 = "THUNDERSTORMS";
-      text2 = "RAIN";
-      break;
-		case "thunderstorm with heavy rain":
-    	icon = 	"mdi-weather-lightning-rainy";
-      text1 = "THUNDERSTORMS"
-      text2 = "HEAVY RAIN";
-      break;
-		case "light thunderstorm":
-    	icon = 	"mdi-weather-lightning";
-      text1 = "LIGHT";
-      text2 = "THUNDERSTORMS";
-      break;
-		case "thunderstorm":
-    	icon = 	"mdi-weather-lightning";
-      text1 = "THUNDERSTORMS";
-      break;
-		case "heavy thunderstorm":
-    	icon = 	"mdi-weather-lightning";
-      text1 = "HEAVY";
-      text2 = "THUNDERSTORMS";
-      break;
-		case "ragged thunderstorm":	
-    	icon = 	"mdi-weather-lightning";
-      text1 = "SCATTERED";
-      text2 = "THUNDERSTORMS";
-      break;
-		case "thunderstorm with light drizzle":
-    	icon = 	"mdi-weather-lightning-rainy";
-      text1 = "THUNDERSTORMS";
-      text2 = "LIGHT DRIZZLE";
-      break;
-		case "thunderstorm with drizzle":	
-    	icon = 	"mdi-weather-lightning-rainy";
-      text1 = "THUNDERSTORMS";
-      text2 = "DRIZZLE";
-      break;
-		case "thunderstorm with heavy drizzle":
-    	icon = 	"mdi-weather-lightning-rainy"
-      text1 = "THUNDERSTORMS"
-      text2 = "HEAVY DRIZZLE";
-      break;
-		case "light intensity drizzle":
-    	icon = 	"mdi-weather-partly-rainy";
-      text1 = "LIGHT";
-      text2 = "DRIZZLE";
-      break;
-		case "drizzle":
-    	icon = 	"mdi-weather-partly-rainy";
-      text1 = "DRIZZLE";
-      break;
-		case "heavy intensity drizzle":
-    	icon = 	"mdi-weather-partly-rainy";
-      text1 = "HEAVY";
-      text2 = "DRIZZLE";
-      break;
-		case "light intensity drizzle rain":
-    	icon = 	"mdi-weather-partly-rainy";
-      text1 = "LIGHT";
-      text2 = "DRIZZLE";
-      break;
-		case "drizzle rain":
-    	icon = 	"mdi-weather-partly-rainy";
-      text1 = "DRIZZLE";
-      break;
-		case "heavy intensity drizzle rain":	
-    	icon = 	"mdi-weather-rainy";
-      text1 = "RAIN";
-      break;
-		case "shower rain and drizzle":
-    	icon = "mdi-weather-rainy";
-      text1 = "RAIN";
-      break;
-		case "heavy shower rain and drizzle":
-    	icon = "mdi-weather-pouring";
-      text1 = "SHOWERS";
-      break;
-		case "shower drizzle":	
-    	icon = "mdi-weather-rainy";
-      text1 = "SHOWERS";
-      break;
-		case "light rain":
-    	icon = 	"mdi-weather-rainy";
-      text1 = "LIGHT";
-      text2 = "RAIN";
-      break;
-		case "moderate rain":	
-    	icon = "mdi-weather-pouring";
-      text1 = "MODERATE";
-      text2 = "RAIN";
-      break;
-		case "heavy intensity rain":	
-    	icon = "mdi-weather-pouring";
-      text1 = "HEAVY";
-      text2 = "RAIN";
-      break;
-		case "very heavy rain":
-    	icon = "mdi-weather-pouring";
-      text1 = "VERY HEAVY";
-      text2 = "RAIN";
-      break;
-		case "extreme rain":	
-    	icon = "mdi-weather-pouring";
-      text1 = "INTENSE";
-      text2 = "RAIN";
-      break;
-		case "freezing rain":	
-    	icon = "mdi-weather-snowy-rainy";
-      text1 = "FREEZING";
-      text2 = "RAIN";
-      break;
-		case "light intensity shower rain":	 
-    	icon = 	"mdi-weather-rainy";
-      text1 = "LIGHT";
-      text2 = "SHOWERS";
-      break;
-		case "shower rain":	
-    	icon = 	"mdi-weather-rainy";
-      text1 = "SHOWERS";
-      break;
-		case "heavy intensity shower rain":	
-    	icon = "mdi-weather-pouring";
-      text1 = "HEAVY"
-      text2 = "SHOWERS";
-      break;
-		case "ragged shower rain":	
-    	icon = "mdi-weather-partly-rainy";
-     	text1 = "SCATTERED";
-      text2 = "SHOWERS";
-      break;
-		case "light snow":
-    	icon = "mdi-weather-snowy";
-      text1 = "LIGHT";
-      text2 = "SNOW";
-      break;
-		case "Snow":
-    	icon = "mdi-weather-snowy";
-      text1 = "SNOW";
-      break;
-		case "Heavy snow":
-    	icon = "mdi-weather-snowy-heavy";
-      text1 = "HEAVY SNOW";
-      break;
-		case "Sleet":
-    	icon = "mdi-weather-hail";
-      text1 = "SLEET";
-      break;
-		case "Light shower sleet":	
-    	icon = "mdi-weather-hail";
-      text1 = "LIGHT SLEET";
-      break;
-		case "Shower sleet":
-    	icon = "mdi-weather-hail";
-      text1 = "SLEET";
-      text2 = "SHOWERS";
-      break;
-		case "Light rain and snow":	 
-    	icon = "mdi-weather-snowy-rainy";
-      text1 = "LIGHT"
-      text2 = "RAIN & SNOW";
-      break;
-		case "Rain and snow":	 
-    	icon = "mdi-weather-snowy-rainy";
-      text1 = "RAIN & SNOW";
-      break;
-		case "Light shower snow":	 
-    	icon = "mdi-weather-partly-snowy";
-      text1 = "LIGHT RAIN"
-      text2 = "SNOW SHOWERS";
-      break;
-		case "Shower snow":	
-    	icon = "mdi-weather-partly-snowy";
-      text1 = "SNOW SHOWERS";
-      break;
-		case "Heavy shower snow":	 
-    	icon = "mdi-weather-partly-snowy";
-      text1 = "HEAVY";
-      text2 = "SNOW SHOWERS";
-      break;
-		case "mist":
-    	icon = "mdi-weather-fog";
-      text1 = "MIST";
-      break;
-		case "Smoke":	 
-    	icon = "mdi-weather-fog";
-      text1 = "SMOKE";
-      break;
-		case "Haze":
-    	icon = "mdi-weather-hazy";
-      text1 = "HAZE";
-      break;
-		case "sand dust whirls":	 
-    	icon = "mdi-weather-tornado";
-      text1 = "DUST WHIRLS";
-      break;
-		case "fog":	
-    	icon = "mdi-weather-fog";
-      text1 = "FOG";
-      break;
-		case "sand":	
-    	icon = "mdi-weather-fog";
-      text1 = "SAND";
-      break;
-		case "dust":	
-    	icon = "mdi-weather-fog";
-      text1 = "DUST";
-      break;
-		case "volcanic ash":	
-    	icon = "mdi-weather-fog";
-      text1 = "VOCANIC ASH";
-      break;
-		case "squalls":
-    	icon = "mdi-weather-tornado";
-      text1 = "SQUALLS";
-      break;
-		case "tornado":
-    	icon = "mdi-weather-tornado";
-      text1 = "TORNADO";
-      break;
-		case "clear sky":		
-    	icon = "mdi-weather-sunny";
-      text1 = "SUNNY";
-      break;
-		case "few clouds":
-    	icon = "mdi-weather-partly-cloudy";
-      text1 = "FEW CLOUDS";
-      break;
-		case "scattered clouds":
-    	icon = "mdi-weather-partly-cloudy";
-      text1 = "SCATTERED";
-      text2 = "CLOUDS";
-      break;
-		case "broken clouds":
-    	icon = "mdi-weather-cloudy";
-      text1 = "BROKEN CLOUDS";
-      break;
- 		case "overcast clouds":
-    	icon = "mdi-weather-cloudy";
-      text1 = "OVERCAST"
-      text2 = "CLOUDS";
-      break;
+}
+
+def defineHTML_getOptions(){
+     def html = """
+        function getOptions() {
+            return jQuery.get("${state.localEndpointURL}getOptions/?access_token=${state.endpointSecret}", (data) => {
+            options = data;
+            console.log("Got Options");
+            console.log(options);
+        });
     }
+    """
+    return html;
+}
+
+def defineHTML_globalVariables(){
+    def html = """
+        var sunrise;
+        var sunset;
+        let options = [];
+    """
+}
+
+def defineHTML_setCondition(){
+    def html = """
     
+    function setCondition(condition) {
+
+    let icon = "mdi-weather-sunny-off";
+    let text1 = "UNKNOWN";
+    let text2 = "";
+    let now = new Date().getTime() / 1000;
+
+    console.debug("Now: " + now + " Sunrise: " + sunrise + " Sunset: " + sunset);
+
+    switch (condition) {
+        case "thunderstorm with light rain":
+            icon = "mdi-weather-lightning-rainy";
+            text1 = "THUNDERSTORMS";
+            text2 = "LIGHT RAIN";
+            break;
+        case "thunderstorm with rain":
+            icon = "mdi-weather-lightning-rainy";
+            text1 = "THUNDERSTORMS";
+            text2 = "RAIN";
+            break;
+        case "thunderstorm with heavy rain":
+            icon = "mdi-weather-lightning-rainy";
+            text1 = "THUNDERSTORMS"
+            text2 = "HEAVY RAIN";
+            break;
+        case "light thunderstorm":
+            icon = "mdi-weather-lightning";
+            text1 = "LIGHT";
+            text2 = "THUNDERSTORMS";
+            break;
+        case "thunderstorm":
+            icon = "mdi-weather-lightning";
+            text1 = "THUNDERSTORMS";
+            break;
+        case "heavy thunderstorm":
+            icon = "mdi-weather-lightning";
+            text1 = "HEAVY";
+            text2 = "THUNDERSTORMS";
+            break;
+        case "ragged thunderstorm":
+            icon = "mdi-weather-lightning";
+            text1 = "SCATTERED";
+            text2 = "THUNDERSTORMS";
+            break;
+        case "thunderstorm with light drizzle":
+            icon = "mdi-weather-lightning-rainy";
+            text1 = "THUNDERSTORMS";
+            text2 = "LIGHT DRIZZLE";
+            break;
+        case "thunderstorm with drizzle":
+            icon = "mdi-weather-lightning-rainy";
+            text1 = "THUNDERSTORMS";
+            text2 = "DRIZZLE";
+            break;
+        case "thunderstorm with heavy drizzle":
+            icon = "mdi-weather-lightning-rainy"
+            text1 = "THUNDERSTORMS"
+            text2 = "HEAVY DRIZZLE";
+            break;
+        case "light intensity drizzle":
+            icon = "mdi-weather-partly-rainy";
+            text1 = "LIGHT";
+            text2 = "DRIZZLE";
+            break;
+        case "drizzle":
+            icon = "mdi-weather-partly-rainy";
+            text1 = "DRIZZLE";
+            break;
+        case "heavy intensity drizzle":
+            icon = "mdi-weather-partly-rainy";
+            text1 = "HEAVY";
+            text2 = "DRIZZLE";
+            break;
+        case "light intensity drizzle rain":
+            icon = "mdi-weather-partly-rainy";
+            text1 = "LIGHT";
+            text2 = "DRIZZLE";
+            break;
+        case "drizzle rain":
+            icon = "mdi-weather-partly-rainy";
+            text1 = "DRIZZLE";
+            break;
+        case "heavy intensity drizzle rain":
+            icon = "mdi-weather-rainy";
+            text1 = "RAIN";
+            break;
+        case "shower rain and drizzle":
+            icon = "mdi-weather-rainy";
+            text1 = "RAIN";
+            break;
+        case "heavy shower rain and drizzle":
+            icon = "mdi-weather-pouring";
+            text1 = "SHOWERS";
+            break;
+        case "shower drizzle":
+            icon = "mdi-weather-rainy";
+            text1 = "SHOWERS";
+            break;
+        case "light rain":
+            icon = "mdi-weather-rainy";
+            text1 = "LIGHT";
+            text2 = "RAIN";
+            break;
+        case "moderate rain":
+            icon = "mdi-weather-pouring";
+            text1 = "MODERATE";
+            text2 = "RAIN";
+            break;
+        case "heavy intensity rain":
+            icon = "mdi-weather-pouring";
+            text1 = "HEAVY";
+            text2 = "RAIN";
+            break;
+        case "very heavy rain":
+            icon = "mdi-weather-pouring";
+            text1 = "VERY HEAVY";
+            text2 = "RAIN";
+            break;
+        case "extreme rain":
+            icon = "mdi-weather-pouring";
+            text1 = "INTENSE";
+            text2 = "RAIN";
+            break;
+        case "freezing rain":
+            icon = "mdi-weather-snowy-rainy";
+            text1 = "FREEZING";
+            text2 = "RAIN";
+            break;
+        case "light intensity shower rain":
+            icon = "mdi-weather-rainy";
+            text1 = "LIGHT";
+            text2 = "SHOWERS";
+            break;
+        case "shower rain":
+            icon = "mdi-weather-rainy";
+            text1 = "SHOWERS";
+            break;
+        case "heavy intensity shower rain":
+            icon = "mdi-weather-pouring";
+            text1 = "HEAVY"
+            text2 = "SHOWERS";
+            break;
+        case "ragged shower rain":
+            icon = "mdi-weather-partly-rainy";
+            text1 = "SCATTERED";
+            text2 = "SHOWERS";
+            break;
+        case "light snow":
+            icon = "mdi-weather-snowy";
+            text1 = "LIGHT";
+            text2 = "SNOW";
+            break;
+        case "Snow":
+            icon = "mdi-weather-snowy";
+            text1 = "SNOW";
+            break;
+        case "Heavy snow":
+            icon = "mdi-weather-snowy-heavy";
+            text1 = "HEAVY SNOW";
+            break;
+        case "Sleet":
+            icon = "mdi-weather-hail";
+            text1 = "SLEET";
+            break;
+        case "Light shower sleet":
+            icon = "mdi-weather-hail";
+            text1 = "LIGHT SLEET";
+            break;
+        case "Shower sleet":
+            icon = "mdi-weather-hail";
+            text1 = "SLEET";
+            text2 = "SHOWERS";
+            break;
+        case "Light rain and snow":
+            icon = "mdi-weather-snowy-rainy";
+            text1 = "LIGHT"
+            text2 = "RAIN & SNOW";
+            break;
+        case "Rain and snow":
+            icon = "mdi-weather-snowy-rainy";
+            text1 = "RAIN & SNOW";
+            break;
+        case "Light shower snow":
+            icon = "mdi-weather-partly-snowy";
+            text1 = "LIGHT RAIN"
+            text2 = "SNOW SHOWERS";
+            break;
+        case "Shower snow":
+            icon = "mdi-weather-partly-snowy";
+            text1 = "SNOW SHOWERS";
+            break;
+        case "Heavy shower snow":
+            icon = "mdi-weather-partly-snowy";
+            text1 = "HEAVY";
+            text2 = "SNOW SHOWERS";
+            break;
+        case "mist":
+            icon = "mdi-weather-fog";
+            text1 = "MIST";
+            break;
+        case "Smoke":
+            icon = "mdi-weather-fog";
+            text1 = "SMOKE";
+            break;
+        case "Haze":
+            icon = "mdi-weather-hazy";
+            text1 = "HAZE";
+            break;
+        case "sand dust whirls":
+            icon = "mdi-weather-tornado";
+            text1 = "DUST WHIRLS";
+            break;
+        case "fog":
+            icon = "mdi-weather-fog";
+            text1 = "FOG";
+            break;
+        case "sand":
+            icon = "mdi-weather-fog";
+            text1 = "SAND";
+            break;
+        case "dust":
+            icon = "mdi-weather-fog";
+            text1 = "DUST";
+            break;
+        case "volcanic ash":
+            icon = "mdi-weather-fog";
+            text1 = "VOCANIC ASH";
+            break;
+        case "squalls":
+            icon = "mdi-weather-tornado";
+            text1 = "SQUALLS";
+            break;
+        case "tornado":
+            icon = "mdi-weather-tornado";
+            text1 = "TORNADO";
+            break;
+        case "clear sky":
+            if (now > sunset || now < sunrise) {
+                icon = "mdi-weather-night";
+                text1 = "CLEAR";
+            } else {
+                icon = "mdi-weather-sunny";
+                text1 = "SUNNY";
+            }
+            break;
+        case "few clouds":
+            if (now > sunset || now < sunrise) {
+                icon = "mdi-weather-night-partly-cloudy"
+            } else {
+                icon = "mdi-weather-partly-cloudy";
+            }
+            text1 = "FEW CLOUDS";
+            break;
+        case "scattered clouds":
+            if (now > sunset || now < sunrise) {
+                icon = "mdi-weather-night-partly-cloudy"
+            } else {
+                icon = "mdi-weather-partly-cloudy";
+            }
+            text1 = "SCATTERED";
+            text2 = "CLOUDS";
+            break;
+        case "broken clouds":
+            icon = "mdi-weather-cloudy";
+            text1 = "BROKEN CLOUDS";
+            break;
+        case "overcast clouds":
+            icon = "mdi-weather-cloudy";
+            text1 = "OVERCAST"
+            text2 = "CLOUDS";
+            break;
+    }
+
     let el = document.getElementById('weather_icon');
-    el.className = 'mdi '+icon;
-    
+    el.className = 'mdi ' + icon;
+
     el = document.getElementById('current_condition1');
     el.textContent = text1;
-    
+
     el = document.getElementById('current_condition2');
     el.textContent = text2;
+    }
+    """
+    return html;
 }
- 
- function setValue(val, str) {
- 		let el = document.getElementById(str);
-    el.textContent = val;
- }
- 
- function getWindDirection(direction){
-	if (direction > 348.75 || direction < 11.25) return "N";
-  if (direction >= 11.25 && direction < 33.75) return "NNE";
- 	if (direction >= 33.75 && direction < 56.25) return "NE";
- 	if (direction >= 56.25 && direction < 78.7) return "ENE";
- 	if (direction >= 78.75 && direction < 101.25) return "E";
- 	if (direction >= 101.25 && direction < 123.75) return "ESE";
- 	if (direction >= 123.75 && direction < 146.25) return "SE";
- 	if (direction >= 146.25 && direction < 168.75) return "SSE";
- 	if (direction >= 168.75 && direction < 191.25) return "S";
- 	if (direction >= 191.25 && direction < 213.75) return "SSW";
- 	if (direction >= 213.75 && direction < 236.25) return "SW";
- 	if (direction >= 236.25 && direction < 258.75) return "WSW";
- 	if (direction >= 258.75 && direction < 281.25) return "W";
- 	if (direction >= 281.25 && direction < 303.75) return "WNW";
- 	if (direction >= 303.75 && direction < 326.25) return "NW";
- 	if (direction >= 326.25 && direction < 348.75) return "NNW";
+
+def defineHTML_setValue(){
+    def html = """
+        function setValue(val, str) {
+ 		    let el = document.getElementById(str);
+            el.textContent = val;
+         }
+    """
+    return html;
 }
+
+def defineHTML_getWindDirection(){
+   def html = """
+        function getWindDirection(direction){
+	        if (direction > 348.75 || direction < 11.25) return "N";
+            if (direction >= 11.25 && direction < 33.75) return "NNE";
+         	if (direction >= 33.75 && direction < 56.25) return "NE";
+         	if (direction >= 56.25 && direction < 78.7) return "ENE";
+         	if (direction >= 78.75 && direction < 101.25) return "E";
+         	if (direction >= 101.25 && direction < 123.75) return "ESE";
+ 	        if (direction >= 123.75 && direction < 146.25) return "SE";
+         	if (direction >= 146.25 && direction < 168.75) return "SSE";
+ 	        if (direction >= 168.75 && direction < 191.25) return "S";
+ 	        if (direction >= 191.25 && direction < 213.75) return "SSW";
+ 	        if (direction >= 213.75 && direction < 236.25) return "SW";
+ 	        if (direction >= 236.25 && direction < 258.75) return "WSW";
+ 	        if (direction >= 258.75 && direction < 281.25) return "W";
+ 	        if (direction >= 281.25 && direction < 303.75) return "WNW";
+ 	        if (direction >= 303.75 && direction < 326.25) return "NW";
+ 	        if (direction >= 326.25 && direction < 348.75) return "NNW";
+        }
+    """
+    return html;
+}
+
+def defineHTML_getString(){
+    
+    def html = """
+    function getString(data){
+         
+        let val = data.value;
+        switch (data.units){
+            case "C" :
+                if (options.tile_units == "imperial"){
+                    val = (data.value * 9/5) + 32;
+                }
+                return val.toFixed+unescape('%B0');
+                break;
+            case "F" : 
+               if (options.tile_units == "metric"){
+                    val = (data.value − 32) * 5/9;
+                }
+               return val.toFixed+unescape('%B0');
+               break;
+            case "mm" :
+               if (options.tile_units == "imperial"){
+                    val = (data.value * 25.4);
+                }
+               return val.toFixed+'"';
+               break;
+            case "in" :
+                if (options.tile_units == "metric"){
+                    val = (data.value / 25.4);
+                }
+               return val.toFixed+'mm';
+               break;
+            case "none" :
+               return val;
+            case 
+            
+        }
+    }
+    """
+    return html;
+}
+
+def defineHTML_setWeatherTile(){
+     def html = """
  
- function setWeatherTile(weather){
+function setWeatherTile(weather) {
 
- 	weather.forEach((value,key) => {
-  		let val = value;
-  		console.log(key+" "+value);
-  		let unit = "";
-  		switch (key){
-      	case "current_temperature":
-				case "forecast_high":
-				case "forecast_low":
-        case "current_feels_like":
-        	unit = "°"; 
-          break;
-       case "current_wind_speed":
-			 case "current_wind_gust":
-       		unit = " mph";
-          break;
-			case "current_wind_direction":
-      		console.log(value);
-      		val = getWindDirection(value);
-          break;
-			case "forecast_precipitation":
-      case "current_precipitation":
-      		unit = '"';
-          break;
-      case "current_pressure":
-      		unit = ' hPa';
-          break;
-      case "current_humidity":
-      case "forecast_precipitation_chance":
-      		unit = '%';
-          break;
-      }
-     
-     if (key == "current_description"){
-     		setCondition(val);
-     } else if (key == "current_pressure_direction"){
-        console.log("Here 3");
-     		setPressure(val);
-     } else {
-    		setValue(" "+val+unit, key);
+    weather.forEach((value, key) => {
+        let val = value;
+        let unit = "";
+        switch (key) {
+            case "current_temperature":
+                val = value.value;
+            case "forecast_high":
+            case "forecast_low":
+            case "current_feels_like":
+                unit = unescape('%B0');
+                break;
+            case "current_wind_speed":
+            case "current_wind_gust":
+                unit = " mph";
+                break;
+            case "current_wind_direction":
+                val = getWindDirection(value);
+                break;
+            case "forecast_precipitation":
+            case "current_precipitation":
+                unit = '"';
+                break;
+            case "current_pressure":
+                unit = ' hPa';
+                break;
+            case "current_humidity":
+            case "forecast_precipitation_chance":
+                unit = '%';
+                break;
+        }
 
+        if (key == "current_description") {
+            setCondition(val);
+        } else if (key == "current_pressure_direction") {
+            setPressure(val);
+        } else {
+            setValue(" " + val + unit, key);
+
+        }
+
+    });
+
+}
+    """
+    return html;
+}
+
+def defineHTML_toInches(){
+   def html = """ 
+         function toInches(val){
+ 	        val = val/25.4;
+            return val.toFixed(2);
+         }
+    """
+    return html;
+}
+
+def defineHTML_getTime(){
+   def html = """
+     function getTime(secs){
+ 	    let date = new Date(secs*1000);
+        return date.toLocaleTimeString([], {timeStyle: 'short'});
      }
-  
-  });
+ """
+    return html;
+}
+
+def defineHTML_getDewPoint(){
+    
+   def html = """
+     function getDewPoint(temp){
  
- }
+ 	    if (temp < 50) return "Dry ("+temp.toFixed()+unescape('%B0')+")";
+        else if (temp < 55) return "Pleasent ("+temp.toFixed()+unescape('%B0')+")";
+        else if (temp < 60) return "Comfortable ("+temp.toFixed()+unescape('%B0')+")";
+        else if (temp < 65) return "Sticky ("+temp.toFixed()+unescape('%B0')+")";
+        else if (temp < 70) return "Uncomfortable ("+temp.toFixed()+unescape('%B0')+")";
+        else if (temp < 75) return "Opressive ("+temp.toFixed()+unescape('%B0')+")";
+        else return "Miserable ("+temp.toFixed()+unescape('%B0')+")";
+    }
  
- function toInches(val){
- 	val = val/25.4;
-  return val.toFixed(2);
- }
- 
- function getTime(secs){
- 	let date = new Date(secs*1000);
-  return date.toLocaleTimeString([], {timeStyle: 'short'});
- }
- 
- function getDewPoint(temp){
- 
- 	if (temp < 50) return "Dry ("+temp.toFixed()+"°)";
-  else if (temp < 55) return "Pleasent ("+temp.toFixed()+"°)";
-  else if (temp < 60) return "Comfortable ("+temp.toFixed()+"°)";
-  else if (temp < 65) return "Sticky ("+temp.toFixed()+"°)";
-  else if (temp < 70) return "Uncomfortable ("+temp.toFixed()+"°)";
-  else if (temp < 75) return "Opressive ("+temp.toFixed()+"°)";
-  else return "Miserable ("+temp.toFixed()+"°)";
- 
- }
- 
- function setPressure(diff){
+  """
+    return html;
+}
+
+def defineHTML_setPressure(){
+    
+    def html = """
+
+    function setPressure(diff){
  		let icon = '';
     let text = '';
     
-    console.log("Diff :"+diff)
  		if (diff == 0) {
     	text = 'Steady';
       icon = 'mdi-arrow-right-thick';
@@ -672,101 +1224,283 @@ function setCondition(condition){
       icon = 'mdi-arrow-up-thick';
     }
  
- 		console.log(icon+" "+text);
- 		let el = document.getElementById('pressure_icon');
+ 	let el = document.getElementById('pressure_icon');
     el.className = 'current_pressure_direction mdi '+icon;
     
     el = document.getElementById('current_pressure_direction');
     el.textContent = text;
  }
- 
- function getWeather() {
- 		const apiKey = "f06d50f56deb8cfa989bf122cac36693";
-    
-    const url = `https://api.openweathermap.org/data/2.5/onecall?lat=38.747277&lon=-77.700569&exclude=minutely,hourly&appid=${apiKey}&units=imperial`;
-   
-	fetch(url)
-  	.then(response => response.json())
-  	.then(data => {
-    	let weather = new Map();
-    	//console.log(data);
-      weather.set('current_temperature', data.current.temp.toFixed());
-      weather.set('forecast_high', data.daily[0].temp.max.toFixed());
-      weather.set('forecast_low', data.daily[0].temp.min.toFixed());
-      weather.set('current_feels_like', data.current.feels_like.toFixed());
-    	weather.set('current_description', data.current.weather[0].description);
-      weather.set('current_wind_speed', data.current.wind_speed.toFixed());
-      if (data.current.wind_gust != undefined) 
-      	weather.set('current_wind_gust', data.current.wind_gust.toFixed());
-      else
-     		weather.set('current_wind_gust', data.current.wind_speed.toFixed());
-   
-      weather.set('current_wind_direction', data.current.wind_deg);
-      if (data.daily[0].rain != undefined)
-      	weather.set('forecast_precipitation', toInches(data.daily[0].rain));
-      else
-      	weather.set('forecast_precipitation', "0.00");
-      
-      weather.set('forecast_precipitation_chance', data.daily[0].pop*100)
-        
-      weather.set('current_pressure', data.current.pressure.toFixed()); 
-      weather.set('current_humidity', data.current.humidity.toFixed());
-      weather.set('sunrise', getTime(data.current.sunrise));
-      weather.set('sunset', getTime(data.current.sunset));
-      weather.set('current_dewpoint', getDewPoint(data.current.dew_point));
-			
-      setWeatherTile(weather);
-  	})
-  	.catch(() => {
-   	 msg.textContent = "Please search for a valid city 😩";
-  	});
-
-
-    let now = new Date();
-    now.setHours(0,0,0,0);
-    let secs = now.getTime()/1000.0
-    secs = secs.toFixed();
-       
-    const url2 = `https://api.openweathermap.org/data/2.5/onecall/timemachine?lat=38.747277&lon=-77.700569&dt=${secs}&appid=${apiKey}`;
-     
-      fetch(url2)
- 			 	.then(response => response.json())
-  			.then(data => {
-        		console.log(data);
-        		let weather2 = new Map();
-      			let total_rain = 0.0;
-            data.hourly.forEach((val) =>{
-            	if (val.rain != undefined) {
-              	total_rain += val.rain["1h"];
-              }
-            })
-            weather2.set('current_precipitation', toInches(total_rain));
-            console.log("Here");
-            let num = data.hourly.length;
-            if (num > 1) {
-            	weather2.set('current_pressure_direction', 0);
-            } else {
-            	let diff = data.hourly[num-1].pressure - data.hourly[num-2].pressure;
-              console.log("Diff:"+diff)
-              weather2.set('current_pressure_direction', diff);
-            } 
-
-					  setWeatherTile(weather2);
-						
-  			})
-  		
-      	.catch(() => {
-   	 			msg.textContent = "Please search for a valid city 😩";
-  			});
+"""
+    return html;
 }
 
+def defineHTML_getWeather(){
+    def html = """
+    
+function getWeather() {
+    const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly&appid=${tile_key}&units=${tile_units}`;
+
+    let now = new Date();
+    console.log("Got data at " + now);
+    let tempUnits = options.tile_units == "imperial" ? "F" : "C";
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            let weather = new Map();
+            weather.set('current_temperature',   {value : data.current.temp.toFixed(),         units: tempUnits});
+            weather.set('forecast_high',         {value : data.daily[0].temp.max.toFixed(),    units: tempUnits});
+            weather.set('forecast_low',          {value : data.daily[0].temp.min.toFixed(),    units: tempUnits});
+            weather.set('current_feels_like',    {value : data.current.feels_like.toFixed(),   units: tempUnits});
+            weather.set('current_description',   {value : data.current.weather[0].description, units: "none"});
+            weather.set('current_wind_speed',    {value : data.current.wind_speed.toFixed(),   units: "msec"});
+            if (data.current.wind_gust != undefined)
+                weather.set('current_wind_gust', {value : data.current.wind_gust.toFixed(),    units: "msec"});
+            else
+                weather.set('current_wind_gust', {value : data.current.wind_speed.toFixed(),   units: "msec"});
+
+            weather.set('current_wind_direction', data.current.wind_deg);
+            if (data.daily[0].rain != undefined)
+                weather.set('forecast_precipitation', {value : data.daily[0].rain,     units: "mm"});
+            else
+                weather.set('forecast_precipitation', {value : "0.00",                 units: "mm"});
+
+            weather.set('forecast_precipitation_chance', {value : data.daily[0].pop * 100, units: "%"})
+
+            weather.set('current_pressure',     {value : data.current.pressure.toFixed(),     units: "hPa"});
+            weather.set('current_humidity',     {value : data.current.humidity.toFixed(),     units: "%"});
+            weather.set('sunrise',              {value : getTime(data.current.sunrise),       units: "sec"});
+            weather.set('sunset',               {value : getTime(data.current.sunset),        units: "sec"});
+            weather.set('current_dewpoint',     {value : getDewPoint(data.current.dew_point), units: tempUnits});
+
+            //Set global sunrise and sunset
+            sunrise = data.current.sunrise;
+            sunset = data.current.sunset;
+            setWeatherTile(weather);
+        })
+        .catch(() => {
+            msg.textContent = "Please search for a valid city 😩";
+        });
 
 
-function change(){    
-    getWeather();
-	}
-</script>
+    now.setHours(0, 0, 0, 0);
+    let secs = now.getTime() / 1000.0
+    secs = secs.toFixed();
 
+    const url2 = `https://api.openweathermap.org/data/2.5/onecall/timemachine?lat=${latitude}&lon=${longitude}&dt=\${secs}&appid=${tile_key}`;
 
-</body>
-</html>
+    fetch(url2)
+        .then(response => response.json())
+        .then(data => {
+            let weather2 = new Map();
+            let total_rain = 0.0;
+            data.hourly.forEach((val) => {
+                if (val.rain != undefined) {
+                    total_rain += val.rain["1h"];
+                }
+            })
+
+            weather2.set('current_precipitation', {value :total_rain, units: "mm"});
+            let num = data.hourly.length;
+            if (num > 1) {
+                weather2.set('current_pressure_direction', {value :0, units: "none"});
+            } else {
+                let diff = data.hourly[num - 1].pressure - data.hourly[num - 2].pressure;
+                weather2.set('current_pressure_direction', {value : diff, units: "none"});
+            }
+
+            setWeatherTile(weather2);
+
+        })
+        .catch(() => {
+            msg.textContent = "Please search for a valid city 😩";
+        });
+    }
+
+    """
+    return html;
+}
+
+def defineHTML_initialize(){
+    
+    def html = """
+    async function initialize(){ 
+        setInterval(() => {
+                getWeather();
+        }, ${tile_refresh_rate});
+
+        await getOptions();    
+
+        console.log("Recuring Load at: ${tile_refresh_rate}");
+        getWeather();
+    }
+    """
+    return html;
+}
+
+def getWeatherTile() {
+    def fullSizeStyle = "margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden";
+    
+    html = defineHTML_Header();
+    html += "<head><style>";
+    //CSS
+    html += defineHTML_CSS();
+    html += """</style></head><body onload="initialize()">"""
+    html += defineHTML_Tile();
+    
+    html += "<script>"
+    html += defineHTML_globalVariables();
+
+    html += defineHTML_getOptions();
+    html += defineHTML_setCondition();
+    html += defineHTML_setValue();
+    html += defineHTML_getWindDirection();
+    html += defineHTML_setWeatherTile();
+    html += defineHTML_toInches();
+    html += defineHTML_getTime();
+    html += defineHTML_getDewPoint();
+    html += defineHTML_setPressure();    
+    html += defineHTML_getWeather();
+    html += defineHTML_initialize();
+    html += defineHTML_getString();
+     
+    html +="</script></body></html>"
+ 
+    return html;
+}
+    
+def initializeAppEndpoint() {
+    if (!state.endpoint) {
+        try {
+            def accessToken = createAccessToken()
+            if (accessToken) {
+                state.endpoint = getApiServerUrl()
+                state.localEndpointURL = fullLocalApiServerUrl("")  
+                state.remoteEndpointURL = fullApiServerUrl("/graph")
+                state.endpointSecret = accessToken
+            }
+        }
+        catch(e) {
+            state.endpoint = null
+        }
+    }
+    return state.endpoint
+}
+
+//oauth endpoints
+def getTile() {
+    render(contentType: "text/html", data: getWeatherTile());      
+}
+
+def getData() {
+    def timeline = buildData();
+    return render(contentType: "text/json", data: JsonOutput.toJson(timeline));
+}
+
+def getOptions() {
+    render(contentType: "text/json", data: JsonOutput.toJson(getTileOptions()));
+}
+
+def getSubscriptions() {
+    def ids = [];
+    def sensors_ = [:];
+    def attributes = [:];
+    def labels = [:];
+    def drop_ = [:];
+    def var_ = [:];
+    def graph_type_ = [:];
+    def states_ = [:];
+    
+    
+    sensors.each {sensor->
+        ids << sensor.idAsLong;
+        
+        //only take what we need
+        sensors_[sensor.id] = [ id: sensor.id, idAsLong: sensor.idAsLong, displayName: sensor.displayName ];        
+        attributes[sensor.id] = settings["attributes_${sensor.id}"];
+        
+        labels[sensor.id] = [:];
+        settings["attributes_${sensor.id}"].each { attr ->
+            labels[sensor.id][attr] = settings["graph_name_override_${sensor.id}_${attr}"];
+        }
+        
+        drop_[sensor.id] = [:];
+        graph_type_[sensor.id] = [:];
+        var_[sensor.id] = [:];
+        states_[sensor.id] = [:];
+        
+        settings["attributes_${sensor.id}"].each { attr ->
+            
+            def stroke_color = settings["var_${sensor.id}_${attr}_stroke_color"];
+            def stroke_opacity = settings["var_${sensor.id}_${attr}_stroke_opacity"];
+            def stroke_line_size = settings["var_${sensor.id}_${attr}_stroke_line_size"];
+            def fill_color = settings["var_${sensor.id}_${attr}_fill_color"];
+            def fill_opacity = settings["var_${sensor.id}_${attr}_fill_opacity"];
+            def function = settings["var_${sensor.id}_${attr}_function"];
+            
+            
+            if (settings["attribute_${sensor.id}_${attr}_states"] && settings["attribute_${sensor.id}_${attr}_custom_states"] == true){
+                states_[sensor.id][attr] = [:];  
+                settings["attribute_${sensor.id}_${attr}_states"].each{states->
+                    states_[sensor.id][attr][states] = settings["attribute_${sensor.id}_${attr}_${states}"];
+                }
+            }
+            
+            drop_valid = false;
+            if (settings["attribute_${sensor.id}_${attr}_drop_line"] == true)
+                drop_valid = true;    
+            
+            drop_[sensor.id][attr] = [    valid: drop_valid  ? "true" : "false",
+                                          value: drop_valid ? settings["attribute_${sensor.id}_${attr}_drop_value"] : "null"
+                                      ];
+            
+            graph_type_[sensor.id][attr] = settings["graph_type_${sensor.id}_${attr}"];
+            
+            var_[sensor.id][attr] = [ stroke_color :   stroke_color,
+                                      stroke_opacity : stroke_opacity,
+                                      stroke_width:    stroke_line_size,
+                                      fill_color:      fill_color,
+                                      fill_opacity:    fill_opacity,
+                                      function:        function, 
+                                      units:           settings["units_${sensor.id}_${attr}"] ? settings["units_${sensor.id}_${attr}"] : "",
+                                    ];
+        }//settings
+            
+    } //sensors
+    
+    def obj = [
+        ids: ids,
+        sensors: sensors_,
+        attributes: attributes, 
+        labels : labels,
+        drop : drop_,
+        graph_type: graph_type_,
+        var : var_,
+        states: states_
+    ]
+    
+    def subscriptions = obj;
+    
+    return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
+}
+
+def getColorCode(code){
+    
+    ret = "#FFFFFF"
+    switch (code){
+        case 7:  ret = "#800000"; break;
+        case 1:	    ret = "#FF0000"; break;
+        case 6:	ret = "#FFA500"; break;	
+        case 8:	ret = "#FFFF00"; break;	
+        case 9:	ret = "#808000"; break;	
+        case 2:	ret = "#008000"; break;	
+        case 5:	ret = "#800080"; break;	
+        case 4:	ret = "#FF00FF"; break;	
+        case 10: ret = "#00FF00"; break;	
+        case 11: ret = "#008080"; break;	
+        case 12: ret = "#00FFFF"; break;	
+        case 3:	ret = "#0000FF"; break;	
+        case 13: ret = "#000080"; break;	
+    }
+    return ret;
+}
