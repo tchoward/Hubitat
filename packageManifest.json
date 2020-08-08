@@ -68,6 +68,14 @@
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_heat_map.groovy",
       "required": true,
       "oauth": true
+    },
+    {
+      "id": "80af7b8b-3c75-44c4-a036-7f6e0d4a0361",
+      "name": "Hubigraph Weather Tile",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_weather_tile.groovy",
+      "required": true,
+      "oauth": true
     }
   ],
   "drivers": [
