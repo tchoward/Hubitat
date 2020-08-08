@@ -126,7 +126,7 @@ def tileSetupPage(){
                            [title: 'Forecast Low',            var: "display_forecast_low",           unit: unitTemp,      imperial: "fahrenheit",      metric: "celsius"],
                            [title: 'Forecast Daily Rainfall', var: "display_forecast_precipitation", unit: unitLength,    imperial: "inches",          metric: "millimeters"],
                            [title: 'Actual Daily Rainfall',   var: "display_actual_precipitation",   unit: unitLength,    imperial: "inches",          metric: "millimeters"],
-                           [title: 'Forecast Rainfall Chance',var: "display_chance_precipitation",   unit: unitPercent,   imperial: "percent_numeric", metric: "perecent_numeric"],
+                           [title: 'Forecast Rainfall Chance',var: "display_chance_precipitation",   unit: unitPercent,   imperial: "percent_numeric", metric: "percent_numeric"],
                            [title: 'Wind Speed',              var: "display_wind_speed",             unit: unitWind,      imperial: "miles_per_hour",  metric: "meters_per_second"],
                            [title: 'Wind Gust',               var: "display_wind_gust",              unit: unitWind,      imperial: "miles_per_hour",  metric: "meters_per_second"],
                            [title: 'Wind Direction',          var: "display_wind_direction",         unit: unitDirection, imperial: "cardinal",        metric: "cardinal"], 
@@ -837,7 +837,7 @@ def defineHTML_CSS(){
   grid-row-start: 7;
   grid-row-end: 7;
   grid-column-start: 18;
-  grid-column-end: 25;
+  grid-column-end: 26;
   font-size: 4vmin;
   text-align: left !important;
 }
@@ -855,7 +855,7 @@ def defineHTML_CSS(){
   grid-row-start: 11;
   grid-row-end: 11;
   grid-column-start: 3;
-  grid-column-end: 7;
+  grid-column-end: 9;
   font-size: 4vmin;
   text-align: left !important;
   line-height: 1;
@@ -884,7 +884,7 @@ def defineHTML_CSS(){
 .current_dewpoint{
   grid-row-start: 11;
   grid-row-end: 11;
-  grid-column-start: 7;
+  grid-column-start: 9;
   grid-column-end: 18;
   font-size: 4vmin;
   text-align: left !important;
