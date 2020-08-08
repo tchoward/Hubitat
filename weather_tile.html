@@ -120,18 +120,21 @@ def tileSetupPage(){
     def unitPercent =    [["percent_numeric": "Numeric (0 to 100)"], ["percent_decimal": "Decimal (0.0 to 1.0)"]];
     def unitTime =       [["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
     
-    def unit_selections = [[title: 'Current Temperature',     var: "display_current_temp",           unit: unitTemp,      imperial: "fahrenheit",     metric: "celsius"],
-                           [title: 'Feels Like',              var: "display_feels_like",             unit: unitTemp,      imperial: "fahrenheit",     metric: "celsius"],
-                           [title: 'Forecast High',           var: "display_forcast_high",           unit: unitTemp,      imperial: "fahrenheit",     metric: "celsius"],
-                           [title: 'Forecast Low',            var: "display_forecast_low",           unit: unitTemp,      imperial: "fahrenheit",     metric: "celsius"],
-                           [title: 'Forecast Daily Rainfall', var: "display_forecast_precipitation", unit: unitLength,    imperial: "inches",         metric: "millimeters"],
-                           [title: 'Actual Daily Rainfall',   var: "display_actual_precipitation",   unit: unitLength,    imperial: "inches",         metric: "millimeters"],
-                           [title: 'Wind Speed',              var: "display_wind_speed",             unit: unitWind,      imperial: "miles_per_hour", metric: "meters_per_second"],
-                           [title: 'Wind Gust',               var: "display_wind_gust",              unit: unitWind,      imperial: "miles_per_hour", metric: "meters_per_second"],
-                           [title: 'Wind Direction',          var: "display_wind_direction",         unit: unitDirection,  imperial: "cardinal",      metric: "cardinal"], 
-                           [title: 'Current Pressure',        var: "display_current_pressure",       unit: unitPressure,  imperial: "inches_mercury", metric: "millimeters_mercury"],
-                           [title: 'Dew Point',               var: "display_dew_point",              unit: unitTemp,      imperial: "fahrenheit",     metric: "celsius"],
-                           [title: 'Time Format',             var: "display_time_format",            unit: unitTime,      imperial: "time_twelve",    metric: "time_two_four"]
+    def unit_selections = [[title: 'Current Temperature',     var: "display_current_temp",           unit: unitTemp,      imperial: "fahrenheit",      metric: "celsius"],
+                           [title: 'Feels Like',              var: "display_feels_like",             unit: unitTemp,      imperial: "fahrenheit",      metric: "celsius"],
+                           [title: 'Forecast High',           var: "display_forcast_high",           unit: unitTemp,      imperial: "fahrenheit",      metric: "celsius"],
+                           [title: 'Forecast Low',            var: "display_forecast_low",           unit: unitTemp,      imperial: "fahrenheit",      metric: "celsius"],
+                           [title: 'Forecast Daily Rainfall', var: "display_forecast_precipitation", unit: unitLength,    imperial: "inches",          metric: "millimeters"],
+                           [title: 'Actual Daily Rainfall',   var: "display_actual_precipitation",   unit: unitLength,    imperial: "inches",          metric: "millimeters"],
+                           [title: 'Forecast Rainfall Chance',var: "display_chance_precipitation",   unit: unitPercent,   imperial: "percent_numeric", metric: "perecent_numeric"],
+                           [title: 'Wind Speed',              var: "display_wind_speed",             unit: unitWind,      imperial: "miles_per_hour",  metric: "meters_per_second"],
+                           [title: 'Wind Gust',               var: "display_wind_gust",              unit: unitWind,      imperial: "miles_per_hour",  metric: "meters_per_second"],
+                           [title: 'Wind Direction',          var: "display_wind_direction",         unit: unitDirection, imperial: "cardinal",        metric: "cardinal"], 
+                           [title: 'Current Pressure',        var: "display_current_pressure",       unit: unitPressure,  imperial: "inches_mercury",  metric: "millimeters_mercury"],
+                           [title: 'Dew Point',               var: "display_dew_point",              unit: unitTemp,      imperial: "fahrenheit",      metric: "celsius"],
+                           [title: 'Humidity',                var: "display_humidity",               unit: unitPercent,   imperial: "percent_numeric", metric: "percent_numeric"],
+                           [title: 'Time Format',             var: "display_time_format",            unit: unitTime,      imperial: "time_twelve",     metric: "time_two_four"]
+
                           ];
 
 
@@ -145,7 +148,6 @@ def tileSetupPage(){
             if (override_openweather){
                 input( type: "enum", name: "pws_refresh_rate", title: "<b>Select PWS Update Rate</b>", multiple: false, required: true, options: updateEnum, defaultValue: "300000");        
             }
-            input( type: "enum", name: "tile_units", title: "<b>Select Units</b>", multiple: false, required: true, options: unitEnum, defaultValue: "imperial");
             container = [];
             container << parent.hubiForm_text_input (this, "<b>Open Weather Map Key</b>", "tile_key", "", false);
             
@@ -194,7 +196,6 @@ def tileSetupPage(){
                 input( type: "enum", name: attribute.var, title: "Units", required: false, multiple: false, options: attribute.unit, defaultValue: attribute.imperial, submitOnChange: false)
                 input( type: "enum", name: attribute.var+"decimal_places", title: "Decimal Places", required: false, multiple: false, options: decimalEnum, defaultValue: 1, submitOnChange: false)
             }
-            parent.hubiForm_container(this, container, 1);     
         }
             
     }//page
@@ -554,7 +555,7 @@ private getPWSData() {
     
     if (override_openweather){
         if (override_current_temp != "openweather") {
-            resp << ["current_temperature":         [ "value" : sensor.currentValue(override_current_temp),     "units": settings["override_current_temp_units"]]];
+            resp << ["current_temperature":         [ "value" : sensor.currentValue(override_current_temp),     "units": settings["override_current_temp_units"] ]];
         }
         if (override_wind_speed != "openweather") {
             resp << ["current_wind_speed":          [ "value" : sensor.currentValue(override_wind_speed),       "units": settings["override_wind_speed_units"]]];
@@ -581,7 +582,7 @@ private getPWSData() {
             resp << ["current_precipitation":       [ "value" : sensor.currentValue(override_daily_precip),     "units": settings["override_daily_precip_units"]]];
         }
         if (override_pressure_trend != "openweather") {      
-            resp << ["current_pressure_direction":  [ "value" : sensor.currentValue(override_pressure_trend),   "units": settings["override_pressure_trend_units"]]];
+            resp << ["current_pressure_trend":  [ "value" : sensor.currentValue(override_pressure_trend),   "units": settings["override_pressure_trend_units"]]];
         }
     }
     
@@ -612,12 +613,15 @@ def getTileOptions(){
                        "forecast_low":             [ "unit" : display_forecast_low,            "decimal" : display_forecast_lowdecimal_places],
                        "forecast_precipitation" :  [ "unit" : display_forecast_precipitation,  "decimal" : display_forecast_precipitationdecimal_places],  
                        "actual_precipitation" :    [ "unit" : display_actual_precipitation,    "decimal" : display_actual_precipitationdecimal_places],
+                       "chance_precipitation" :    [ "unit" : display_chance_precipitation,    "decimal" : display_chance_precipitationdecimal_places],
                        "wind_speed" :              [ "unit" : display_wind_speed,              "decimal" : display_wind_speeddecimal_places],
                        "wind_gust" :               [ "unit" : display_wind_gust,               "decimal" : display_wind_gustdecimal_places],
                        "wind_direction"  :         [ "unit" : display_wind_direction,          "decimal" : display_wind_directiondecimal_places],
                        "current_pressure" :        [ "unit" : display_current_pressure,        "decimal" : display_current_pressuredecimal_places],
                        "dew_point"  :              [ "unit" : display_dew_point,               "decimal" : display_dew_pointdecimal_places],
-                       "time_format"  :            [ "unit" : display_time_format,             "decimal" : display_time_formatdecimal_places]
+                       "humidity"  :               [ "unit" : display_humidity,                "decimal" : display_humiditydecimal_places],
+                       "time_format"  :            [ "unit" : display_time_format,             "decimal" : display_time_formatdecimal_places],
+                       "pressure_trend" :      [ "unit" : "trend_text",                    "decimal" : "none"],
                       ]
     ];
         
@@ -838,7 +842,7 @@ def defineHTML_CSS(){
   text-align: left !important;
 }
 
-.current_pressure_direction{
+.current_pressure_trend{
   grid-row-start: 8;
   grid-row-end: 8;
   grid-column-start: 18;
@@ -885,6 +889,17 @@ def defineHTML_CSS(){
   font-size: 4vmin;
   text-align: left !important;
   line-height: 1;
+}
+
+.dewpoint_text{
+   grid-row-start: 4;
+      grid-row-end: 4;
+      grid-column-start: 13;
+      grid-column-end: 24;
+      font-size: 4vmin;
+      text-align: center !important;
+      line-height: 1;
+    }
 }
 
 .units{
@@ -952,16 +967,19 @@ def defineHTML_Tile(){
     <div class="current_pressure">
         <span id="current_pressure" class="mdi mdi-thermostat"> ----</span><span class="units"> ${getAbbrev(display_current_pressure)}</span> 
     </div>
-    <div class="current_pressure_direction">
+    <div class="current_pressure_trend">
         <span id="pressure_icon" class="mdi mdi-arrow-up-thick"></span>
-        <span id="current_pressure_direction"> -------</span>
+        <span id="current_pressure_trend"> -------</span>
     </div>
 
     <div class="current_humidity">
         <span id="current_humidity" class="mdi mdi-water-percent"> --</span><span class="units">%</span> 
     </div>
     <div class="current_dewpoint">
-        <span id="current_dewpoint"> -------</span>
+        <span id="current_dewpoint" class="mdi mdi-waves"> --.-</span><span class="units">${getAbbrev(display_dew_point)}</span> 
+    </div>
+    <div class="dewpoint_text">
+        <span id="dewpoint_text"> -------</span>
     </div>
     <div class="current_condition1"> 
         <span id="current_condition1">------- </span>
@@ -1014,28 +1032,32 @@ def defineHTML_getData(){
         function getData() {
             return jQuery.get("${state.localEndpointURL}getData/?access_token=${state.endpointSecret}", (data) => {
             
-            console.debug(data);
+            let out = options.display;
+
             pws_data = new Map();
             if (data.current_temperature) 
-                pws_data.set('current_temperature',         {value : data.current_temperature.value,                          units: data.current_temperature.units});
-            if (data.current_wind_speed) 
-                pws_data.set('current_wind_speed',          {value : data.current_wind_speed.value,                           units: data.current_wind_speed.units});
+                pws_data.set('current_temperature',         {value : data.current_temperature.value,            in_units: data.current_temperature.units,        out: out.current_temp});
+            if (data.current_wind_speed)
+                pws_data.set('current_wind_speed',          {value : data.current_wind_speed.value,             in_units: data.current_wind_speed.units,         out: out.wind_speed});
             if (data.current_feels_like) 
-                pws_data.set('current_feels_like',          {value : data.current_feels_like.value,                           units: data.current_feels_like.units});
-            if (data.current_wind_gust) 
-                pws_data.set('current_wind_gust',           {value : data.current_wind_gust.value,                            units: data.current_wind_gust.units});
+                pws_data.set('current_feels_like',          {value : data.current_feels_like.value,             in_units: data.current_feels_like.units,         out: out.feels_like});
+            if (data.current_wind_gust)  
+                pws_data.set('current_wind_gust',           {value : data.current_wind_gust.value,              in_units: data.current_wind_gust.units,          out: out.wind_gust});
             if (data.current_wind_direction) 
-                pws_data.set('current_wind_direction',      {value : data.current_wind_direction.value,                       units: data.current_wind_direction.units});
+                pws_data.set('current_wind_direction',      {value : data.current_wind_direction.value,         in_units: data.current_wind_direction.units,     out: out.wind_direction});
             if (data.current_pressure) 
-                pws_data.set('current_pressure',            {value : data.current_pressure.value,                             units: data.current_pressure.units});
+                pws_data.set('current_pressure',            {value : data.current_pressure.value,               in_units: data.current_pressure.units,           out: out.current_pressure});
             if (data.current_humidity) 
-                pws_data.set('current_humidity',            {value : data.current_humidity.value,                             units: data.current_humidity.units});
-            if (data.current_dewpoint) 
-                pws_data.set('current_dewpoint',            {value : data.current_dewpoint.value,                             units: data.current_dewpoint.value});
-            if (data.current_pressure_direction)
-                pws_data.set('current_pressure_direction',  {value : data.current_humidity.value,                             units: data.current_humidity.value});  
+                pws_data.set('current_humidity',            {value : data.current_humidity.value,               in_units: data.current_humidity.units,           out: out.humidity});
+            if (data.current_dewpoint) {
+                pws_data.set('current_dewpoint',            {value : data.current_dewpoint.value,               in_units: data.current_dewpoint.units,           out: out.dew_point});
+                pws_data.set('dewpoint_text',               {value : getDewPoint(data.current_dewpoint.value),  in_units: "none",                                out: "none"});
+            }
+            if (data.current_pressure_trend)
+                pws_data.set('current_pressure_trend',      {value : data.current_pressure_trend.value,         in_units: data.current_pressure_trend.units,    out: out.pressure_trend});  
             if (data.current_precipitation) 
-                pws_data.set('current_precipitation',       {value : data.current_precipitation.value,                        units: data.current_precipitation.units});
+                pws_data.set('current_precipitation',       {value : data.current_precipitation.value,          in_units: data.current_precipitation.units,      out: out.actual_precipitation});
+            
         });
     }
     """
@@ -1376,111 +1398,212 @@ def defineHTML_getWindDirection(){
 def defineHTML_getString(){
     
     def html = """
-    function getString(data){
-         
-        let val = parseFloat(data.value);
-        switch (data.units){
+    
+function getString(data) {
 
+    let val = parseFloat(data.value);
+    let in_units = data.in_units;
+    let out_units = data.out.unit;
+    let digits = data.out.decimal;
+    let outputType = "numeric";
+
+    if (in_units != out_units) {
+        switch (in_units) {
             //Temperature
-            case "celsius" :
-                if (options.tile_units == "imperial"){
-                    val = (data.value * 9/5) + 32;
-                    return " "+val.toFixed();
-                } 
-                return " "+val.toFixed(1);
+            case "celsius":
+                switch (out_units) {
+                    case "fahrenheit": val = (val * 9 / 5) + 32; break;
+                    case "kelvin": val = val + 273.15; break;
+                    default: val = "UNSUPPORTED";
+                }
                 break;
-            case "fahrenheit" : 
-               if (options.tile_units == "metric"){
-                    val = (data.value - 32.0) * (5.0/9.0);
-                    return " "+val.toFixed(1);
+            case "fahrenheit":
+                switch (out_units) {
+                    case "celsius": val = (val - 32.0) * (5 / 9); break;
+                    case "kelvin": val = ((val - 32) * (5 / 9)) + 273.15; break;
+                    default: val = "UNSUPPORTED";
                 }
-               return " "+val.toFixed();
-               break;
-            
-            //Length
-            case "millimeters" :
-               if (options.tile_units == "imperial"){
-                    val = (data.value / 25.4);
+                break;
+            case "kelvin":
+                switch (out_units) {
+                    case "fahrenheit": val = ((val - 273.15) * (9 / 5)) + 32; break;
+                    case "celsius": val = (val - 273.15); break;
+                    default: val = "UNSUPPORTED";
                 }
-                return " "+val.toFixed(2);
-               break;
-            case "inches" :
-                if (options.tile_units == "metric"){
-                    val = (data.value * 25.4);
-                }
-               return " "+val.toFixed(2);
-               break;
-            case "meters_per_second":
-               if (options.tile_units == "imperial"){
-                    val = (parseFloat(data.value) * 2.237);
-               }
-               return " "+val.toFixed(1);
-               break;
-            case "miles_per_hour":
-               if (options.tile_units == "metric"){
-                    val = (data.value / 2.237);
-               }
-               return " "+val.toFixed(1);
-               break;
-            case "%":
-               return " "+val.toFixed();
-               break;
-            case "millibars":
-               if (options.tile_units == "metric"){
-                    val = (data.value / 1.3333);
-                    return " "+val.toFixed(2);
-               }
-               if (options.tile_units == "imperial"){
-                    val = (data.value / 33.864);
-                    return " "+val.toFixed(3);
-               }
-               break;
-            case "inches_mercury":
-               if (options.tile_units == "metric"){
-                    val = (data.value * 25.4);
-                    return " "+val.toFixed(1);
-               }
-               return " "+val.toFixed(3);
-               break;
-            case "millimeters_mercury":
-               if (options.tile_units == "imperial"){
-                    val = (data.value / 25.4);
-                    return " "+val.toFixed(3);
-               }
-               return " "+val.toFixed(1);
-               break;
-            case "time":
-               let date = new Date(data.value*1000);
-               if (options.tile_units == "metric"){
-                    return " "+date.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'}); 
-               }
-               if (options.tile_units == "imperial"){
-                    return date.toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit'});
-               } 
-               
-               break;
-            case "trend_text":
-                let lcString = data.value.toLowerCase();
-                switch (lcString) {
-                    case "falling" : return "Falling"; break;    
-                    case "steady" : return "Steady"; break;
-                    case "rising" : return "Rising"; break;
-                }
-                return "Unknown";
             break;
+            //Length
+            case "millimeters":
+                if (out_units == "inches") {
+                    val = (val / 25.4);
+                }
+                else val = "UNSUPPORTED";
+            break;
+            case "inches":
+                if (out_units == "millimeters") {
+                    val = (val * 25.4);
+                }
+                else val = "UNSUPPORTED";
+            break;
+            case "meters_per_second":
+                switch (out_units) {
+                    case "miles_per_hour": val = (val * 2.237); break;
+                    case "knots": val = (val * 1.944); break;
+                    default: val = "UNSUPPORTED";
+                }
+            break;
+            case "miles_per_hour":
+                switch (out_units) {
+                    case "miles_per_hour": val = (val / 2.237); break;
+                    case "knots": val = (val / 1.151); break;
+                    default: val = "UNSUPPORTED";
+                }
+                break;
+            case "knots":
+                switch (out_units) {
+                    case "miles_per_hour": val = (val * 1.151); break;
+                    case "meters_per_second": val = (val / 1.944); break;
+                    default: val = "UNSUPPORTED";
+                }
+                break;
+            case "millibars":
+                switch (out_units) {
+                    case "inches_mercury": val = (val / 33.864); break;
+                    case "millimeters_mercury": val = (val / 1.333); break;
+                    default: val = "UNSUPPORTED";
+                }
+                break;
+            case "inches_mercury":
+                switch (out_units) {
+                    case "millibars": val = (val * 33.864); break;
+                    case "inches_mercury": val = (val / 25.4); break;
+                    default: val = "UNSUPPORTED";
+                }
+                break;
+            case "millimeters_mercury":
+                switch (out_units) {
+                    case "millibars": val = (val * 1.333); break;
+                    case "millimeters_mercury": val = (val * 25.4); break;
+                    default: val = "UNSUPPORTED";
+                }
+                break;
+            case "degrees":
+                switch (out_units) {
+                    case "cardinal": 
+                        val = getWindDirection(val); 
+                        outputType = "text"; 
+                        break;
+                    case "radians": val = (val * 3.1415926535) * 180.0; break;
+                    default: val = "UNSUPPORTED";
+                }
+                break;
+            case "radians":
+                switch (out_units) {
+                    case "cardinal": val = getWindDirection(((val * 3.1415926535) * 180.0)); outputType = "text"; break;
+                    case "degrees": val = ((val * 180) / 3.1415926535); break;
+                    default: val = "UNSUPPORTED";
+                }
+                break;
+            case "cardinal":
+                switch (data.value) {
+                    case "N": val = 0;
+                    case "NNE": val = 22.5;
+                    case "NE": val = 45;
+                    case "ENE": val = 67.5;
+                    case "E": val = 90;
+                    case "ESE": val = 112.5;
+                    case "SE": val = 135;
+                    case "SSE": val = 157.5;
+                    case "S": val = 180;
+                    case "SSW": val = 202.5;
+                    case "SW": val = 225;
+                    case "WSW": val = 247.5;
+                    case "W": val = 270;
+                    case "WNW": val = 292.5;
+                    case "NW": val = 315;
+                    case "NNW": val = 337.5;
+                    default: val = -1;
+                }
+                if (val != -1) {
+                    switch (out_units) {
+                        case "radians": val = ((val * 3.1415926535) * 180.0); break;
+                        case "degrees": val = val; break;
+                        default: val = "UNSUPPORTED";
+                    }
+                } else val = "UNSUPPORTED";
+                break;
+
+            //TEXT CONVERSIONS
+            case "time_seconds":
+                 let d = new Date(data.value*1000);
+
+                switch (out_units) {
+                    case "time_twelve": val = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); outputType = "text"; break;
+                    case "time_two_four": val = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); outputType = "text"; break;
+                    default: val = "UNSUPPORTED";
+                }
+                break;
+            case "time_milliseconds":
+                let e = new Date(data.value);
+
+                switch (out_units) {
+                    case "time_twelve": val = e.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); outputType = "text"; break;
+                    case "time_two_four": val = e.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); outputType = "text"; break;
+                    default: val = "UNSUPPORTED";
+                }
+                break;
+            case "trend_numeric":
+                if (out_units == "trend_text") {
+                    val = parseFloat(data.value);
+                    if (val < 0)
+                        val = "Falling";
+                    else if (val == 0)
+                        val = "Steady";
+                    else
+                        val = "Rising";
+                } else val = "UNSUPPORTED";
+                outputType = "text";
+                break;
+            case "trend_text":
+                if (out_units == "trend_numeric") {
+                    let lcString = data.value.toLowerCase();
+                    switch (lcString) {
+                        case "falling": val = -1; break;
+                        case "steady": val = 0; break;
+                        case "rising": val = 1; break;
+                    }
+                }
+                break;
             case "trend_numeric":
                 val = parseFloat(data.value);
-                if (val < 0) 
-                    return "Falling";
-                else if (val == 0) 
-                    return "Steady";
-                else 
-                    return "Rising";
+                if (val < 0)
+                    val = "Falling";
+                else if (val == 0)
+                    val = "Steady";
+                else
+                    val = "Rising";
                 break;
-         
+                outputType = "text";
+            case "percent_numeric":
+                if (out_units == "percent_decimal") val = val / 100.0;
+                else val = "UNSUPPORTED";
+                break;
+            case "percent_decimal":
+                if (out_units == "percent_numeric") val = val * 100.0;
+                else val = "UNSUPPORTED";
+                break;
         }
-        return data.value;
+
     }
+    
+    if (outputType == "text") return val;
+    else {
+        if (val == "UNSUPPORTED"){
+            console.log("UNSUPPORTED:: "+data.value+": "+data.in_units+" "+data.out.unit+" "+data.out.decimal);
+            return val;
+        }
+        return " "+val.toFixed(digits);
+    } 
+}
     """
     return html;
 }
@@ -1491,15 +1614,18 @@ def defineHTML_setWeatherTile(){
 function setWeatherTile(weather) {
 
     weather.forEach((value, key) => {
+        
         let val = getString(value); 
 
         if (key == "current_description") {        
             setCondition(value.value);
-        } else if (key == "current_pressure_direction") {
+        } else if (key == "current_pressure_trend") {
             setPressure(value.value);
+        }
+        else if (key == "dewpoint_text"){
+            setValue(value.value, key);
         } else {
-            setValue(val, key);
-
+           setValue(val, key);
         }
 
     });
@@ -1534,13 +1660,13 @@ def defineHTML_getDewPoint(){
    def html = """
      function getDewPoint(temp){
  
- 	    if (temp < 50) return "Dry ("+temp.toFixed()+unescape('%B0')+")";
-        else if (temp < 55) return "Pleasent ("+temp.toFixed()+unescape('%B0')+")";
-        else if (temp < 60) return "Comfortable ("+temp.toFixed()+unescape('%B0')+")";
-        else if (temp < 65) return "Sticky ("+temp.toFixed()+unescape('%B0')+")";
-        else if (temp < 70) return "Uncomfortable ("+temp.toFixed()+unescape('%B0')+")";
-        else if (temp < 75) return "Oppressive ("+temp.toFixed()+unescape('%B0')+")";
-        else return "Miserable ("+temp.toFixed()+unescape('%B0')+")";
+ 	    if (temp < 50) return "DRY";
+        else if (temp < 55) return "PLEASENT";
+        else if (temp < 60) return "COMFORTABLE";
+        else if (temp < 65) return "STICKY";
+        else if (temp < 70) return "UNCOMFORTABLE";
+        else if (temp < 75) return "OPPERESSIVE";
+        else return "MISERABLE"
     }
  
   """
@@ -1551,25 +1677,30 @@ def defineHTML_setPressure(){
     
     def html = """
 
-    function setPressure(diff){
+    function setPressure(val){
     let icon = '';
     let text = '';
+    let valStr = '';
     
-     if (diff == 0) {
+    if (isNaN(val)) valStr = val.toLowerCase();
+
+    console.log(val+" "+valStr);
+    
+    if (val == 0 || valStr == 'steady') {
     	text = 'Steady';
         icon = 'mdi-arrow-right-thick';
-    } else if (diff < 0) {
+    } else if (val < 0  || valStr == 'falling') {
     	text = 'Falling';
         icon = 'mdi-arrow-down-thick';
-    } else if (diff > 0) {
+    } else if (val > 0 || valStr == 'rising') {
     	text = 'Rising';
         icon = 'mdi-arrow-up-thick';
     }
  
  	let el = document.getElementById('pressure_icon');
-    el.className = 'current_pressure_direction mdi '+icon;
+    el.className = 'current_pressure_trend mdi '+icon;
     
-    el = document.getElementById('current_pressure_direction');
+    el = document.getElementById('current_pressure_trend');
     el.textContent = text;
  }
 """
@@ -1587,7 +1718,7 @@ function getWeather() {
     let speedUnits = "meters_per_second";
     let precipUnits = "millimeters";
     let pressureUnits = "millibars";
-    let timeunits = "seconds"
+    let timeUnits = "time_seconds"
     let dirUnits = "degrees"
     let percent = "percent_numeric";
 
@@ -1602,35 +1733,37 @@ function getWeather() {
             let override = options.override;
             let out = options.display;
 
-            if (override.current_temp == "openweather")      weather.set('current_temperature',           {value : data.current.temp,                   units: tempUnits,     outunits: out.current_temp.unit});
-                                                             weather.set('forecast_high',                 {value : data.daily[0].temp.max,              units: tempUnits,     outunits: out.});
-                                                             weather.set('forecast_low',                  {value : data.daily[0].temp.min,              units: tempUnits,     outunits: out.});
-            if (override.feels_like == "openweather")        weather.set('current_feels_like',            {value : data.current.feels_like,             units: tempUnits,     outunits: out.});
-                                                             weather.set('current_description',           {value : data.current.weather[0].description, units: "none",        outunits: out.});
-            if (override.wind_speed == "openweather")        weather.set('current_wind_speed',            {value : data.current.wind_speed,             units: speedUnits,    outunits: out.});
+            if (override.current_temp == "openweather")      weather.set('current_temperature',           {value : data.current.temp,                   in_units: tempUnits,     out: out.current_temp});
+                                                             weather.set('forecast_high',                 {value : data.daily[0].temp.max,              in_units: tempUnits,     out: out.forcast_high});
+                                                             weather.set('forecast_low',                  {value : data.daily[0].temp.min,              in_units: tempUnits,     out: out.forecast_low});
+            if (override.feels_like == "openweather")        weather.set('current_feels_like',            {value : data.current.feels_like,             in_units: tempUnits,     out: out.feels_like});
+                                                             weather.set('current_description',           {value : data.current.weather[0].description, in_units: "none",        out: "none"});
+            if (override.wind_speed == "openweather")        weather.set('current_wind_speed',            {value : data.current.wind_speed,             in_units: speedUnits,    out: out.wind_speed});
             
             if (override.wind_gust == "openweather")
-                if (data.current.wind_gust != undefined)     weather.set('current_wind_gust',             {value : data.current.wind_gust,              units: speedUnits,    outunits: out.});
-                else                                         weather.set('current_wind_gust',             {value : data.current.wind_speed,             units: speedUnits,    outunits: out.});
+                if (data.current.wind_gust != undefined)     weather.set('current_wind_gust',             {value : data.current.wind_gust,              in_units: speedUnits,    out: out.wind_gust});
+                else                                         weather.set('current_wind_gust',             {value : data.current.wind_speed,             in_units: speedUnits,    out: out.wind_gust});
 
-            if (override.wind_direction == "openweather")    weather.set('current_wind_direction',        {value : data.current.wind_deg,               units: dirUnits,        outunits: out.});
+            if (override.wind_direction == "openweather")    weather.set('current_wind_direction',        {value : data.current.wind_deg,               in_units: dirUnits,      out: out.wind_direction});
 
-            if (data.daily[0].rain != undefined)             weather.set('forecast_precipitation',        {value : data.daily[0].rain,                  units: precipUnits,   outunits: out.});
-            else                                             weather.set('forecast_precipitation',        {value : "0.00",                              units: precipUnits,   outunits: out.});
+            if (data.daily[0].rain != undefined)             weather.set('forecast_precipitation',        {value : data.daily[0].rain,                  in_units: precipUnits,   out: out.forecast_precipitation});
+            else                                             weather.set('forecast_precipitation',        {value : "0.00",                              in_units: precipUnits,   out: out.forecast_precipitation});
 
-                                                             weather.set('forecast_precipitation_chance', {value : data.daily[0].pop * 100,             units: percent,            outunits: out.})
+                                                             weather.set('forecast_precipitation_chance', {value : data.daily[0].pop * 100,             in_units: percent,       out: out.chance_precipitation})
 
-            if (override.current_pressure == "openweather")  weather.set('current_pressure',              {value : data.current.pressure,               units: pressureUnits,  outunits: out.});
+            if (override.current_pressure == "openweather")  weather.set('current_pressure',              {value : data.current.pressure,               in_units: pressureUnits, out: out.current_pressure});
             currentPressure = data.current.pressure;
             
-            if (override.humidity == "openweather")          weather.set('current_humidity',              {value : data.current.humidity,               units: percent,             outunits: out.});
-                                                             weather.set('sunrise',                       {value : data.current.sunrise,                units: timeUnits});
-                                                             weather.set('sunset',                        {value : data.current.sunset,                 units: timeunits});
-            if (override.dew_point == "openweather")         weather.set('current_dewpoint',              {value : data.current.dew_point,              units: tempUnits});
-
+            if (override.humidity == "openweather")          weather.set('current_humidity',              {value : data.current.humidity,               in_units: percent,       out: out.humidity});
+                                                             weather.set('sunrise',                       {value : data.current.sunrise,                in_units: timeUnits,     out: out.time_format});    
+                                                             weather.set('sunset',                        {value : data.current.sunset,                 in_units: timeUnits,     out: out.time_format});
+            if (override.dew_point == "openweather")         weather.set('current_dewpoint',              {value : data.current.dew_point,              in_units: tempUnits,     out: out.dew_point});
+            if (override.dew_point == "openweather")         weather.set('dewpoint_text',                 {value : getDewPoint(data.current.dew_point), in_units: "none",        out: "none"});
+            
             //Set global sunrise and sunset
             sunrise = data.current.sunrise;
             sunset = data.current.sunset;
+
             setWeatherTile(weather);
         })
         .catch((error) => {
@@ -1649,6 +1782,8 @@ function getWeather() {
         .then(data => {
             let override = options.override;
             let weather2 = new Map();
+            let out = options.display;
+
             if (override.daily_precip == "openweather"){
                 let total_rain = 0.0;
                 data.hourly.forEach((val) => {
@@ -1656,7 +1791,7 @@ function getWeather() {
                         total_rain += val.rain["1h"];
                     }
                 })            
-                weather2.set('current_precipitation', {value :total_rain, units: "millimeters"});
+                weather2.set('current_precipitation',              {value : total_rain,         in_units: "millimeters",        out: out.actual_precipitation});
             }
 
             if (override.pressure_trend == "openweather"){
@@ -1667,7 +1802,7 @@ function getWeather() {
                 }
                 
                 let diff = data.hourly[compare].pressure - currentPressure;
-                weather2.set('current_pressure_direction', {value : diff, units: "none"});
+                weather2.set('current_pressure_trend',        {value : diff,                in_units: "none",           out: "none"});
             }
             setWeatherTile(weather2);
 
