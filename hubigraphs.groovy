@@ -19,12 +19,13 @@ preferences {
     page(name: "mainPage", title: "Graph Creator", install: true, uninstall: true,submitOnChange: true) {
         section {
             app(name: "hubiGraphLine", appName: "Hubigraph Line Graph", namespace: "tchoward", title: "Create New Line Graph (Deprecated)", multiple: true)
-            app(name: "hubiBarGraph", appName: "Hubigraph Bar Graph", namespace: "tchoward", title: "Create New Bar Graph", multiple: true)
-			app(name: "hubiRangeBar", appName: "Hubigraph Range Bar", namespace: "tchoward", title: "Create New Range Bar", multiple: true)
-            app(name: "hubiGraphTime", appName: "Hubigraph Time Line", namespace: "tchoward", title: "Create New Time Line", multiple: true)
-            app(name: "hubiGauge", appName: "Hubigraph Gauge", namespace: "tchoward", title: "Create New Gauge", multiple: true)
+            app(name: "hubiBarGraph",  appName: "Hubigraph Bar Graph",  namespace: "tchoward", title: "Create New Bar Graph", multiple: true)
+			app(name: "hubiRangeBar",  appName: "Hubigraph Range Bar",  namespace: "tchoward", title: "Create New Range Bar", multiple: true)
+            app(name: "hubiGraphTime", appName: "Hubigraph Time Line",  namespace: "tchoward", title: "Create New Time Line", multiple: true)
+            app(name: "hubiGadget",    appName: "Hubigraph Gadget",     namespace: "tchoward", title: "Create New Gadget", multiple: true)
             app(name: "hubiTimeGraph", appName: "Hubigraph Time Graph", namespace: "tchoward", title: "Create New Time Graph", multiple: true)
-            app(name: "hubiHeatMap", appName: "Hubigraph Heat Map", namespace: "tchoward", title: "Create New Heat Map", multiple: true)
+            app(name: "hubiHeatMap",   appName: "Hubigraph Heat Map",   namespace: "tchoward", title: "Create New Heat Map", multiple: true)
+            app(name: "hubiWeather",   appName: "Hubigraph Weather Tile",   namespace: "tchoward", title: "Create New Weather Tile", multiple: true)
 
         }
     }
