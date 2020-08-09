@@ -157,6 +157,14 @@ def tileSetupPage(){
                                                      "background", 
                                                      "#000000", 
                                                      false);
+            container << parent.hubiForm_slider     (this, title: "Background Opacity", 
+                                                           name:  "background_opacity",  
+                                                           default: 90, 
+                                                           min: 0,
+                                                           max: 100, 
+                                                           units: "%",
+                                                           submit_on_change: false);
+            
             container << parent.hubiForm_color(this, "Text", 
                                                      "text", 
                                                      "#FFFFFF", 
@@ -552,8 +560,6 @@ private getUnits(unit, value){
     return [name: "unknown", var: "tbd"];
 }
 
-
-
 private getPWSData() {
     def resp = [:]
     def units;
@@ -676,7 +682,7 @@ def defineHTML_CSS(){
       grid-template-rows: 30vmin 6vmin 6vmin 8vmin 3vmin 8vmin 7vmin 7vmin 7vmin 6vmin 6vmin 6vmin;
       grid-gap: 0px;
       align-items: center;
-      background-color: ${background_color};
+      background-color: ${getRGBA(background_color, background_opacity)};
     }
 
     .grid-container > div {
