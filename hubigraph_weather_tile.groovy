@@ -1661,11 +1661,11 @@ def defineHTML_getDewPoint(){
      function getDewPoint(temp){
  
  	    if (temp < 50) return "DRY";
-        else if (temp < 55) return "PLEASENT";
+        else if (temp < 55) return "PLEASANT";
         else if (temp < 60) return "COMFORTABLE";
         else if (temp < 65) return "STICKY";
         else if (temp < 70) return "UNCOMFORTABLE";
-        else if (temp < 75) return "OPPERESSIVE";
+        else if (temp < 75) return "OPPRESSIVE";
         else return "MISERABLE"
     }
  
