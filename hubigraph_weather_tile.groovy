@@ -112,9 +112,9 @@ def tileSetupPage(){
     
     def unitEnum =       [["imperial":"Imperial (°F, mph, in, inHg, 0:00 am)"], ["metric":"Metric (°C, m/sec, mm, mmHg, 00:00)"]]; 
     def unitTemp =       [["fahrenheit": "Fahrenheit (°F)"], ["celsius" : "Celsius (°C)"], ["kelvin" : "Kelvin (K)"]];
-    def unitWind =       [["meters_per_second": "Meters per Second (m/s)"], ["miles_per_hour": "Miles per Hour (mph)"], ["knots": "Knots (kn)"]];
+    def unitWind =       [["meters_per_second": "Meters per Second (m/s)"], ["miles_per_hour": "Miles per Hour (mph)"], ["knots": "Knots (kn)"], ["kilometers_per_hour": "Kilometers per Hour (km/h)"]];
     def unitLength =     [["millimeters": "Millimeters (mm)"], ["inches": """Inches (") """]];
-    def unitPressure =   [["millibars": "Millibars (mbar)"], ["millimeters_mercury": "Millimeters of Mercury (mmHg)"], ["inches_mercury": "Inches of Mercury (inHg)"]];
+    def unitPressure =   [["millibars": "Millibars (mbar)"], ["millimeters_mercury": "Millimeters of Mercury (mmHg)"], ["inches_mercury": "Inches of Mercury (inHg)"], ["hectopascal" : "Hectopascal (hPa)"]];
     def unitDirection =  [["degrees": "Degrees (°)"], ["radians", "Radians (°)"], ["cardinal": "Cardinal (N, NE, E, SE, etc)"]];
     def unitTrend =      [["trend_numeric": "Numeric (↑ < 0, → = 0, ↓ > 0)"], ["trend_text": "Text (↑ rising, → steady, ↓ falling)"]];
     def unitPercent =    [["percent_numeric": "Numeric (0 to 100)"], ["percent_decimal": "Decimal (0.0 to 1.0)"]];
@@ -204,9 +204,9 @@ def tileSetupPage(){
 def deviceSelectionPage() {
     def final_attrs;
     def unitTemp =       [["fahrenheit": "Fahrenheit (°F)"], ["celsius" : "Celsius (°C)"], ["kelvin" : "Kelvin (K)"]];
-    def unitWind =       [["meters_per_second": "Meters per Second (m/s)"], ["miles_per_hour": "Miles per Hour (mph)"], ["knots": "Knots (kn)"]];
+    def unitWind =       [["meters_per_second": "Meters per Second (m/s)"], ["miles_per_hour": "Miles per Hour (mph)"], ["knots": "Knots (kn)"], ["kilometers_per_hour": "Kilometers per Hour (km/h)"]];
     def unitLength =     [["millimeters": "Millimeters (mm)"], ["inches": """Inches (") """]];
-    def unitPressure =   [["millibars": "Millibars (mbar)"], ["millimeters_mercury": "Millimeters of Mercury (mmHg)"], ["inches_mercury": "Inches of Mercury (inHg)"]];
+    def unitPressure =   [["millibars": "Millibars (mbar)"], ["millimeters_mercury": "Millimeters of Mercury (mmHg)"], ["inches_mercury": "Inches of Mercury (inHg)"], ["hectopascal" : "Hectopascal (hPa)"]];
     def unitDirection =  [["degrees": "Degrees (°)"], ["radians", "Radians (°)"], ["cardinal", "Cardinal (N, NE, E, SE, etc)"]];
     def unitTrend =      [["trend_numeric": "Numeric (↑ < 0, → = 0, ↓ > 0)"], ["trend_text": "Text (↑ rising, → steady, ↓ falling)"]];
     def unitPercent =    [["percent_numeric": "Numeric (0 to 100)"], ["percent_decimal": "Decimal (0.0 to 1.0)"]];
@@ -488,6 +488,8 @@ private getAbbrev(unit){
         case "millibars": return "mbar";
         case "millimeters_mercury": return "mmHg";
         case "inches_mercury": return "inHg";
+        case "hectopascal": return "hPa";
+        case "kilometers_per_hour" : return "km/h";
         
 
         
@@ -505,9 +507,9 @@ private getUnits(unit, value){
         case "°c":
             return [name: "Celsius (°C)", var: "celsius"]; break;
         case "mph": 
-            return [name: "Miles per Hour", var: "miles_per_hour"]; break;
+            return [name: "Miles per Hour (mph)", var: "miles_per_hour"]; break;
         case "m/s":
-            return [name: "Meters per Second", var: "meters_per_second"]; break;
+            return [name: "Meters per Second (m/s)", var: "meters_per_second"]; break;
         case "in":
         case '"':
             return [name: 'Inches (")', var: "inches"]; break;
@@ -522,6 +524,10 @@ private getUnits(unit, value){
             return [name: "Millimeters of Mecury mmHg)", var: "millimeters_mercury"]; break;
         case "mbar":
             return [name: "Millibars (mbar)", var: "millibars"]; break;
+        case "km/h":
+            return [name: "Kilometers per hour (km/h)", var: "kilometers_per_hour"]; break;
+        case "hPa":
+            return [name: "Hectopascal (hPa)", var: "hectopascal"]; break;
         case "%":
             value = Double.parseDouble(value);
             if (value > 1.0 && value < 100.0) {
@@ -532,8 +538,7 @@ private getUnits(unit, value){
                 return [name: "unknown", var: "tbd"];  break;  
             }
     }
-    log.debug(unit+" "+value);
-    log.debug(unit.toLowerCase());
+    
     switch (value.toLowerCase()){
        case "falling":
        case "rising" :
@@ -1448,6 +1453,7 @@ function getString(data) {
                 switch (out_units) {
                     case "miles_per_hour": val = (val * 2.237); break;
                     case "knots": val = (val * 1.944); break;
+                    case "kilometers_per_hour" : val = (val * 3.6); break;
                     default: val = "UNSUPPORTED";
                 }
             break;
@@ -1455,6 +1461,7 @@ function getString(data) {
                 switch (out_units) {
                     case "miles_per_hour": val = (val / 2.237); break;
                     case "knots": val = (val / 1.151); break;
+                    case "kilometers_per_hour" : val = (val * 1.609); break;
                     default: val = "UNSUPPORTED";
                 }
                 break;
@@ -1462,9 +1469,19 @@ function getString(data) {
                 switch (out_units) {
                     case "miles_per_hour": val = (val * 1.151); break;
                     case "meters_per_second": val = (val / 1.944); break;
+                    case "kilometers_per_hour" : val = (val * 1.852); break;
                     default: val = "UNSUPPORTED";
                 }
                 break;
+             case "kilometers_per_hour":
+                switch (out_units) {
+                    case "miles_per_hour": val = (val / 1.609); break;
+                    case "meters_per_second": val = (val / 3.6); break;
+                    case "knots": val = (val / 1.852); break;
+                    default: val = "UNSUPPORTED";
+                }
+                break;
+            case "hectopascal":
             case "millibars":
                 switch (out_units) {
                     case "inches_mercury": val = (val / 33.864); break;
@@ -1474,6 +1491,7 @@ function getString(data) {
                 break;
             case "inches_mercury":
                 switch (out_units) {
+                    case "hectopascal":
                     case "millibars": val = (val * 33.864); break;
                     case "inches_mercury": val = (val / 25.4); break;
                     default: val = "UNSUPPORTED";
@@ -1481,6 +1499,7 @@ function getString(data) {
                 break;
             case "millimeters_mercury":
                 switch (out_units) {
+                    case "hectopascal":
                     case "millibars": val = (val * 1.333); break;
                     case "millimeters_mercury": val = (val * 25.4); break;
                     default: val = "UNSUPPORTED";
