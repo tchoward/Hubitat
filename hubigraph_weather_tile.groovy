@@ -267,7 +267,8 @@ def deviceSelectionPage() {
                         parent.hubiForm_container(this, container, 1); 
                         input( type: "enum", name: tile.var, title: tile.title, required: false, multiple: false, options: final_attrs, defaultValue: "openweather", submitOnChange: true)
                         container = [];
-                        if (settings[tile.var] != "openweather" && tile.unit != null){
+                        if (settings[tile.var] != "openweather" && tile.unit != null && settings[tile.var]!=null){
+                            log.debug("["+settings[tile.var]+"]");
                             unit = sensor.currentState(settings[tile.var]).getUnit();
                             value = sensor.currentState(settings[tile.var]).getValue();
                             
@@ -290,7 +291,7 @@ def deviceSelectionPage() {
                                 parent.hubiForm_container(this, container, 1);
                                 input( type: "enum", name: tile.var+"_units", title: "Override "+tile.title+" Units", required: false, multiple: false, options: tile.unit, defaultValue: tile.default, submitOnChange: false)
                             } 
-                        } else {
+                        } else if (settings[tile.var]!=null && settings[tile.var] != "openweather"){
                             app.updateSetting("${tile.var}_units", null);
                         }
                     }
@@ -1492,6 +1493,7 @@ function getString(data) {
                 switch (out_units) {
                     case "inches_mercury": val = (val / 33.864); break;
                     case "millimeters_mercury": val = (val / 1.333); break;
+                    case "hectopascal": break;
                     default: val = "UNSUPPORTED";
                 }
                 break;
