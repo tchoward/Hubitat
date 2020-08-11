@@ -16,8 +16,13 @@ definition(
 
 preferences {
     // The parent app preferences are pretty simple: just use the app input for the child app.
-    page(name: "mainPage", title: "Graph Creator", install: true, uninstall: true,submitOnChange: true) {
-        section {
+    page(name: "mainPage", title: "Graph Creator", install: true, uninstall: true,submitOnChange: true)
+    page(name: "clonePage", nextPage: "mainPage")
+}
+
+def mainPage(){
+    dynamicPage(name: "mainPage"){
+       section {
             app(name: "hubiGraphLine", appName: "Hubigraph Line Graph", namespace: "tchoward", title: "Create New Line Graph (Deprecated)", multiple: true)
             app(name: "hubiBarGraph",  appName: "Hubigraph Bar Graph",  namespace: "tchoward", title: "Create New Bar Graph", multiple: true)
 			app(name: "hubiRangeBar",  appName: "Hubigraph Range Bar",  namespace: "tchoward", title: "Create New Range Bar", multiple: true)
@@ -26,9 +31,40 @@ preferences {
             app(name: "hubiTimeGraph", appName: "Hubigraph Time Graph", namespace: "tchoward", title: "Create New Time Graph", multiple: true)
             app(name: "hubiHeatMap",   appName: "Hubigraph Heat Map",   namespace: "tchoward", title: "Create New Heat Map", multiple: true)
             app(name: "hubiWeather",   appName: "Hubigraph Weather Tile",   namespace: "tchoward", title: "Create New Weather Tile", multiple: true)
-
         }
+        /*
+         section {
+            href name: "clonePager", title: "Clone a Graph", description: "", page: "clonePage"    
+        } 
+        */
     }
+}
+
+def clonePage(){
+        apps = [:];
+        childApps.each {child ->
+            log.debug "child app: ${child.label} ${child.id}"
+            apps << ["${child.id}" : child.label];
+        }
+        
+        dynamicPage(name: "clonePage") {    
+            section{
+                input( type: "enum", name: "app_to_clone", title: "HubiGraph to Clone", required: false, multiple: false, options: apps, submitOnChange: true);
+                
+                if (app_to_clone){
+                    log.debug("Selected: "+app_to_clone);
+                    child_app = getChildAppById(app_to_clone.toInteger());
+                    if (child_app) {
+                        log.debug(child_app.id);
+                        log.debug(child_app.class.settings);
+                    }
+                }
+            }
+        }
+}
+
+def makeCopy(child){
+
 }
 
 def installed() {
@@ -403,6 +439,79 @@ def hubiForm_font_size(Map map, child){
         return (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
     }
 }
+
+def hubiForm_fontvx_size(Map map, child){
+    
+    child.call(){
+        def title = map.title;
+        def varname = map.name;
+        def default_ = map.default;
+        def min = map.min;
+        def max = map.max;
+        def submit_on_change = map.submit_on_change;
+        def baseId = varname;
+        def weight = map.weight ? "font-weight: ${map.weight} !important;" : "";
+        def icon = null;
+        
+        def varFontSize = "${varname}_font"  
+        def icon_size = settings[varFontSize] ? 10*settings[varFontSize] : default_*10; 
+       
+        def jq = "";
+        
+        if (map.icon){
+              icon = """
+                    <style>
+                        .material-icons.test { font-size: ${icon_size}px; }
+                    </style>
+                    <i id="${baseId}_icon" class="material-icons test">cloud</i>
+                    """;
+            
+              jq = """jQuery('.test').css('font-size', 10*val+"px");"""   
+        } else {
+              jq = """                              
+                        jQuery('#${baseId}_font_size_val').css("font-size", 0.5*val+"em");
+                        jQuery('#${baseId}_font_size_val').text(text);
+                    """    
+        }
+        
+	
+	    
+        settings[varFontSize] = settings[varFontSize] ? settings[varFontSize] : default_;
+        submitOnChange = submit_on_change ? "submitOnChange" : "";
+	    
+        def html_ = 
+                """
+                <label for="settings[${varFontSize}]" class="control-label" style= "vertical-align: bottom;">
+                    <b>${title}</b>
+                <span id="${baseId}_font_size_val" style="float:right; font-size: ${settings[varFontSize]*0.5}em; ${weight}">
+                    ${icon == null ? settings[varFontSize] : icon}
+                </span>
+                </label>
+                        
+                <input type="range" min = "$min" max = "$max" name="settings[${varFontSize}]" 
+							      class="mdl-slider $submit_on_change " 
+							      value="${settings[varFontSize]}" 
+							      id="settings[${varFontSize}]"
+							      onchange="${baseId}_updateFontSize(this.value);">
+                <div class="form-group">
+                        <input type="hidden" name="${varFontSize}.type" value="number">
+                        <input type="hidden" name="${varFontSize}.multiple" value="false">
+                </div>
+		        <script>
+                      function ${baseId}_updateFontSize(val) {
+                            var text = "";
+                            text += val;"""
+                        html_+= jq;
+                        html_+="""
+                            
+                      }
+                </script>
+                """
+        
+        return (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
+    }
+}
+
 
 def hubiForm_line_size(Map map, child){
     
