@@ -149,7 +149,7 @@ def tileSetupPage(){
                 input( type: "enum", name: "pws_refresh_rate", title: "<b>Select PWS Update Rate</b>", multiple: false, required: true, options: updateEnum, defaultValue: "300000");        
             }
             container = [];
-            container << parent.hubiForm_text_input (this, "<b>Open Weather Map Key</b>", "tile_key", "", false);
+            container << parent.hubiForm_text_input (this, "<b>Open Weather Map Key</b>", "tile_key", "", "true");
             
             container << parent.hubiForm_text_input (this, "<b>Latitude (Default = Hub location)</b>", "latitude", location.latitude, false);
             container << parent.hubiForm_text_input (this, "<b>Longitude (Default = Hub location)</b>", "longitude", location.longitude, false);
@@ -171,9 +171,30 @@ def tileSetupPage(){
                                                      false);
             
             container << parent.hubiForm_switch     (this, title: "Color Icons?", name: "color_icons", default: false);
+            
+            container << parent.hubiForm_switch     (this, title: "Show Dew Point Description?", name: "show_dewpoint", default: true);
                          
             parent.hubiForm_container(this, container, 1);     
         } 
+        parent.hubiForm_section(this,"Font Sizes", 1)
+        {
+            container = [];
+            container << parent.hubiForm_text         (this, "<p style='background-color: yellow;'><b>Adjust the component font sizes.<br>Default are populated upon installation (below)<br>*Note: The displayed sizes are not exact but <b>relative</b> to tile size.</b>,</p>");
+            container << parent.hubiForm_fontvx_size  (this, title: "Icon", name: "icon", default: 10, min: 1, max: 20, icon: true);
+            container << parent.hubiForm_fontvx_size  (this, title: "Current Temperature", name: "temperature", default: 20, min: 1, max: 30, weight: 900);
+            container << parent.hubiForm_fontvx_size  (this, title: "Real Feel", name: "realfeel", default: 7, min: 1, max: 15, weight: 900);
+            container << parent.hubiForm_fontvx_size  (this, title: "High/Low Forecast", name: "highlow", default: 7, min: 1, max: 15);
+            container << parent.hubiForm_fontvx_size  (this, title: "Headings<br>(Rainfall/Wind/Pressure)", name: "heading", default: 5, min: 1, max: 10);
+            container << parent.hubiForm_fontvx_size  (this, title: "Wind, Rail and Barometer Items", name: "column", default: 5, min: 1, max: 10);
+            container << parent.hubiForm_fontvx_size  (this, title: "Sunrise/Sunset", name: "time", default: 3, min: 1, max: 10);
+            container << parent.hubiForm_fontvx_size  (this, title: "Current Conditions", name: "conditions", default: 5, min: 1, max: 10);
+            container << parent.hubiForm_fontvx_size  (this, title: "Humidity/Dew Point", name: "humidity", default: 4, min: 1, max: 10);
+            container << parent.hubiForm_fontvx_size  (this, title: "Dew Point Conditions", name: "dewpoint", default: 4, min: 1, max: 10);
+
+            
+            parent.hubiForm_container(this, container, 1);     
+        }
+        
         
         parent.hubiForm_section(this,"Display Options", 1)
         {
@@ -198,13 +219,14 @@ def tileSetupPage(){
                     setting = "${attribute[setUnits]}";
                     var = attribute.var;
                     app.updateSetting(var, [type: "enum", value: setting]);
-                    log.debug("Var: $var Setting: $setting");              
                 }
                 container = [];
                 container <<  parent.hubiForm_sub_section(this, attribute.title+" Display");
                 parent.hubiForm_container(this, container, 1);
                 input( type: "enum", name: attribute.var, title: "Units", required: false, multiple: false, options: attribute.unit, defaultValue: attribute.imperial, submitOnChange: false)
-                input( type: "enum", name: attribute.var+"decimal_places", title: "Decimal Places", required: false, multiple: false, options: decimalEnum, defaultValue: 1, submitOnChange: false)
+                if (attribute.var != "display_time_format")
+                    input( type: "enum", name: attribute.var+"decimal_places", title: "Decimal Places", required: false, multiple: false, options: decimalEnum, defaultValue: 1, submitOnChange: false)
+                
             }
         }
             
@@ -270,7 +292,6 @@ def deviceSelectionPage() {
                         input( type: "enum", name: tile.var, title: tile.title, required: false, multiple: false, options: final_attrs, defaultValue: "openweather", submitOnChange: true)
                         container = [];
                         if (settings[tile.var] != "openweather" && tile.unit != null && settings[tile.var]!=null){
-                            log.debug("["+settings[tile.var]+"]");
                             unit = sensor.currentState(settings[tile.var]).getUnit();
                             value = sensor.currentState(settings[tile.var]).getValue();
                             
@@ -608,6 +629,7 @@ def getTileOptions(){
     def options = [
         "tile_units": tile_units,
         "color_icons": color_icons,
+        "show_dewpoint": show_dewpoint,
         "openweather_refresh_rate": openweather_refresh_rate,
         "pws_refresh_rate": override_openweather ? pws_refresh_rate : null,
         "override" : [  "sensor_id" :            override_openweather ? sensor.id : null,
@@ -674,6 +696,10 @@ def defineHTML_Header(){
     
     <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    
     """
     return html;
 }
@@ -683,7 +709,7 @@ def defineHTML_CSS(){
      .grid-container {
       display: grid;
       grid-template-columns: 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw;
-      grid-template-rows: 30vmin 6vmin 6vmin 8vmin 3vmin 8vmin 7vmin 7vmin 7vmin 6vmin 6vmin 6vmin;
+      grid-template-rows: 30vmin 6vmin 8vmin 6vmin 5vmin 6vmin 7vmin 7vmin 7vmin 6vmin 6vmin 6vmin;
       grid-gap: 0px;
       align-items: center;
       background-color: ${getRGBA(background_color, background_opacity)};
@@ -699,7 +725,7 @@ def defineHTML_CSS(){
       grid-row-end: 3;
       grid-column-start: 13;
       grid-column-end: 24;
-      font-size: 10vmin;
+      font-size: ${icon_font}vmin;
       padding-top: 0vmin !important; 
       padding-left: 00vmin !important;
       text-align: center !important;
@@ -707,21 +733,21 @@ def defineHTML_CSS(){
     }
 
     .current_condition1 {
-      grid-row-start:2;
-      grid-row-end: 2;
+      grid-row-start:3;
+      grid-row-end: 3;
       grid-column-start: 13;
       grid-column-end: 24;
-      font-size: 5vmin;
+      font-size: ${conditions_font}vmin;
       text-align: center !important;
       line-height: 1;
     }
 
     .current_condition2 {
-      grid-row-start: 3;
-      grid-row-end: 3;
+      grid-row-start: 4;
+      grid-row-end: 4;
       grid-column-start: 13;
       grid-column-end: 24;
-      font-size: 5vmin;
+      font-size: ${conditions_font}vmin;
       text-align: center !important;
       line-height: 1;
     }
@@ -732,7 +758,7 @@ def defineHTML_CSS(){
       grid-row-end: 1;
       grid-column-start: 2;
       grid-column-end: 15;
-      font-size: 20vmin;
+      font-size: ${temperature_font}vmin;
       text-align: center !important;
       padding-top: 10vmin !important; 
     }
@@ -742,34 +768,46 @@ def defineHTML_CSS(){
       grid-row-end: 3;
       grid-column-start: 2;
       grid-column-end: 14;
-      font-size: 5vmin;
+      font-size: 4vmin;
       text-align: center !important;  
+    }
+
+    .feels_like_number{
+       font-size: ${realfeel_font}vmin !important;
+       font-weight: 900 !important;
+
     }
 
     .forecast_low{
       grid-row-start: 4;
-      grid-row-end: 4;
+      grid-row-end: 6;
       grid-column-start: 3;
       grid-column-end: 8;
-      font-size: 5vmin;
+      font-size: ${highlow_font}vmin;
       text-align: center !important;
     }
 
     .forecast_high{
       grid-row-start: 4;
-      grid-row-end: 4;
+      grid-row-end: 6;
       grid-column-start: 8;
       grid-column-end: 13;
-      font-size: 5vmin;
+      font-size: ${highlow_font}vmin;
       text-align: center !important;
     }
 
+    .precipitation_group {
+        grid-row-start: 6;
+        grid-row-end: 9;
+        grid-column-start: 2;
+        grid-column-end: 9;
+    }
     .precipitation_title{
       grid-row-start: 6;
       grid-row-end: 6;
       grid-column-start: 2;
       grid-column-end: 9;
-      font-size: 4vmin;
+      font-size: ${heading_font}vmin;
       text-align: left !important;
       line-height: 1; 
       border-bottom: 1px solid ${text_color};
@@ -780,7 +818,7 @@ def defineHTML_CSS(){
       grid-row-end: 7;
       grid-column-start: 2;
       grid-column-end: 9;
-      font-size: 4vmin;
+      font-size: ${column_font}vmin;
       text-align: left !important;
     }
 
@@ -789,7 +827,7 @@ def defineHTML_CSS(){
       grid-row-end: 8;
       grid-column-start: 2;
       grid-column-end: 9;
-      font-size: 4vmin;
+      font-size: ${column_font}vmin;
       text-align: left !important;
     }
 
@@ -798,7 +836,7 @@ def defineHTML_CSS(){
       grid-row-end: 9;
       grid-column-start: 2;
       grid-column-end: 9;
-      font-size: 4vmin;
+      font-size: ${column_font}vmin;
       text-align: left !important;
     }
 
@@ -807,7 +845,7 @@ def defineHTML_CSS(){
       grid-row-end: 6;
       grid-column-start: 10;
       grid-column-end: 17;
-      font-size: 4vmin;
+      font-size: ${heading_font}vmin;
       text-align: left !important;
       line-height: 1;
       border-bottom: 1px solid ${text_color}; 
@@ -818,7 +856,7 @@ def defineHTML_CSS(){
   grid-row-end: 7;
   grid-column-start: 10;
   grid-column-end: 17;
-  font-size: 4vmin;
+  font-size: ${column_font}vmin;
   text-align: left !important;
 }
 .current_wind_gust{
@@ -826,7 +864,7 @@ def defineHTML_CSS(){
   grid-row-end: 8;
   grid-column-start: 10;
   grid-column-end: 17;
-  font-size: 4vmin;
+  font-size: ${column_font}vmin;
   text-align: left !important;
 }
 .current_wind_direction{
@@ -834,7 +872,7 @@ def defineHTML_CSS(){
   grid-row-end: 9;
   grid-column-start: 10;
   grid-column-end: 17;
-  font-size: 4vmin;
+  font-size: ${column_font}vmin;
   text-align: left !important;
 }
 
@@ -843,7 +881,7 @@ def defineHTML_CSS(){
   grid-row-end: 6;
   grid-column-start: 18;
   grid-column-end: 25;
-  font-size: 4vmin;
+  font-size: ${heading_font}vmin;
   text-align: left !important;
   line-height: 1;
   border-bottom: 1px solid ${text_color};
@@ -854,7 +892,7 @@ def defineHTML_CSS(){
   grid-row-end: 7;
   grid-column-start: 18;
   grid-column-end: 26;
-  font-size: 4vmin;
+  font-size: ${column_font}vmin;
   text-align: left !important;
 }
 
@@ -863,16 +901,16 @@ def defineHTML_CSS(){
   grid-row-end: 8;
   grid-column-start: 18;
   grid-column-end: 25;
-  font-size: 4vmin;
+  font-size: ${column_font}vmin;
   text-align: left !important;
 }
 
 .current_humidity{
   grid-row-start: 11;
   grid-row-end: 11;
-  grid-column-start: 3;
-  grid-column-end: 9;
-  font-size: 4vmin;
+  grid-column-start: 2;
+  grid-column-end: 6;
+  font-size: ${humidity_font}vmin;
   text-align: left !important;
   line-height: 1;
 }
@@ -882,7 +920,7 @@ def defineHTML_CSS(){
   grid-row-end: 11;
   grid-column-start: 21;
   grid-column-end: 26;
-  font-size: 3vmin;
+  font-size: ${time_font}vmin;
   text-align: left !important;
   line-height: 1;
 }
@@ -892,7 +930,7 @@ def defineHTML_CSS(){
   grid-row-end: 11;
   grid-column-start: 17;
   grid-column-end: 21;
-  font-size: 3vmin;
+  font-size: ${time_font}vmin;
   text-align: left !important;
   line-height: 1;
 }
@@ -900,22 +938,22 @@ def defineHTML_CSS(){
 .current_dewpoint{
   grid-row-start: 11;
   grid-row-end: 11;
-  grid-column-start: 9;
+  grid-column-start: 6;
   grid-column-end: 18;
-  font-size: 4vmin;
+  font-size: ${humidity_font}vmin;
   text-align: left !important;
   line-height: 1;
 }
 
 .dewpoint_text{
-   grid-row-start: 4;
-      grid-row-end: 4;
-      grid-column-start: 13;
-      grid-column-end: 24;
-      font-size: 4vmin;
-      text-align: center !important;
-      line-height: 1;
-    }
+   grid-row-start: 11;
+   grid-row-end: 11;
+   grid-column-start: 10;
+   grid-column-end: 20;
+   font-size: ${dewpoint_font}vmin;
+   text-align: left !important;
+   line-height: 1;
+}
 }
 
 .units{
@@ -924,6 +962,49 @@ def defineHTML_CSS(){
 
     """
     return html
+}
+
+def defineHTML_GraphWindowCSS(){
+    def html = """
+ 
+.graphWindow {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 5vh; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.graphWindow-content {
+  background-color: #fefefe;
+  margin: auto;
+  padding: 1vh;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+/* The Close Button */
+.close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+"""
+    return html;
 }
 
 def defineHTML_Tile(){
@@ -960,11 +1041,12 @@ def defineHTML_Tile(){
     </div>
 
     <div class="current_feels_like">
-        <span class="mdi mdi-home-thermometer-outline">Feels Like: </span>
-        <span id="current_feels_like" style="font-size: 7vmin; font-weight: 900;">--</span><span>${getAbbrev(display_feels_like)}</span>  
+        <span class="mdi mdi-home-thermometer-outline">Feels Like:</span>
+        <span id="current_feels_like" class="feels_like_number">--</span><span>${getAbbrev(display_feels_like)}</span>  
     </div>
-
-    <div class="precipitation_title">
+    
+    
+    <div class="precipitation_title"  onclick="showWeather()">          
         <span class="mdi mdi-umbrella-outline"> Rainfall</span>
     </div>
     <div class="forecast_precipitation" ><span class="mdi mdi-ruler"> </span> 
@@ -976,6 +1058,7 @@ def defineHTML_Tile(){
     <div class="forecast_precipitation_chance"><span class="mdi mdi-cloud-question"> </span>
         <span id="forecast_precipitation_chance" >--</span><span class="units">%</span> 
     </div>
+    
 
     <div class="pressure_title">
         <span class="mdi mdi-gauge"> Pressure</span>
@@ -994,9 +1077,15 @@ def defineHTML_Tile(){
     <div class="current_dewpoint"><span class="mdi mdi-waves"> </span>
         <span id="current_dewpoint"> --.-</span><span class="units">${getAbbrev(display_dew_point)}</span> 
     </div>
+    """
+    
+    if (show_dewpoint) html += """
     <div class="dewpoint_text">
         <span id="dewpoint_text"> -------</span>
     </div>
+    """
+    
+    html += """
     <div class="current_condition1"> 
         <span id="current_condition1">------- </span>
     </div>
@@ -1024,6 +1113,17 @@ def defineHTML_Tile(){
         <span id="sunset" class="mdi mdi-weather-sunset-down"> --:-- </span> 
     </div>
     </div>
+
+    <!-- The Weather Graph -->
+    <div id="precipitationGraph" class="graphWindow">
+
+      <!-- Modal content -->
+      <div class="graphWindow-content">
+        <div class="daily-graph" id="daily_precipitation_graph" style="width: 90vw; height: 75vh">
+      </div>
+
+    </div>
+
 """
     return html;
    
@@ -1081,6 +1181,9 @@ def defineHTML_getData(){
 
 def defineHTML_globalVariables(){
     def html = """
+        google.load('visualization', '1.0', {'packages':['corechart']});
+        google.setOnLoadCallback(drawChart);
+
         var sunrise;
         var sunset;
         let options = [];
@@ -1395,6 +1498,7 @@ def defineHTML_setCondition(){
                 icon = "mdi-weather-partly-cloudy";
             }
             text1 = "FEW CLOUDS";
+            color = "#ffffcc";
             break;
         case "scattered clouds":
             if (now > sunset || now < sunrise) {
@@ -1798,9 +1902,10 @@ function setWeatherTile(weather) {
                     dewPoint_f = (val - 273.15) * 9/5 + 32; break;
                 
             }
-            
-            let dewpoint_text = getDewPoint(dewPoint_f);
-            setValue(dewpoint_text, 'dewpoint_text');
+            if (options.show_dewpoint){
+                let dewpoint_text = getDewPoint(dewPoint_f);
+                setValue(dewpoint_text, 'dewpoint_text');
+            }
             break;
         case 'forecast_precipitation':
             out = options.display.forecast_precipitation;
@@ -2073,6 +2178,67 @@ def defineHTML_initialize(){
     return html;
 }
 
+def defineHTML_graphWindow(){
+    def html = """
+
+    function showWeather() {
+        //jQuery(".graphWindow").css("cssText", "display: block");
+    }
+
+    function hideWeather() {
+        jQuery(".graphWindow").css("cssText", "display: none");
+    }
+
+    function drawChart(){
+        google.charts.load('current', {'packages':['corechart']});
+
+	    var data = google.visualization.arrayToDataTable([
+          ['Year', 'Sales', 'Expenses'],
+          ['2004',  1000,      400],
+          ['2005',  1170,      460],
+          ['2006',  660,       1120],
+          ['2007',  1030,      540]
+        ]);
+
+        var options = {
+          title: 'Company Performance',
+          curveType: 'function',
+          legend: { position: 'bottom' }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('daily_precipitation_graph'));
+
+        chart.draw(data, options);
+    }
+    // Get the modal
+    //var modal = document.getElementById("myModal");
+
+    // Get the button that opens the modal
+    //var btn = document.getElementById("myBtn");
+
+    // Get the <span> element that closes the modal
+    //var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks the button, open the modal 
+    //btn.onclick = function() {
+    //  modal.style.display = "block";
+    //}
+
+    // When the user clicks on <span> (x), close the modal
+    //span.onclick = function() {
+    //  modal.style.display = "none";
+    //}
+
+    // When the user clicks anywhere outside of the modal, close it
+    //window.onclick = function(event) {
+    //  if (event.target == modal) {
+    //    modal.style.display = "none";
+    //  }
+    //}
+    """
+    return html;
+}
+
 def getWeatherTile() {
     def fullSizeStyle = "margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden";
     
@@ -2080,6 +2246,7 @@ def getWeatherTile() {
     html += "<head><style>";
     //CSS
     html += defineHTML_CSS();
+    html += defineHTML_GraphWindowCSS();
     html += """</style></head><body onload="initialize()">"""
     html += defineHTML_Tile();
     
@@ -2101,6 +2268,7 @@ def getWeatherTile() {
     html += defineHTML_getWeather();
     html += defineHTML_initialize();
     html += defineHTML_getString();
+    html += defineHTML_graphWindow();
     //html += defineHTML_getTimerData();
      
     html +="</script></body></html>"
