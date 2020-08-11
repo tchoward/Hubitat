@@ -169,6 +169,8 @@ def tileSetupPage(){
                                                      "text", 
                                                      "#FFFFFF", 
                                                      false);
+            
+            container << parent.hubiForm_switch     (this, title: "Color Icons?", name: "color_icons", default: false);
                          
             parent.hubiForm_container(this, container, 1);     
         } 
@@ -333,14 +335,14 @@ def mainPage() {
                     href name: "enableAPIPageLink", title: "Enable API", description: "", page: "enableAPIPage"    
                  }    
             } else {
-               parent.hubiForm_section(this, "Graph Options", 1, "tune"){
+               parent.hubiForm_section(this, "Tile Options", 1, "tune"){
                     container = [];
                     container << parent.hubiForm_page_button(this, "Select Device/Data", "deviceSelectionPage", "100%", "vibration");
                     container << parent.hubiForm_page_button(this, "Configure Tile", "tileSetupPage", "100%", "poll");              
                     parent.hubiForm_container(this, container, 1); 
                 }
                 
-                parent.hubiForm_section(this, "Local Graph URL", 1, "link"){
+                parent.hubiForm_section(this, "Local Tile URL", 1, "link"){
                     container = [];
                     container << parent.hubiForm_text(this, "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
                     
@@ -362,7 +364,7 @@ def mainPage() {
                              
                         container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
                         if (install_device==true){ 
-                             container << parent.hubiForm_text_input(this, "Name for HubiGraph Tile Device", "device_name", "Hubigraph Tile", "false");
+                             container << parent.hubiForm_text_input(this, "Name for Tile Device", "device_name", "Hubigraph Tile", "false");
                         }
                         parent.hubiForm_container(this, container, 1); 
                     }
@@ -373,7 +375,7 @@ def mainPage() {
                    parent.hubiForm_section(this, "Hubigraph Application", 1, "settings"){
                         container = [];
                         container << parent.hubiForm_sub_section(this, "Application Name");
-                        container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Time Graph", "false");
+                        container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Weather Tile", "false");
                         container << parent.hubiForm_sub_section(this, "Debugging");
                         container << parent.hubiForm_switch(this, title: "Enable Debug Logging?", name: "debug", default: false);
                         container << parent.hubiForm_sub_section(this, "Disable Oauth Authorization");
@@ -605,6 +607,7 @@ def getTileOptions(){
     
     def options = [
         "tile_units": tile_units,
+        "color_icons": color_icons,
         "openweather_refresh_rate": openweather_refresh_rate,
         "pws_refresh_rate": override_openweather ? pws_refresh_rate : null,
         "override" : [  "sensor_id" :            override_openweather ? sensor.id : null,
@@ -677,7 +680,7 @@ def defineHTML_Header(){
 
 def defineHTML_CSS(){
     def html = """
-        .grid-container {
+     .grid-container {
       display: grid;
       grid-template-columns: 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw 4vw;
       grid-template-rows: 30vmin 6vmin 6vmin 8vmin 3vmin 8vmin 7vmin 7vmin 7vmin 6vmin 6vmin 6vmin;
@@ -700,6 +703,7 @@ def defineHTML_CSS(){
       padding-top: 0vmin !important; 
       padding-left: 00vmin !important;
       text-align: center !important;
+      color: ${text_color} !important;
     }
 
     .current_condition1 {
@@ -957,38 +961,38 @@ def defineHTML_Tile(){
 
     <div class="current_feels_like">
         <span class="mdi mdi-home-thermometer-outline">Feels Like: </span>
-        <span id="current_feels_like">--</span><span>${getAbbrev(display_feels_like)}</span>  
+        <span id="current_feels_like" style="font-size: 7vmin; font-weight: 900;">--</span><span>${getAbbrev(display_feels_like)}</span>  
     </div>
 
     <div class="precipitation_title">
         <span class="mdi mdi-umbrella-outline"> Rainfall</span>
     </div>
-    <div class="forecast_precipitation mdi mdi-ruler">
-        <span id="forecast_precipitation"> -.--</span><span class="units">${getAbbrev(display_forecast_precipitation)}</span> 
+    <div class="forecast_precipitation" ><span class="mdi mdi-ruler"> </span> 
+        <span id="forecast_precipitation">-.--</span><span class="units">${getAbbrev(display_forecast_precipitation)}</span> 
     </div>
-    <div class="current_precipitation">
-        <span id="current_precipitation" class="mdi mdi-calendar-today"> -.--</span><span class="units">${getAbbrev(display_actual_precipitation)}</span> 
+    <div class="current_precipitation"><span  class="mdi mdi-calendar-today"> </span>
+        <span id="current_precipitation"> -.--</span><span class="units">${getAbbrev(display_actual_precipitation)}</span> 
     </div>
-    <div class="forecast_precipitation_chance">
-        <span id="forecast_precipitation_chance" class="mdi mdi-cloud-question"> --</span><span class="units">%</span> 
+    <div class="forecast_precipitation_chance"><span class="mdi mdi-cloud-question"> </span>
+        <span id="forecast_precipitation_chance" >--</span><span class="units">%</span> 
     </div>
 
     <div class="pressure_title">
         <span class="mdi mdi-gauge"> Pressure</span>
     </div>
-    <div class="current_pressure">
-        <span id="current_pressure" class="mdi mdi-thermostat"> ----</span><span class="units"> ${getAbbrev(display_current_pressure)}</span> 
+    <div class="current_pressure"><span class="mdi mdi-thermostat"> </span>
+        <span id="current_pressure">----</span><span class="units"> ${getAbbrev(display_current_pressure)}</span> 
     </div>
     <div class="current_pressure_trend">
         <span id="pressure_icon" class="mdi mdi-arrow-up-thick"></span>
         <span id="current_pressure_trend"> -------</span>
     </div>
 
-    <div class="current_humidity">
-        <span id="current_humidity" class="mdi mdi-water-percent"> --</span><span class="units">%</span> 
+    <div class="current_humidity"><span class="mdi mdi-water-percent"> </span>
+        <span id="current_humidity">--</span><span class="units">%</span> 
     </div>
-    <div class="current_dewpoint">
-        <span id="current_dewpoint" class="mdi mdi-waves"> --.-</span><span class="units">${getAbbrev(display_dew_point)}</span> 
+    <div class="current_dewpoint"><span class="mdi mdi-waves"> </span>
+        <span id="current_dewpoint"> --.-</span><span class="units">${getAbbrev(display_dew_point)}</span> 
     </div>
     <div class="dewpoint_text">
         <span id="dewpoint_text"> -------</span>
@@ -1003,13 +1007,13 @@ def defineHTML_Tile(){
     <div class="wind_title">
         <span class="mdi mdi-weather-windy-variant"> Wind</span>
     </div>
-    <div class="current_wind_speed mdi mdi-tailwind">
+    <div class="current_wind_speed"><span class=" mdi mdi-tailwind"> </span>
         <span id="current_wind_speed"> -- </span><span class="units">${getAbbrev(display_wind_speed)}</span> 
     </div>
-    <div class="current_wind_gust mdi mdi-weather-windy">
+    <div class="current_wind_gust"><span class=" mdi mdi-weather-windy"> </span>
         <span id="current_wind_gust"> -- </span><span class="units">${getAbbrev(display_wind_gust)}</span> 
     </div>
-    <div class="current_wind_direction mdi mdi-compass-outline">
+    <div class="current_wind_direction"><span class="mdi mdi-compass-outline"> </span>
         <span id="current_wind_direction"> --</span><span class="units">${getAbbrev(display_wind_direction)}</span> 
     </div>
 
@@ -1048,27 +1052,26 @@ def defineHTML_getData(){
 
             pws_data = new Map();
             if (data.current_temperature) 
-                pws_data.set('current_temperature',         {value : data.current_temperature.value,            in_units: data.current_temperature.units,        out: out.current_temp});
+                pws_data.set('current_temperature',         {value : data.current_temperature.value,            in_units: data.current_temperature.units});
             if (data.current_wind_speed)
-                pws_data.set('current_wind_speed',          {value : data.current_wind_speed.value,             in_units: data.current_wind_speed.units,         out: out.wind_speed});
+                pws_data.set('current_wind_speed',          {value : data.current_wind_speed.value,             in_units: data.current_wind_speed.units});
             if (data.current_feels_like) 
-                pws_data.set('current_feels_like',          {value : data.current_feels_like.value,             in_units: data.current_feels_like.units,         out: out.feels_like});
+                pws_data.set('current_feels_like',          {value : data.current_feels_like.value,             in_units: data.current_feels_like.units});
             if (data.current_wind_gust)  
-                pws_data.set('current_wind_gust',           {value : data.current_wind_gust.value,              in_units: data.current_wind_gust.units,          out: out.wind_gust});
+                pws_data.set('current_wind_gust',           {value : data.current_wind_gust.value,              in_units: data.current_wind_gust.units});
             if (data.current_wind_direction) 
-                pws_data.set('current_wind_direction',      {value : data.current_wind_direction.value,         in_units: data.current_wind_direction.units,     out: out.wind_direction});
+                pws_data.set('current_wind_direction',      {value : data.current_wind_direction.value,         in_units: data.current_wind_direction.units});
             if (data.current_pressure) 
-                pws_data.set('current_pressure',            {value : data.current_pressure.value,               in_units: data.current_pressure.units,           out: out.current_pressure});
+                pws_data.set('current_pressure',            {value : data.current_pressure.value,               in_units: data.current_pressure.units});
             if (data.current_humidity) 
-                pws_data.set('current_humidity',            {value : data.current_humidity.value,               in_units: data.current_humidity.units,           out: out.humidity});
+                pws_data.set('current_humidity',            {value : data.current_humidity.value,               in_units: data.current_humidity.units});
             if (data.current_dewpoint) {
-                pws_data.set('current_dewpoint',            {value : data.current_dewpoint.value,               in_units: data.current_dewpoint.units,           out: out.dew_point});
-                pws_data.set('dewpoint_text',               {value : getDewPoint(data.current_dewpoint.value),  in_units: "none",                                out: "none"});
+                pws_data.set('current_dewpoint',            {value : data.current_dewpoint.value,               in_units: data.current_dewpoint.units});
             }
             if (data.current_pressure_trend)
-                pws_data.set('current_pressure_trend',      {value : data.current_pressure_trend.value,         in_units: data.current_pressure_trend.units,    out: out.pressure_trend});  
+                pws_data.set('current_pressure_trend',      {value : data.current_pressure_trend.value,         in_units: data.current_pressure_trend.units});  
             if (data.current_precipitation) 
-                pws_data.set('current_precipitation',       {value : data.current_precipitation.value,          in_units: data.current_precipitation.units,      out: out.actual_precipitation});
+                pws_data.set('current_precipitation',       {value : data.current_precipitation.value,          in_units: data.current_precipitation.units});
             
         });
     }
@@ -1082,6 +1085,7 @@ def defineHTML_globalVariables(){
         var sunset;
         let options = [];
         let pws_data = [];
+        let currentTemperature;
     """
 }
 
@@ -1094,75 +1098,91 @@ def defineHTML_setCondition(){
     let text1 = "UNKNOWN";
     let text2 = "";
     let now = new Date().getTime() / 1000;
+    let color = "#ff0000";
 
     switch (condition) {
         case "thunderstorm with light rain":
             icon = "mdi-weather-lightning-rainy";
             text1 = "THUNDERSTORMS";
             text2 = "LIGHT RAIN";
+            color = "#e6f7ff";
             break;
         case "thunderstorm with rain":
             icon = "mdi-weather-lightning-rainy";
             text1 = "THUNDERSTORMS";
             text2 = "RAIN";
+            color = "#e6f7ff";
             break;
         case "thunderstorm with heavy rain":
             icon = "mdi-weather-lightning-rainy";
             text1 = "THUNDERSTORMS"
             text2 = "HEAVY RAIN";
+            color = "#e6f7ff";
             break;
         case "light thunderstorm":
             icon = "mdi-weather-lightning";
             text1 = "LIGHT";
             text2 = "THUNDERSTORMS";
+            color = "#cccc00";
             break;
         case "thunderstorm":
             icon = "mdi-weather-lightning";
             text1 = "THUNDERSTORMS";
+            color = "#cccc00";
             break;
         case "heavy thunderstorm":
             icon = "mdi-weather-lightning";
             text1 = "HEAVY";
             text2 = "THUNDERSTORMS";
+            color = "#cccc00";
             break;
         case "ragged thunderstorm":
             icon = "mdi-weather-lightning";
             text1 = "SCATTERED";
             text2 = "THUNDERSTORMS";
+            color = "#cccc00";
             break;
         case "thunderstorm with light drizzle":
             icon = "mdi-weather-lightning-rainy";
             text1 = "THUNDERSTORMS";
             text2 = "LIGHT DRIZZLE";
+            color = "#e6f7ff";
             break;
         case "thunderstorm with drizzle":
             icon = "mdi-weather-lightning-rainy";
             text1 = "THUNDERSTORMS";
             text2 = "DRIZZLE";
+            color = "#e6f7ff";
             break;
         case "thunderstorm with heavy drizzle":
             icon = "mdi-weather-lightning-rainy"
             text1 = "THUNDERSTORMS"
             text2 = "HEAVY DRIZZLE";
+            color = "#e6f7ff";
             break;
         case "light intensity drizzle":
             icon = "mdi-weather-partly-rainy";
             text1 = "LIGHT";
             text2 = "DRIZZLE";
+            color = "#e6f7ff";
             break;
         case "drizzle":
             icon = "mdi-weather-partly-rainy";
-            text1 = "DRIZZLE";
+            text1 = "DRIZZLE"
+            color = "#e6f7ff";
+            color = "#e6f7ff";
             break;
         case "heavy intensity drizzle":
             icon = "mdi-weather-partly-rainy";
             text1 = "HEAVY";
             text2 = "DRIZZLE";
+            color = "#e6f7ff";
             break;
         case "light intensity drizzle rain":
             icon = "mdi-weather-partly-rainy";
             text1 = "LIGHT";
             text2 = "DRIZZLE";
+            color = "#e6f7ff";
             break;
         case "drizzle rain":
             icon = "mdi-weather-partly-rainy";
@@ -1171,164 +1191,201 @@ def defineHTML_setCondition(){
         case "heavy intensity drizzle rain":
             icon = "mdi-weather-rainy";
             text1 = "RAIN";
+            color = "#00ace6";
             break;
         case "shower rain and drizzle":
             icon = "mdi-weather-rainy";
             text1 = "RAIN";
+            color = "#00ace6";
             break;
         case "heavy shower rain and drizzle":
             icon = "mdi-weather-pouring";
             text1 = "SHOWERS";
+            color = "#00ace6";
             break;
         case "shower drizzle":
             icon = "mdi-weather-rainy";
             text1 = "SHOWERS";
+            color = "#00ace6";
             break;
         case "light rain":
             icon = "mdi-weather-rainy";
             text1 = "LIGHT";
             text2 = "RAIN";
+            color = "#00ace6";
             break;
         case "moderate rain":
             icon = "mdi-weather-pouring";
             text1 = "MODERATE";
             text2 = "RAIN";
+            color = "#00ace6";
             break;
         case "heavy intensity rain":
             icon = "mdi-weather-pouring";
             text1 = "HEAVY";
             text2 = "RAIN";
+            color = "#00ace6";
             break;
         case "very heavy rain":
             icon = "mdi-weather-pouring";
             text1 = "VERY HEAVY";
             text2 = "RAIN";
+            color = "#00ace6";
             break;
         case "extreme rain":
             icon = "mdi-weather-pouring";
             text1 = "INTENSE";
             text2 = "RAIN";
+            color = "#4dd2ff";
             break;
         case "freezing rain":
             icon = "mdi-weather-snowy-rainy";
             text1 = "FREEZING";
             text2 = "RAIN";
+            color = "#e6f9ff";
             break;
         case "light intensity shower rain":
             icon = "mdi-weather-rainy";
             text1 = "LIGHT";
             text2 = "SHOWERS";
+            color = "#b3ecff"
             break;
         case "shower rain":
             icon = "mdi-weather-rainy";
             text1 = "SHOWERS";
+            color = "#99e6ff"
             break;
         case "heavy intensity shower rain":
             icon = "mdi-weather-pouring";
             text1 = "HEAVY"
             text2 = "SHOWERS";
+            color = "#4dd2ff";
             break;
         case "ragged shower rain":
             icon = "mdi-weather-partly-rainy";
             text1 = "SCATTERED";
             text2 = "SHOWERS";
+            color = "#33ccff"
             break;
         case "light snow":
             icon = "mdi-weather-snowy";
             text1 = "LIGHT";
             text2 = "SNOW";
+            color = "#FFFFFF"
             break;
         case "Snow":
             icon = "mdi-weather-snowy";
             text1 = "SNOW";
+            color = "#FFFFFF"
             break;
         case "Heavy snow":
             icon = "mdi-weather-snowy-heavy";
             text1 = "HEAVY SNOW";
+            color = "#FFFFFF"
             break;
         case "Sleet":
             icon = "mdi-weather-hail";
             text1 = "SLEET";
+             color = "#e6f9ff"
             break;
         case "Light shower sleet":
             icon = "mdi-weather-hail";
             text1 = "LIGHT SLEET";
+             color = "#e6f9ff"
             break;
         case "Shower sleet":
             icon = "mdi-weather-hail";
             text1 = "SLEET";
             text2 = "SHOWERS";
+             color = "#e6f9ff"
             break;
         case "Light rain and snow":
             icon = "mdi-weather-snowy-rainy";
             text1 = "LIGHT"
             text2 = "RAIN & SNOW";
+             color = "#e6f9ff"
             break;
         case "Rain and snow":
             icon = "mdi-weather-snowy-rainy";
             text1 = "RAIN & SNOW";
+             color = "#e6f9ff"
             break;
         case "Light shower snow":
             icon = "mdi-weather-partly-snowy";
             text1 = "LIGHT RAIN"
             text2 = "SNOW SHOWERS";
+             color = "#FFFFFF"
             break;
         case "Shower snow":
             icon = "mdi-weather-partly-snowy";
             text1 = "SNOW SHOWERS";
+            color = "#ffffe6";
             break;
         case "Heavy shower snow":
             icon = "mdi-weather-partly-snowy";
             text1 = "HEAVY";
             text2 = "SNOW SHOWERS";
+            color = "#ffffe6"
             break;
         case "mist":
             icon = "mdi-weather-fog";
             text1 = "MIST";
+            color = "#f0f0f5"
             break;
         case "Smoke":
             icon = "mdi-weather-fog";
             text1 = "SMOKE";
+            color = "#f0f0f5"
             break;
         case "Haze":
             icon = "mdi-weather-hazy";
             text1 = "HAZE";
+            color = "#ebebe0"
             break;
         case "sand dust whirls":
             icon = "mdi-weather-tornado";
             text1 = "DUST WHIRLS";
+            color = "#cc9966";
             break;
         case "fog":
             icon = "mdi-weather-fog";
             text1 = "FOG";
+            color = "#a6a6a6"
             break;
         case "sand":
             icon = "mdi-weather-fog";
             text1 = "SAND";
+            color = "#cc9966";
             break;
         case "dust":
             icon = "mdi-weather-fog";
             text1 = "DUST";
+            color = "#cc9966";
             break;
         case "volcanic ash":
             icon = "mdi-weather-fog";
             text1 = "VOCANIC ASH";
+            color = "#a6a6a6";
             break;
         case "squalls":
             icon = "mdi-weather-tornado";
             text1 = "SQUALLS";
+            color = "#c68c53";
             break;
         case "tornado":
             icon = "mdi-weather-tornado";
             text1 = "TORNADO";
+            color = "#c68c53";
             break;
         case "clear sky":
             if (now > sunset || now < sunrise) {
                 icon = "mdi-weather-night";
                 text1 = "CLEAR";
+                color = "#4d79ff"
             } else {
                 icon = "mdi-weather-sunny";
                 text1 = "SUNNY";
+                color = "yellow"
             }
             break;
         case "few clouds":
@@ -1347,16 +1404,19 @@ def defineHTML_setCondition(){
             }
             text1 = "SCATTERED";
             text2 = "CLOUDS";
+            color = "#ffffcc";
             break;
         case "broken clouds":
             icon = "mdi-weather-cloudy";
             text1 = "BROKEN"
             text2 = "CLOUDS";
+            color = "#ffffcc";
             break;
         case "overcast clouds":
             icon = "mdi-weather-cloudy";
             text1 = "OVERCAST"
             text2 = "CLOUDS";
+            color = "#ffffcc";
             break;
     }
 
@@ -1368,6 +1428,13 @@ def defineHTML_setCondition(){
 
     el = document.getElementById('current_condition2');
     el.textContent = text2;
+
+    if (options.color_icons){
+        console.log("Setting color: "+color);
+        jQuery(".weather_icon").css("cssText", "color: "+color+" !important");
+
+
+    }
     }
     """
     return html;
@@ -1411,13 +1478,10 @@ def defineHTML_getString(){
     
     def html = """
     
-function getString(data) {
+function getString(data, out_units) {
 
     let val = parseFloat(data.value);
     let in_units = data.in_units;
-    let out_units = data.out.unit;
-    let digits = data.out.decimal;
-    let outputType = "numeric";
 
     if (in_units != out_units) {
         switch (in_units) {
@@ -1622,14 +1686,11 @@ function getString(data) {
 
     }
     
-    if (outputType == "text") return val;
-    else {
-        if (val == "UNSUPPORTED"){
+    if (val == "UNSUPPORTED"){
             console.log("UNSUPPORTED:: "+data.value+": "+data.in_units+" "+data.out.unit+" "+data.out.decimal);
             return val;
-        }
-        return " "+val.toFixed(digits);
-    } 
+    }
+    return val;
 }
     """
     return html;
@@ -1642,20 +1703,134 @@ function setWeatherTile(weather) {
 
     weather.forEach((value, key) => {
         
-        let val = getString(value); 
+    let val;
+    let out;
 
-        if (key == "current_description") {        
+    switch (key){
+        case 'current_temperature':
+            out = options.display.current_temp;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            switch (out.unit) {
+                case "celsius":
+                    currentTemperature = (val * 9 / 5) + 32; break;
+                case "fahrenheit": 
+                    currentTemperature = val; break;
+                case "kelvin":
+                    currentTemperature = (val - 273.15) * 9/5 + 32; break;
+                
+            }
+            setValue(val, key);
+            break;
+        case 'forecast_high':
+            out = options.display.forcast_high;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+        case 'forecast_low':
+            out = options.display.forecast_low;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+        case 'current_feels_like':
+            out = options.display.feels_like;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+        case 'current_description':
             setCondition(value.value);
-        } else if (key == "current_pressure_trend") {
+            break;
+        case 'current_wind_speed':
+            out = options.display.wind_speed;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+        case 'current_wind_gust':
+            out = options.display.wind_gust;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+        case 'current_wind_direction':
+            out = options.display.wind_direction;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+        case 'current_pressure':
+            out = options.display.current_pressure;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+        case 'current_pressure_trend':
             setPressure(value.value);
-        }
-        else if (key == "dewpoint_text"){
-            setValue(value.value, key);
-        } else {
-           setValue(val, key);
-        }
+            break;
+        case 'current_humidity':
+            out = options.display.humidity;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;            
+        case 'current_precipitation':
+            out = options.display.actual_precipitation;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+        case 'current_dewpoint':
+            out = options.display.dew_point;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
 
-    });
+            let dewPoint_f;
+            switch (out.unit) {
+                case "celsius":
+                    dewPoint_f = (val * 9 / 5) + 32; break;
+                case "fahrenheit": 
+                    dewPoint_f = val; break;
+                case "kelvin":
+                    dewPoint_f = (val - 273.15) * 9/5 + 32; break;
+                
+            }
+            
+            let dewpoint_text = getDewPoint(dewPoint_f);
+            setValue(dewpoint_text, 'dewpoint_text');
+            break;
+        case 'forecast_precipitation':
+            out = options.display.forecast_precipitation;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+        case 'forecast_precipitation_chance':
+            out = options.display.chance_precipitation;
+            val = getString(value, out.unit);
+            console.log(val+" Here");
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+        case 'sunrise':
+            out = options.display.time_format;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+        case 'sunset':
+            out = options.display.time_format;
+            val = getString(value, out.unit);
+            val = isNaN(val) ? val : val.toFixed(out.decimal);
+            setValue(val, key);
+            break;
+
+    }
+
+});
 
 }
     """
@@ -1685,15 +1860,16 @@ def defineHTML_getTime(){
 def defineHTML_getDewPoint(){
     
    def html = """
-     function getDewPoint(temp){
- 
- 	    if (temp < 50) return "DRY";
-        else if (temp < 55) return "PLEASANT";
-        else if (temp < 60) return "COMFORTABLE";
-        else if (temp < 65) return "STICKY";
-        else if (temp < 70) return "UNCOMFORTABLE";
-        else if (temp < 75) return "OPPRESSIVE";
-        else return "MISERABLE"
+     function getDewPoint(dewPoint){
+        if (currentTemperature > 65) {
+ 	        if (dewPoint < 50) return "DRY";
+            else if (dewPoint < 55) return "PLEASANT";
+            else if (dewPoint < 60) return "COMFORTABLE";
+            else if (dewPoint < 65) return "STICKY";
+            else if (dewPoint < 70) return "UNCOMFORTABLE";
+            else if (dewPoint < 75) return "OPPRESSIVE";
+            else return "MISERABLE"
+        } else return "";
     }
  
   """
@@ -1738,7 +1914,7 @@ def defineHTML_getWeather(){
     def html = """
     
 function getWeather() {
-    const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely,hourly&appid=${tile_key}&units=imperial`;
+    const url = `https://api.openweathermap.org/data/2.5/onecall?lat=${latitude}&lon=${longitude}&exclude=minutely&appid=${tile_key}&units=imperial`;
 
     let now = new Date();
     let tempUnits = "fahrenheit";
@@ -1757,35 +1933,35 @@ function getWeather() {
         .then(response => response.json())
         .then(data => {
             let weather = new Map();
+            console.log(data);
             let override = options.override;
             let out = options.display;
 
-            if (override.current_temp == "openweather")      weather.set('current_temperature',           {value : data.current.temp,                   in_units: tempUnits,     out: out.current_temp});
-                                                             weather.set('forecast_high',                 {value : data.daily[0].temp.max,              in_units: tempUnits,     out: out.forcast_high});
-                                                             weather.set('forecast_low',                  {value : data.daily[0].temp.min,              in_units: tempUnits,     out: out.forecast_low});
-            if (override.feels_like == "openweather")        weather.set('current_feels_like',            {value : data.current.feels_like,             in_units: tempUnits,     out: out.feels_like});
-                                                             weather.set('current_description',           {value : data.current.weather[0].description, in_units: "none",        out: "none"});
-            if (override.wind_speed == "openweather")        weather.set('current_wind_speed',            {value : data.current.wind_speed,             in_units: speedUnits,    out: out.wind_speed});
+            if (override.current_temp == "openweather")      weather.set('current_temperature',           {value : data.current.temp,                   in_units: tempUnits});
+                                                             weather.set('forecast_high',                 {value : data.daily[0].temp.max,              in_units: tempUnits});
+                                                             weather.set('forecast_low',                  {value : data.daily[0].temp.min,              in_units: tempUnits});
+            if (override.feels_like == "openweather")        weather.set('current_feels_like',            {value : data.current.feels_like,             in_units: tempUnits});
+                                                             weather.set('current_description',           {value : data.current.weather[0].description, in_units: "none"});
+            if (override.wind_speed == "openweather")        weather.set('current_wind_speed',            {value : data.current.wind_speed,             in_units: speedUnits});
             
             if (override.wind_gust == "openweather")
-                if (data.current.wind_gust != undefined)     weather.set('current_wind_gust',             {value : data.current.wind_gust,              in_units: speedUnits,    out: out.wind_gust});
-                else                                         weather.set('current_wind_gust',             {value : data.current.wind_speed,             in_units: speedUnits,    out: out.wind_gust});
+                if (data.current.wind_gust != undefined)     weather.set('current_wind_gust',             {value : data.current.wind_gust,              in_units: speedUnits});
+                else                                         weather.set('current_wind_gust',             {value : data.current.wind_speed,             in_units: speedUnits});
 
-            if (override.wind_direction == "openweather")    weather.set('current_wind_direction',        {value : data.current.wind_deg,               in_units: dirUnits,      out: out.wind_direction});
+            if (override.wind_direction == "openweather")    weather.set('current_wind_direction',        {value : data.current.wind_deg,               in_units: dirUnits});
 
-            if (data.daily[0].rain != undefined)             weather.set('forecast_precipitation',        {value : data.daily[0].rain,                  in_units: precipUnits,   out: out.forecast_precipitation});
-            else                                             weather.set('forecast_precipitation',        {value : "0.00",                              in_units: precipUnits,   out: out.forecast_precipitation});
+            if (data.daily[0].rain != undefined)             weather.set('forecast_precipitation',        {value : data.daily[0].rain,                  in_units: precipUnits});
+            else                                             weather.set('forecast_precipitation',        {value : "0.00",                              in_units: precipUnits});
 
-                                                             weather.set('forecast_precipitation_chance', {value : data.daily[0].pop * 100,             in_units: percent,       out: out.chance_precipitation})
+                                                             weather.set('forecast_precipitation_chance', {value : data.daily[0].pop * 100,             in_units: percent})
 
-            if (override.current_pressure == "openweather")  weather.set('current_pressure',              {value : data.current.pressure,               in_units: pressureUnits, out: out.current_pressure});
+            if (override.current_pressure == "openweather")  weather.set('current_pressure',              {value : data.current.pressure,               in_units: pressureUnits});
             currentPressure = data.current.pressure;
             
-            if (override.humidity == "openweather")          weather.set('current_humidity',              {value : data.current.humidity,               in_units: percent,       out: out.humidity});
-                                                             weather.set('sunrise',                       {value : data.current.sunrise,                in_units: timeUnits,     out: out.time_format});    
-                                                             weather.set('sunset',                        {value : data.current.sunset,                 in_units: timeUnits,     out: out.time_format});
-            if (override.dew_point == "openweather")         weather.set('current_dewpoint',              {value : data.current.dew_point,              in_units: tempUnits,     out: out.dew_point});
-            if (override.dew_point == "openweather")         weather.set('dewpoint_text',                 {value : getDewPoint(data.current.dew_point), in_units: "none",        out: "none"});
+            if (override.humidity == "openweather")          weather.set('current_humidity',              {value : data.current.humidity,               in_units: percent});
+                                                             weather.set('sunrise',                       {value : data.current.sunrise,                in_units: timeUnits});    
+                                                             weather.set('sunset',                        {value : data.current.sunset,                 in_units: timeUnits});
+            if (override.dew_point == "openweather")         weather.set('current_dewpoint',              {value : data.current.dew_point,              in_units: tempUnits});
             
             //Set global sunrise and sunset
             sunrise = data.current.sunrise;
@@ -1818,7 +1994,7 @@ function getWeather() {
                         total_rain += val.rain["1h"];
                     }
                 })            
-                weather2.set('current_precipitation',              {value : total_rain,         in_units: "millimeters",        out: out.actual_precipitation});
+                weather2.set('current_precipitation',              {value : total_rain,         in_units: "millimeters"});
             }
 
             if (override.pressure_trend == "openweather"){
@@ -1829,7 +2005,7 @@ function getWeather() {
                 }
                 
                 let diff = data.hourly[compare].pressure - currentPressure;
-                weather2.set('current_pressure_trend',        {value : diff,                in_units: "none",           out: "none"});
+                weather2.set('current_pressure_trend',        {value : diff,                in_units: "none"});
             }
             setWeatherTile(weather2);
 
