@@ -704,7 +704,7 @@ def defineHTML_Header(){
     
     <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
     <!--script defer src="http://192.168.1.64:8080/WeatherTile.js"></script> -->
-    <script defer src="/local/WeatherTile.js"></script>
+    <script defer src="/local/a7af9806-4b0e-4032-a78e-a41e27e4d685-WeatherTile.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
