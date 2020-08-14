@@ -10,6 +10,10 @@ var weekdays = new Array(
     "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 );
 
+var months = new Array(
+    "Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sep", "Oct", "Nov", "Dec"
+);
+
 function getOptions() {
     return jQuery.get(localURL+"getOptions/?access_token="+secretEndpoint, (data) => {
         options = data;
@@ -583,6 +587,9 @@ function getString(data, out_units) {
                     case "time_twelve": val = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); outputType = "text"; break;
                     case "time_two_four": val = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }); outputType = "text"; break;
                     case "day_only": val = weekdays[d.getDay()]; outputType = "text"; break;
+                    case "date_only": val = d.getDate(); outputType = "text"; break;
+                    case "day_date": val = weekdays[d.getDay()]+" "+d.getDate(); outputType = "text"; break;
+                    case "month_day": val = months[d.getMonth()]+" "+d.getDate(); outputType = "text"; break;
                     default: val = "UNSUPPORTED";
                 }
                 break;
@@ -793,12 +800,12 @@ function getTime(secs) {
 
 function getDewPoint(dewPoint) {
     
-        if (dewPoint < 50) return "DRY";
-        else if (dewPoint < 55) return "SLIGHTLY DRY";
-        else if (dewPoint < 60) return "NORMAL";
+        if (dewPoint < 50) "DRY"
+        else if (dewPoint < 55) return "NORMAL";
+        else if (dewPoint < 60) return "OPTIMAL";
         else if (dewPoint < 65) return "STICKY";
-        else if (dewPoint < 70) return "UNCOMFORTABLE";
-        else if (dewPoint < 75) return "OPPRESSIVE";
+        else if (dewPoint < 70) return "MOIST";
+        else if (dewPoint < 75) return "WET";
         else return "MISERABLE"
   
 }
@@ -1002,7 +1009,7 @@ async function initializeForecast() {
     await getOptions();
 
     setInterval(() => {
-        getOpenWeatherForecastData();
+        getWeeklyForecastWeather();
     }, options.openweather_refresh_rate);
     let minutes = (options.openweather_refresh_rate / 1000) / 60;
     console.log("Refreshing OpenWeather Forecast at " + minutes + " minutes");
@@ -1054,26 +1061,17 @@ function setForecastTile(weather) {
 }
 
 function getWeeklyForecastWeather() {
-    let now = new Date();
-    let tempUnits = "fahrenheit";
-    let speedUnits = "meters_per_second";
-    let precipUnits = "millimeters";
-    let pressureUnits = "millibars";
-    let timeUnits = "time_seconds"
-    let dirUnits = "degrees"
-    let percent = "percent_numeric";
-    now.setHours(0, 0, 0, 0);
-    let secs = now.getTime() / 1000.0
-    secs = secs.toFixed();
-
+       
     const url = `https://api.openweathermap.org/data/2.5/onecall?lat=`+latitude+`&lon=`+longitude+`&exclude=minutely&appid=`+tile_key+`&units=imperial`;
+
+    let now = new Date();
+    console.log("OpenWeather Data Refresh at " + now.toLocaleString());
 
     let weather = new Map();
     fetch(url)
         .then(response => response.json())
         .then(data => {
-            console.log(data)
-            let day = data.daily[1];
+            let day = data.daily[options.display_day];
             console.log(day);
             options.measurements.forEach((measure) => {
                 weather.set(measure.name, { value: lookup(day, measure.openweather), 
