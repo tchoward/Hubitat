@@ -843,7 +843,7 @@ def hubiForm_list_reorder(child, var, var_color, solid_background="") {
                                         jQuery("#settings${var}").val(JSON.stringify(order));
                     }
                 </script>
-                <script src="/local/HubiGraph.js"></script>
+                <script src="/local/a930f16d-d5f4-4f37-b874-6b0dcfd47ace-HubiGraph.js"></script>
                 <div id = "moveable" class = "mdl-grid" style="margin: 0; padding: 0; text-color: white !important"> 
                """
                
