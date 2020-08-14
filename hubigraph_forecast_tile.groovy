@@ -121,25 +121,25 @@ def tileSetupPage(){
     def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
     def unitDate =       [["day_only": "Day Only (Thursday)"],["date_only":"Date Only (29)"],["day_date":"Day and Date (Thursday 29)"], ["month_day":"Month and Day (June 29)"]];  
     
-    atomicState.selections = [[title: 'Weather Forecast Icon',          var: "weather_icon",          ow: "weather.0.description", iu: "none",              icon: "none",                    icon_loc: "none", h: 4,  w:4, baseline_row: 2,  baseline_column:  1, alignment: "center", lpad: 0, rpad: 0, unit: "none",      decimal: "no",  font: 20, font_weight: "normal", imperial: "none",            metric: "none"],
-                              [title: 'Forecast Description',           var: "description",           ow: "weather.0.description", iu: "none",              icon: "none",                    icon_loc: "none", h: 2,  w:4, baseline_row: 6,  baseline_column:  1, alignment: "center", lpad: 0, rpad: 0, unit: "none",      decimal: "no",  font: 10, font_weight: "normal", imperial: "none",            metric: "none"],
-                              [title: 'Forecast Temperature',           var: "temperature",           ow: "temp.day",              iu: "fahrenheit",        icon: "none",                    icon_loc: "none", h: 4,  w:2, baseline_row: 8,  baseline_column:  1, alignment: "right", lpad: 0, rpad: 0, unit: unitTemp,    decimal: "yes", font: 12, font_weight: "900",    imperial: "fahrenheit",      metric: "celsius"],
-                              [title: 'Forecast High',                  var: "high",                  ow: "temp.max",              iu: "fahrenheit",        icon: "mdi-arrow-up-thick",      icon_loc: "right", h: 2, w:2, baseline_row: 8,  baseline_column:  3, alignment: "left", lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "700",    imperial: "fahrenheit",      metric: "celsius"],
-                              [title: 'Forecast Low',                   var: "low",                   ow: "temp.min",              iu: "fahrenheit",        icon: "mdi-arrow-down-thick",    icon_loc: "right", h: 2, w:2, baseline_row: 10, baseline_column:  3, alignment: "left", lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "700",    imperial: "fahrenheit",      metric: "celsius"],
-                              [title: 'Precipitation Forecast',         var: "precipitation",         ow: "rain",                  iu: "millimeters",       icon: "mdi-umbrella-outline",    icon_loc: "left",  h: 1, w:2, baseline_row: 12, baseline_column:  1, alignment: "right",  lpad: 0, rpad: 3, unit: unitPrecip,  decimal: "yes", font: 4,  font_weight: "normal", imperial: "inches",          metric: "millimeters"],
-                              [title: 'Precipitation Forecast Percent', var: "precipitation_percent", ow: "pop",                   iu: "percent_decimal",   icon: "none",                    icon_loc: "none",  h: 1, w:2, baseline_row: 12, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitPercent, decimal: "yes", font: 4,  font_weight: "normal", imperial: "percent_numeric", metric: "percent_numeric"],
-                              [title: 'Sunrise',                        var: "sunrise",               ow: "sunrise",               iu: "time_seconds",      icon: "mdi-weather-sunset-up",   icon_loc: "left",  h: 1, w:2, baseline_row: 13, baseline_column:  1, alignment: "right",  lpad: 0, rpad: 3, unit: unitTime,    decimal: "no",  font: 4,  font_weight: "normal", imperial: "time_twelve",     metric: "time_two_four"],
-                              [title: 'Sunrise Temp',                   var: "sunrise_temp",          ow: "temp.morn",             iu: "fahrenheit",        icon: "none",                    icon_loc: "none",  h: 1, w:1, baseline_row: 13, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "normal", imperial: "fahrenheit",      metric: "celsius"],
-                              [title: 'Sunset',                         var: "sunset",                ow: "sunset",                iu: "time_seconds",      icon: "mdi-weather-sunset-down", icon_loc: "left",  h: 1, w:2, baseline_row: 14, baseline_column:  1, alignment: "right",  lpad: 0, rpad: 3, unit: unitTime,    decimal: "no",  font: 4,  font_weight: "normal", imperial: "time_twelve",     metric: "time_two_four"],
-                              [title: 'Sunset Temp',                    var: "sunset_temp",           ow: "temp.eve",              iu: "fahrenheit",        icon: "none",                    icon_loc: "none",  h: 1, w:1, baseline_row: 14, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "normal",  imperial: "fahrenheit",      metric: "celsius"],
-                              [title: 'Dewpoint',                       var: "dewpoint",              ow: "dew_point",             iu: "fahrenheit",        icon: "mdi-waves",               icon_loc: "left",  h: 1, w:2, baseline_row: 15, baseline_column: 1, alignment: "right",  lpad: 0, rpad: 3, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "normal", imperial: "fahrenheit",      metric: "celsius"],
-                              [title: 'Dewpoint Description',           var: "dewpoint_desc",         ow: "dew_point",             iu: "none",              icon: "none",                    icon_loc: "none",  h: 1, w:2, baseline_row: 15, baseline_column: 3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "no",  font: 4,  font_weight: "normal", imperial: "none",            metric: "none"],                      
-                              [title: 'Forecast Clouds',                var: "clouds",                ow: "clouds",                iu: "percent_numeric",   icon: "mdi-cloud-outline",       icon_loc: "right", h: 1, w:2, baseline_row: 16, baseline_column: 3, alignment: "left",   lpad: 3, rpad: 0, unit: unitPercent, decimal: "no",  font: 4,  font_weight: "normal", imperial: "percent_numeric", metric: "percent_numeric"],
-                              [title: 'Forecast Wind',                  var: "wind",                  ow: "wind_speed",            iu: "miles_per_hour",    icon: "mdi-tailwind",            icon_loc: "left",  h: 1, w:2, baseline_row: 16, baseline_column: 1, alignment: "right",  lpad: 0, rpad: 3, unit: unitWind,    decimal: "yes", font: 4,  font_weight: "normal", imperial: "miles_per_hour",  metric: "meters_per_second"],
-                              [title: 'Day and Date',                   var: "date",                  ow: "dt",                    iu: "time_seconds",      icon: "none",                    icon_loc: "none",  h: 2, w:4, baseline_row: 17, baseline_column: 1, alignment: "center", lpad: 0, rpad: 0, unit: unitDate,    decimal: "no",  font: 4,  font_weight: "800", imperial: "day_date",        metric: "day_date"], 
+    atomicState.selections = [[title: 'Weather Forecast Icon',          var: "weather_icon",          ow: "weather.0.description", iu: "none",              icon: "none",                    icon_loc: "none",  icon_space: "",  h: 4, w:4, baseline_row: 2,  baseline_column:  1, alignment: "center", lpad: 0, rpad: 0, unit: "none",      decimal: "no",  font: 20, font_weight: "400", imperial: "none",            metric: "none"],
+                              [title: 'Forecast Description',           var: "description",           ow: "weather.0.description", iu: "none",              icon: "none",                    icon_loc: "none",  icon_space: "",  h: 2, w:4, baseline_row: 6,  baseline_column:  1, alignment: "center", lpad: 0, rpad: 0, unit: "none",      decimal: "no",  font: 10, font_weight: "400", imperial: "none",            metric: "none"],
+                              [title: 'Forecast Temperature',           var: "temperature",           ow: "temp.day",              iu: "fahrenheit",        icon: "none",                    icon_loc: "none",  icon_space: "",  h: 4, w:2, baseline_row: 8,  baseline_column:  1, alignment: "right",  lpad: 0, rpad: 0, unit: unitTemp,    decimal: "yes", font: 12, font_weight: "900", imperial: "fahrenheit",      metric: "celsius"],
+                              [title: 'Forecast High',                  var: "high",                  ow: "temp.max",              iu: "fahrenheit",        icon: "mdi-arrow-up-thick",      icon_loc: "right", icon_space: "",  h: 2, w:2, baseline_row: 8,  baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "700", imperial: "fahrenheit",      metric: "celsius"],
+                              [title: 'Forecast Low',                   var: "low",                   ow: "temp.min",              iu: "fahrenheit",        icon: "mdi-arrow-down-thick",    icon_loc: "right", icon_space: "",  h: 2, w:2, baseline_row: 10, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "700", imperial: "fahrenheit",      metric: "celsius"],
+                              [title: 'Precipitation Forecast',         var: "precipitation",         ow: "rain",                  iu: "millimeters",       icon: "mdi-umbrella-outline",    icon_loc: "left",  icon_space: " ", h: 1, w:2, baseline_row: 12, baseline_column:  1, alignment: "right",  lpad: 0, rpad: 3, unit: unitPrecip,  decimal: "yes", font: 4,  font_weight: "400", imperial: "inches",          metric: "millimeters"],
+                              [title: 'Precipitation Forecast Percent', var: "precipitation_percent", ow: "pop",                   iu: "percent_decimal",   icon: "none",                    icon_loc: "none",  icon_space: " ", h: 1, w:2, baseline_row: 12, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitPercent, decimal: "yes", font: 4,  font_weight: "400", imperial: "percent_numeric", metric: "percent_numeric"],
+                              [title: 'Sunrise',                        var: "sunrise",               ow: "sunrise",               iu: "time_seconds",      icon: "mdi-weather-sunset-up",   icon_loc: "left",  icon_space: " ", h: 1, w:2, baseline_row: 13, baseline_column:  1, alignment: "right",  lpad: 0, rpad: 3, unit: unitTime,    decimal: "no",  font: 4,  font_weight: "400", imperial: "time_twelve",     metric: "time_two_four"],
+                              [title: 'Sunrise Temp',                   var: "sunrise_temp",          ow: "temp.morn",             iu: "fahrenheit",        icon: "none",                    icon_loc: "none",  icon_space: " ", h: 1, w:1, baseline_row: 13, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "400", imperial: "fahrenheit",      metric: "celsius"],
+                              [title: 'Sunset',                         var: "sunset",                ow: "sunset",                iu: "time_seconds",      icon: "mdi-weather-sunset-down", icon_loc: "left",  icon_space: " ", h: 1, w:2, baseline_row: 14, baseline_column:  1, alignment: "right",  lpad: 0, rpad: 3, unit: unitTime,    decimal: "no",  font: 4,  font_weight: "400", imperial: "time_twelve",     metric: "time_two_four"],
+                              [title: 'Sunset Temp',                    var: "sunset_temp",           ow: "temp.eve",              iu: "fahrenheit",        icon: "none",                    icon_loc: "none",  icon_space: " ", h: 1, w:1, baseline_row: 14, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "400", imperial: "fahrenheit",      metric: "celsius"],
+                              [title: 'Dewpoint',                       var: "dewpoint",              ow: "dew_point",             iu: "fahrenheit",        icon: "mdi-waves",               icon_loc: "left",  icon_space: " ", h: 1, w:2, baseline_row: 15, baseline_column:  1, alignment: "right",  lpad: 0, rpad: 3, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "400", imperial: "fahrenheit",      metric: "celsius"],
+                              [title: 'Dewpoint Description',           var: "dewpoint_desc",         ow: "dew_point",             iu: "none",              icon: "none",                    icon_loc: "none",  icon_space: " ", h: 1, w:2, baseline_row: 15, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "no",  font: 4,  font_weight: "400", imperial: "none",            metric: "none"],                      
+                              [title: 'Forecast Clouds',                var: "clouds",                ow: "clouds",                iu: "percent_numeric",   icon: "mdi-cloud-outline",       icon_loc: "right", icon_space: " ", h: 1, w:2, baseline_row: 16, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitPercent, decimal: "no",  font: 4,  font_weight: "400", imperial: "percent_numeric", metric: "percent_numeric"],
+                              [title: 'Forecast Wind',                  var: "wind",                  ow: "wind_speed",            iu: "miles_per_hour",    icon: "mdi-tailwind",            icon_loc: "left",  icon_space: " ", h: 1, w:2, baseline_row: 16, baseline_column:  1, alignment: "right",  lpad: 0, rpad: 3, unit: unitWind,    decimal: "yes", font: 4,  font_weight: "400", imperial: "miles_per_hour",  metric: "meters_per_second"],
+                              [title: 'Day and Date',                   var: "date",                  ow: "dt",                    iu: "time_seconds",      icon: "none",                    icon_loc: "none",  icon_space: " ", h: 2, w:4, baseline_row: 18, baseline_column:  1, alignment: "center", lpad: 0, rpad: 0, unit: unitDate,    decimal: "no",  font: 8,  font_weight: "800", imperial: "day_date",        metric: "day_date"], 
                              ];
 
-    atomicState.rows = 18;
+    atomicState.rows = 19;
     atomicState.columns = 4;
 
     def location = getLocation();
@@ -169,12 +169,14 @@ def tileSetupPage(){
                                                            units: "%",
                                                            submit_on_change: false);
             
+            
+            
                        
             container << parent.hubiForm_switch     (this, title: "Color Icons?", name: "color_icons", default: false);
                         
             parent.hubiForm_container(this, container, 1);
-            def daysEnum = [[1: "1"], [2: "2"], [3: "3"], [4: "4"], [5: "5"], [6: "6"]];
-            input( type: "enum", name: "num_days", title: "<b>Number of Days to Display</b>", multiple: false, required: false, options: daysEnum, defaultValue: "3");        
+            def daysEnum = [[0: "Today"], [1: "Tomorrow"], [2: "2 Days from Now"], [3: "3 Days from Now"], [4: "4 Days from Now"], [5: "Five Days from Now"]];
+            input( type: "enum", name: "day_num", title: "Day to Display", multiple: false, required: false, options: daysEnum, defaultValue: "1");        
 
         } 
         
@@ -191,7 +193,15 @@ def tileSetupPage(){
                                                                     min: 1, 
                                                                     max: measurement.font*2, 
                                                                     weight: measurement.font_weight,
-                                                                    icon: measurement.var == "weather_icon" ? true : false);         
+                                                                    icon: measurement.var == "weather_icon" ? true : false);
+                    
+                    container << parent.hubiForm_slider   (this, title: "Text Weight (400 = normal, 700= bold)", 
+                                                           name:  measurement.var+"_font_weight",  
+                                                           default: measurement.font_weight, 
+                                                           min: 100,
+                                                           max: 900, 
+                                                           units: "",
+                                                           submit_on_change: false);
                 
                     container << parent.hubiForm_color(this, "Font", measurement.var, "#FFFFFF", false);
                     parent.hubiForm_container(this, container, 1); 
@@ -367,7 +377,7 @@ def mainPage() {
                              
                         container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
                         if (install_device==true){ 
-                             container << parent.hubiForm_text_input(this, "Name for Tile Device", "device_name", "Hubigraph Tile", "false");
+                             container << parent.hubiForm_text_input(this, "Name for Tile Device", "device_name", "Forecast Tile", "false");
                         }
                         parent.hubiForm_container(this, container, 1); 
                     }
@@ -378,7 +388,7 @@ def mainPage() {
                    parent.hubiForm_section(this, "Hubigraph Application", 1, "settings"){
                         container = [];
                         container << parent.hubiForm_sub_section(this, "Application Name");
-                        container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Weather Tile", "false");
+                        container << parent.hubiForm_text_input(this, "Rename the Application?", "app_name", "Hubigraph Forecast Tile", "false");
                         container << parent.hubiForm_sub_section(this, "Debugging");
                         container << parent.hubiForm_switch(this, title: "Enable Debug Logging?", name: "debug", default: false);
                         container << parent.hubiForm_sub_section(this, "Disable Oauth Authorization");
@@ -571,6 +581,7 @@ def getTileOptions(){
     
     def options = [
         "tile_units": tile_units,
+        "display_day": day_num,
         "color_icons": color_icons,
         "openweather_refresh_rate": openweather_refresh_rate,
         "measurements": [],
@@ -630,8 +641,8 @@ def defineHTML_Header(){
     </script>
     
     <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
-    <script defer src="http://192.168.1.64:8080/WeatherTile.js"></script>
-    <!--script defer src="/local/WeatherTile.js"></script> -->
+    <!--script defer src="http://192.168.1.64:8080/WeatherTile.js"></script> -->
+    <script defer src="/local/WeatherTile.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -680,6 +691,7 @@ def defineHTML_CSS(){
         if (settings["${var}_display"]){
             color = settings["${var}_color"];
             font = settings["${var}_font"];
+            weight = settings["${var}_font_weight"];
             row_start = item.baseline_row;
             row_end = item.baseline_row + item.h;
             column_start = item.baseline_column;
@@ -697,7 +709,7 @@ def defineHTML_CSS(){
                      padding-right: ${item.rpad}vw !important;
                      text-align: ${item.alignment} !important;
                      color: ${color} !important;
-                     font-weight: ${item.font_weight};
+                     font-weight: ${weight};
                 }
                """
         }
@@ -734,7 +746,7 @@ def defineHTML_Tile(){
         //Left Icon
         if (item.icon != "none" && item.icon_loc == "left"){
             log.debug(item.icon);
-            html+="""<span class="mdi ${item.icon}"> </span>""";
+            html+="""<span class="mdi ${item.icon}">${item.icon_space}</span>""";
         }
         
         //Main Content
@@ -746,8 +758,8 @@ def defineHTML_Tile(){
         
         //Right Icon
         if (item.icon != "none" && item.icon_loc == "right"){
-            html+="""<span> </span>""";
-            html+="""<span class="mdi ${item.icon}"> </span>""";
+            html+="""<span>${item.icon_space}</span>""";
+            html+="""<span class="mdi ${item.icon}"></span>""";
         }
         html += """</div>""";
     }        
