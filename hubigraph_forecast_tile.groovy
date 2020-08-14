@@ -42,7 +42,7 @@ definition(
 preferences {
     section ("test"){
        page(name: "mainPage", install: true, uninstall: true)
-       page(name: "deviceSelectionPage", nextPage: "mainPage")
+       //page(name: "deviceSelectionPage", nextPage: "mainPage")
        page(name: "tileSetupPage", nextPage: "mainPage")
        page(name: "enableAPIPage")
        page(name: "disableAPIPage")
@@ -123,9 +123,9 @@ def tileSetupPage(){
     
     atomicState.selections = [[title: 'Weather Forecast Icon',          var: "weather_icon",          ow: "weather.0.description", iu: "none",              icon: "none",                    icon_loc: "none",  icon_space: "",  h: 4, w:4, baseline_row: 2,  baseline_column:  1, alignment: "center", lpad: 0, rpad: 0, unit: "none",      decimal: "no",  font: 20, font_weight: "400", imperial: "none",            metric: "none"],
                               [title: 'Forecast Description',           var: "description",           ow: "weather.0.description", iu: "none",              icon: "none",                    icon_loc: "none",  icon_space: "",  h: 2, w:4, baseline_row: 6,  baseline_column:  1, alignment: "center", lpad: 0, rpad: 0, unit: "none",      decimal: "no",  font: 10, font_weight: "400", imperial: "none",            metric: "none"],
-                              [title: 'Forecast Temperature',           var: "temperature",           ow: "temp.day",              iu: "fahrenheit",        icon: "none",                    icon_loc: "none",  icon_space: "",  h: 4, w:2, baseline_row: 8,  baseline_column:  1, alignment: "right",  lpad: 0, rpad: 0, unit: unitTemp,    decimal: "yes", font: 12, font_weight: "900", imperial: "fahrenheit",      metric: "celsius"],
-                              [title: 'Forecast High',                  var: "high",                  ow: "temp.max",              iu: "fahrenheit",        icon: "mdi-arrow-up-thick",      icon_loc: "right", icon_space: "",  h: 2, w:2, baseline_row: 8,  baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "700", imperial: "fahrenheit",      metric: "celsius"],
-                              [title: 'Forecast Low',                   var: "low",                   ow: "temp.min",              iu: "fahrenheit",        icon: "mdi-arrow-down-thick",    icon_loc: "right", icon_space: "",  h: 2, w:2, baseline_row: 10, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 4,  font_weight: "700", imperial: "fahrenheit",      metric: "celsius"],
+                              [title: 'Forecast Temperature',           var: "temperature",           ow: "temp.day",              iu: "fahrenheit",        icon: "none",                    icon_loc: "none",  icon_space: "",  h: 4, w:2, baseline_row: 8,  baseline_column:  1, alignment: "right",  lpad: 0, rpad: 0, unit: unitTemp,    decimal: "yes", font: 20, font_weight: "900", imperial: "fahrenheit",      metric: "celsius"],
+                              [title: 'Forecast High',                  var: "high",                  ow: "temp.max",              iu: "fahrenheit",        icon: "mdi-arrow-up-thick",      icon_loc: "right", icon_space: "",  h: 2, w:2, baseline_row: 8,  baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 7,  font_weight: "700", imperial: "fahrenheit",      metric: "celsius"],
+                              [title: 'Forecast Low',                   var: "low",                   ow: "temp.min",              iu: "fahrenheit",        icon: "mdi-arrow-down-thick",    icon_loc: "right", icon_space: "",  h: 2, w:2, baseline_row: 10, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitTemp,    decimal: "yes", font: 7,  font_weight: "700", imperial: "fahrenheit",      metric: "celsius"],
                               [title: 'Precipitation Forecast',         var: "precipitation",         ow: "rain",                  iu: "millimeters",       icon: "mdi-umbrella-outline",    icon_loc: "left",  icon_space: " ", h: 1, w:2, baseline_row: 12, baseline_column:  1, alignment: "right",  lpad: 0, rpad: 3, unit: unitPrecip,  decimal: "yes", font: 4,  font_weight: "400", imperial: "inches",          metric: "millimeters"],
                               [title: 'Precipitation Forecast Percent', var: "precipitation_percent", ow: "pop",                   iu: "percent_decimal",   icon: "none",                    icon_loc: "none",  icon_space: " ", h: 1, w:2, baseline_row: 12, baseline_column:  3, alignment: "left",   lpad: 3, rpad: 0, unit: unitPercent, decimal: "yes", font: 4,  font_weight: "400", imperial: "percent_numeric", metric: "percent_numeric"],
                               [title: 'Sunrise',                        var: "sunrise",               ow: "sunrise",               iu: "time_seconds",      icon: "mdi-weather-sunset-up",   icon_loc: "left",  icon_space: " ", h: 1, w:2, baseline_row: 13, baseline_column:  1, alignment: "right",  lpad: 0, rpad: 3, unit: unitTime,    decimal: "no",  font: 4,  font_weight: "400", imperial: "time_twelve",     metric: "time_two_four"],
@@ -350,7 +350,7 @@ def mainPage() {
             } else {
                parent.hubiForm_section(this, "Tile Options", 1, "tune"){
                     container = [];
-                    container << parent.hubiForm_page_button(this, "Select Device/Data", "deviceSelectionPage", "100%", "vibration");
+                    //container << parent.hubiForm_page_button(this, "Select Device/Data", "deviceSelectionPage", "100%", "vibration");
                     container << parent.hubiForm_page_button(this, "Configure Tile", "tileSetupPage", "100%", "poll");              
                     parent.hubiForm_container(this, container, 1); 
                 }
