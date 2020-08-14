@@ -76,6 +76,14 @@
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_weather_tile.groovy",
       "required": true,
       "oauth": true
+    },
+    {
+      "id": "d226575e-1b10-4ef9-b835-66fbf07b9b3e",
+      "name": "Hubigraph Forecast Tile",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_forecast_tile.groovy",
+      "required": true,
+      "oauth": true
     }
   ],
   "drivers": [
@@ -86,5 +94,19 @@
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_tile.groovy",
       "required": true
     }
-  ]
+  ],
+  "files" : [
+		{
+			"id":"a930f16d-d5f4-4f37-b874-6b0dcfd47ace",
+			"name": "HubiGraph.js",
+			"location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/HubiGraph.js"
+		},
+    {
+			"id":"a7af9806-4b0e-4032-a78e-a41e27e4d685",
+			"name": "WeatherTile.js",
+			"location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/WeatherTile.js"
+		}
+    
+	]
+  
 }
