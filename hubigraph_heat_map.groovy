@@ -574,8 +574,7 @@ def getChartOptions(){
             "vAxis": [ "textPosition": "none",
                        "gridlines" : [ "count" : "0" ]
                      ],
-            "annotations" : [    "alwaysOutside": false,
-                                 "position" : "center",
+            "annotations" : [    "alwaysOutside": "false",
                                  "textStyle": [
       					            "fontSize": annotation_font,
       					            "bold":     annotation_bold,
@@ -583,7 +582,8 @@ def getChartOptions(){
       	         					"color":    annotation_color_transparent ? "transparent" : annotation_color,
       					            "auraColor":annotation_aura_color_transparent ? "transparent" : annotation_aura_color,
 				                 ],
-                                 "stem": [ "color": "transparent" ],
+                                 "stem": [ "color": "transparent",
+                                          ],
                                  "highContrast": "false"
                              ],		 
          ],
@@ -605,7 +605,7 @@ def getTimeLine() {
             <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.25.0/moment.min.js" integrity="sha256-imB/oMaNA0YvIkDkF5mINRWpuFPEGVCEkHy6rm2lAzA=" crossorigin="anonymous"></script>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/he/1.2.0/he.min.js" integrity="sha256-awnFgdmMV/qmPoT6Fya+g8h/E4m0Z+UFwEHZck/HRcc=" crossorigin="anonymous"></script>
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-            <script src="/local/HubiGraph.js"></script>
+            <script src="/local/a930f16d-d5f4-4f37-b874-6b0dcfd47ace-HubiGraph.js"></script>
             <script type="text/javascript">
 google.charts.load('current', {'packages':['corechart']});
 
@@ -986,7 +986,8 @@ function drawChart(callback) {
                 opacity = 1.0;
                 width = subscriptions.line_thickness;
                 if (subscriptions.show_annotations){
-                    attr = parseFloat(value).toFixed(subscriptions.decimals);
+                    val = parseFloat(value).toFixed(subscriptions.decimals);
+                    attr = val;
                 } else {
                     attr = '';
                 }
@@ -1002,10 +1003,7 @@ function drawChart(callback) {
     var dataTable = google.visualization.arrayToDataTable(dataArray);
     
     chart = new google.visualization.BarChart(document.getElementById("timeline"));
-    //} else {
-    //    chart = new google.visualization.ColumnChart(document.getElementById("timeline"));
-    //}
-    //if we have a callback
+   
     if(callback) google.visualization.events.addListener(chart, 'ready', callback);
 
     chart.draw(dataTable, options.graphOptions);
