@@ -533,6 +533,9 @@ def graphSetupPage(){
                         
                         if (enumType == false){
                             container <<  parent.hubiForm_sub_section(this, """Custom State Values for "$attribute" """ );
+                            if (settings["attribute_${sensor.id}_${attribute}_custom_states"] == null){
+                                app.updateSetting("attribute_${sensor.id}_${attribute}_custom_states", [type: "bool", value: "false"]);
+                            }
                             container << parent.hubiForm_switch(this, title: "<b>Set Custom State Values?</b><br><small>(For custom drivers w/ non-numeric values)</small>", 
                                                                       name: "attribute_${sensor.id}_${attribute}_custom_states", 
                                                                       default: false, 
