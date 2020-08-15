@@ -387,7 +387,7 @@ def graphSetupPage(){
                         
                         container << parent.hubiForm_enum (this, title:             "Plot Type", 
                                                                  name:              "graph_type_${sensor.id}_${attribute}",
-                                                                 list:              ["Line", "Area", "Scatter", "Bar"],
+                                                                 list:              ["Line", "Area", "Scatter", "Bar", "Stepped"],
                                                                  default:           "Line",
                                                                  submit_on_change:  true);
                         
@@ -410,15 +410,19 @@ def graphSetupPage(){
                                 break;
                              case "Area":
                                 colorText = "Area Line";
-                                fillText = "Fill"
+                                fillText = "Fill";
                                 break;
                              case "Bar":
                                 colorText = "Bar Border";
-                                fillText = "Fill"
+                                fillText = "Fill";
                                 break;
                              case "Scatter":
                                 colorText = "Border";
-                                fillText = "Fill"
+                                fillText = "Fill";
+                                break;
+                            case "Stepped":
+                                colorText = "Line";
+                                fillText = "Fill";
                                 break;
                         }
                         
@@ -442,7 +446,7 @@ def graphSetupPage(){
                                                                             default: 2, min: 1, max: 20);
                         
                         
-                        if (graphType == "Bar" || graphType == "Area") {
+                        if (graphType == "Bar" || graphType == "Area" || graphType == "Stepped") {
                             
                             container <<  parent.hubiForm_sub_section(this, graphType+" "+fillText+" Options");
                             
@@ -1081,6 +1085,7 @@ def getChartOptions(){
     sensors.each { sensor ->
         settings["attributes_${sensor.id}"].each { attribute ->
             def type_ = settings["graph_type_${sensor.id}_${attribute}"].toLowerCase();
+            if (type_ == "stepped") type_ = "steppedArea";
             def axes_ = settings["graph_axis_number_${sensor.id}_${attribute}"] == "Left" ? 0 : 1;
             def stroke_color = settings["var_${sensor.id}_${attribute}_stroke_color"];
             def stroke_opacity = settings["var_${sensor.id}_${attribute}_stroke_opacity"];
@@ -1468,7 +1473,8 @@ function getStyle(deviceIndex, attribute){
         let fill_opacity = style.fill_opacity == null ? "" : parseFloat(style.fill_opacity)/100.0;
         
         let returnString = `{ stroke-color: \${stroke_color}; stroke-opacity: \${stroke_opacity}; stroke-width: \${stroke_width}; fill-opacity: \${fill_opacity}; fill-color: \${fill_color}; }`
-    
+        if (subscriptions.graph_type[deviceIndex][attribute] == "Stepped") returnString = `{ stroke-opacity: \${stroke_opacity}; stroke-width: \${stroke_width}; fill-opacity: \${fill_opacity}; fill-color: \${fill_color}; }`
+
         return returnString;
 }
 
@@ -1516,6 +1522,7 @@ function drawChart(callback) {
     //map the graph data
     Object.entries(graphData).forEach(([deviceIndex, attributes]) => {
         Object.entries(attributes).forEach(([attribute, events]) => {
+            console.log("HERE"+subscriptions.graph_type[deviceIndex][attribute])
             let func = subscriptions.var[deviceIndex][attribute].function;
             current = then;
             if (subscriptions.drop[deviceIndex][attribute].valid == "true"){
@@ -1532,12 +1539,15 @@ function drawChart(callback) {
                         drop_val = newEntry.value;
                     }
                 }
+                if (subscriptions.graph_type[deviceIndex][attribute] == "Stepped"){
+                    drop_val = newEntry == undefined ? events[0].value : newEntry.value;
+                }
                 next = current+spacing;
                 switch (func){
                     case "Average": newEntry = averageEvents(current, next, events, drop_val); break;
                     case "Min":     newEntry = minEvents(current, next, events, drop_val);     break;
                     case "Max":     newEntry = maxEvents(current, next, events, drop_val);     break;
-                    case "Mid":     newEntry = midEvents(current, next, events, drop_val);  break;
+                    case "Mid":     newEntry = midEvents(current, next, events, drop_val);     break;
                 }
                 
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), newEntry.value];
