@@ -36,7 +36,6 @@ import groovy.json.*;
 // V 1.8 Smoother sliders, bug fixes
 // V 2.0 New Version to Support Combo Graphs.  Support for Line Graphs is ended.    
 // V 2.1 Long Term Storage Enabled
-// V 2.2 Current Value Overlays
 
 // Credit to Alden Howard for optimizing the code.
 
@@ -64,7 +63,7 @@ preferences {
        page(name: "mainPage", install: true, uninstall: true)
        page(name: "deviceSelectionPage", nextPage: "graphSetupPage")
        page(name: "graphSetupPage", nextPage: "mainPage")
-       page(name: "longTermStoragePage");
+       page(name: "longTermStoragePage", nextPage: "mainPage");
        page(name: "enableAPIPage")
        page(name: "disableAPIPage")
 }
@@ -723,6 +722,9 @@ def mainPage() {
                                 }
                             }
                         }
+                        if (container==[]){
+                            container << parent.hubiForm_text(this, "<b>Long Term Storage Enabled</b><br>Events will be stored when a graph is refreshed and nightly.<br>Details will populate over time.");       
+                        }
                     
                         parent.hubiForm_container(this, container, 1);
                     }
@@ -801,11 +803,11 @@ def longTermStoragePage(){
                 }
                     
                 parent.hubiForm_section(this, "Storage Options", 1, "memory"){
-                    def timeEnum = ["1 Day", "1 Week", "2 Weeks", "3 Weeks", "1 Month", "2 Months", "Indefinite"];
-                    def updateEnum = ["1:05 am", "2:30 am", "3:45 am", "4:55 am"];
+                    def timeEnum = ["1 Day", "2 Days", "3 Days", "4 Days", "5 Days", "6 Days", "1 Week", "2 Weeks", "3 Weeks", "1 Month", "2 Months", "Indefinite"];
+                    def updateEnum = ["1:05 am", "1:55 am", "2:30 am", "3:45 am", "4:55 am"];
                     
                     container = [];
-                    container << parent.hubiForm_switch(this, title: "<b>Utilize Long Term Storage for Above Sensors</b>", 
+                    container << parent.hubiForm_switch(this, title: "<b>Utilize Long Term Storage for Sensors</b>", 
                                                               name: "lts", 
                                                               default: false, 
                                                               submit_on_change: true);
@@ -820,8 +822,13 @@ def longTermStoragePage(){
                         container << parent.hubiForm_enum(this, title: "Time to Refresh/Maintain Storage",
                                                                 name: "lts_update",
                                                                 list: updateEnum,
-                                                                default: "2:30 am",
+                                                                default: "1:55 am",
                                                                 submit_on_change: false);
+                        
+                        if (lts_time == null) 
+                            app.updateSetting("lts_time",   [type: "enum", value: "1 Week"]);
+                            app.updateSetting("lts_update", [type: "enum", value: "1:55 am"]);
+                        lts_time = "1 Week";
                         
                         def factor = getDays(lts_time);
                         
@@ -869,6 +876,11 @@ def getDays(str){
 
     switch (str){
         case "1 Day":      return 1; break;
+        case "2 Days":      return 2; break;
+        case "3 Days":      return 3; break;
+        case "4 Days":      return 4; break;
+        case "5 Days":      return 5; break;
+        case "6 Days":      return 6; break;
         case "1 Week":     return 7; break;
         case "2 Weeks":    return 14; break;
         case "3 Weeks":    return 21; break;
@@ -909,6 +921,7 @@ def updated() {
     if (lts){
         switch (lts_update){
             case "1:05 am": schedule("0 05 01 * * ?", longTermStorageUpdate); break;
+            case "1:55 am": schedule("0 55 01 * * ?", longTermStorageUpdate); break;
             case "2:30 am": schedule("0 30 02 * * ?", longTermStorageUpdate); break;
             case "3:45 am": schedule("0 45 04 * * ?", longTermStorageUpdate); break;
             case "4:55 am": schedule("0 55 04 * * ?", longTermStorageUpdate); break;    
@@ -1275,6 +1288,7 @@ async function onLoad() {
                top: 50px;   
                left: 100px;
                text-align: center;
+               box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
             }
             .overlay-title {
                font-size: ${overlay_font}px;
@@ -1751,7 +1765,7 @@ def getSubscriptions() {
                                       fill_color:      fill_color,
                                       fill_opacity:    fill_opacity,
                                       function:        function, 
-                                      units:           settings["units_${sensor.id}_${attr}"],
+                                      units:           settings["units_${sensor.id}_${attr}"] ? settings["units_${sensor.id}_${attr}"] : "",
                                     ];
         }//settings
             
