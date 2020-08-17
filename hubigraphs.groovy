@@ -13,6 +13,7 @@ definition(
 //V 1.8 Smoother sliders, bug fixes
 //V 2.0 Support for Time Graphs
 //V 2.1 Support for Heatmaps
+//V 3.3 Radar Tiles
 
 preferences {
     // The parent app preferences are pretty simple: just use the app input for the child app.
@@ -32,6 +33,10 @@ def mainPage(){
             app(name: "hubiHeatMap",   appName: "Hubigraph Heat Map",      namespace: "tchoward", title: "Create New Heat Map", multiple: true)
             app(name: "hubiWeather",   appName: "Hubigraph Weather Tile",  namespace: "tchoward", title: "Create New Weather Tile", multiple: true)
             app(name: "hubiForecast",  appName: "Hubigraph Forecast Tile", namespace: "tchoward", title: "Create New Forecast Tile", multiple: true)
+            //app(name: "hubiWeather2",   appName: "Hubigraph Weather Tile 2",  namespace: "tchoward", title: "Create New Weather Tile 2", multiple: true)
+            app(name: "hubiRadar",      appName: "Hubigraph Radar Tile",      namespace: "tchoward", title: "Create New Radar Tile", multiple: true)
+
+
         }
         /*
          section {
