@@ -84,11 +84,19 @@
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_forecast_tile.groovy",
       "required": true,
       "oauth": true
-    }
+    },
+    {
+      "id": "d226575e-1b10-4ef9-b835-66fbf07b9b3e",
+      "name": "Hubigraph Radar Tile",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_radar_tile.groovy",
+      "required": true,
+      "oauth": true
+    }	  
   ],
   "drivers": [
     {
-      "id": "7bc3bac8-f9c8-4022-9e53-4e70b9f729b6",
+      "id": "0e142b8f-b61e-409d-9a70-a866036693fa",
       "name": "Hubigraph Tile Device",
       "namespace": "tchoward",
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_tile.groovy",
