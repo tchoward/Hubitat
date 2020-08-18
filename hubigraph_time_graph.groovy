@@ -791,7 +791,6 @@ def longTermStoragePage(){
         
         def total_bytes = 0;
         
-        //log.debug(atomicState.test);
         section() {
             if(!sensors) {
                 paragraph "Please select Sensors and Graph Options Before setting up storage"
@@ -1082,7 +1081,8 @@ def getChartOptions(){
     ];
     
     count_ = 0;
-    sensors.each { sensor ->
+    temp_sensors = sensors.sort{it.id.toInteger()};
+    temp_sensors.each { sensor ->
         settings["attributes_${sensor.id}"].each { attribute ->
             def type_ = settings["graph_type_${sensor.id}_${attribute}"].toLowerCase();
             if (type_ == "stepped") type_ = "steppedArea";
@@ -1488,7 +1488,9 @@ function drawChart(callback) {
     let colNums = {};
     let i = 0;
     subscriptions.ids.forEach((deviceId) => {
-        subscriptions.attributes[deviceId].forEach((attr) => {    
+        
+        subscriptions.attributes[deviceId].forEach((attr) => {   
+            console.log(deviceId+" "+attr);
             dataTable.addColumn({ label: subscriptions.labels[deviceId][attr].replace('%deviceName%', subscriptions.sensors[deviceId].displayName).replace('%attributeName%', attr), type: 'number' }); 
             dataTable.addColumn({ role: "style" });
         });
@@ -1522,7 +1524,7 @@ function drawChart(callback) {
     //map the graph data
     Object.entries(graphData).forEach(([deviceIndex, attributes]) => {
         Object.entries(attributes).forEach(([attribute, events]) => {
-            console.log("HERE"+subscriptions.graph_type[deviceIndex][attribute])
+            console.log("#2: "+deviceIndex+" "+attributes)
             let func = subscriptions.var[deviceIndex][attribute].function;
             current = then;
             if (subscriptions.drop[deviceIndex][attribute].valid == "true"){
@@ -1785,7 +1787,7 @@ def getSubscriptions() {
     } //sensors
     
     def obj = [
-        ids: ids,
+        ids: ids.sort(),
         sensors: sensors_,
         attributes: attributes, 
         labels : labels,
