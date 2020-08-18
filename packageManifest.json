@@ -86,7 +86,7 @@
       "oauth": true
     },
     {
-      "id": "d226575e-1b10-4ef9-b835-66fbf07b9b3e",
+      "id": "ddd76acc-76d2-4cad-83e4-0071049fd9c8",
       "name": "Hubigraph Radar Tile",
       "namespace": "tchoward",
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_radar_tile.groovy",
