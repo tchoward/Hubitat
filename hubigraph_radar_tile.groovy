@@ -72,7 +72,41 @@ def tileSetupPage() {
     
     zoomEnum =    [[3:"3"], [4: "4"], [5: "5"], [6: "6"], [7: "7"], [8: "8"], [9: "9"], [10: "10"]];
     refreshEnum = [[60000:"1 minute"], [300000: "5 minutes"], [600000: "10 minutes"], [1200000: "20 minutes"], [1800000: "30 minutes"], [3600000: "1 hour"]];
+    
         
+    weatherMapEnum = [["radar" :    "Current Radar"], 
+                      ["temp" :     "Temperature"],
+                      ["wind"  :    "Wind"],   
+                      ["rain"  :    "Rain and Thunder"],
+                      ["rainAccu" : "Rain Accumulation"],
+                      ["snowAccu" : "Snow Accumulation"],
+                      ["snowcover": "Snow Ground Cover"]];
+    
+    forecastModelEnum =[["ecmwf":    "European Centre for Medium-Range Weather Forecasts"],
+                        ["gfs":      "Global Forecast System"]];
+    
+    hoursModelEnum = [["now" : "Current"],
+                      ["12"  : "12 Hours"],
+                      ["24"  : "24 Hours"]];  
+    
+    measureEnum =   [["in": "inches"],
+                     ["mm": "millimeters"]];
+    
+    windEnum =  [["knot" : "Knots (k)"],
+                 ["meters_per_second" : "Meters / Second (m/s)"],
+                 ["kilometers_per_hour" : "Kilometers / Hour (km/h)"],
+                 ["miles_per_hour" : "Miles per Hour (mph)"]];
+    
+    tempEnum =    [["fahrenheit": "Fahrenheit (°F)"], 
+                   ["celsius" : "Celsius (°C)"]];
+
+    
+                         
+                         
+                         
+                     
+
+       
     dynamicPage(name: "tileSetupPage") {
         
         def location = getLocation();
@@ -81,11 +115,39 @@ def tileSetupPage() {
             container << parent.hubiForm_text_input (this, "<b>Latitude (Default = Hub location)</b>", "latitude", location.latitude, false);
             container << parent.hubiForm_text_input (this, "<b>Longitude (Default = Hub location)</b>", "longitude", location.longitude, false);
             
-            parent.hubiForm_container(this, container, 1);     
+            parent.hubiForm_container(this, container, 1);
+            
+            if (!overlay) overlay = "radar";
             
             input( type: "enum", name: "zoom", title: "<b>Zoom Amount</b>", required: false, multiple: false, options: zoomEnum, defaultValue: 3, submitOnChange: false)
             input( type: "enum", name: "refresh", title: "<b>Refresh Time</b>", required: false, multiple: false, options: refreshEnum, defaultValue: 600000, submitOnChange: false)
+            input( type: "enum", name: "overlay", title: "<b>Map Type</b>", required: false, multiple: false, options: weatherMapEnum, defaultValue: "radar", submitOnChange: true)
+            
+            if (overlay != "radar") {
+                container = [];
+                container << parent.hubiForm_text(this, """<b>You have chosen a forecast map.</b> Please note:<br>
+                                                              1. Forecast maps are update on the hour<br>
+                                                              2. "Current" is the current condition (within the last hour)<br>
+                                                              3. Refreshing these maps "more often" won't change anything""");
+                parent.hubiForm_container(this, container, 1);     
+
+                if (product == "radar") app.updateSetting("product", [type: "enum", value: "gfs"]);
+                input( type: "enum", name: "product", title: "<b>Forecast Model</b>", required: false, multiple: false, options: forecastModelEnum, defaultValue: "gfs", submitOnChange: false);
+                input( type: "enum", name: "calendar", title: "<b>Display Time</b>", required: false, multiple: false, options: hoursModelEnum, defaultValue: "now", submitOnChange: false);
+            } else {
+                app.updateSetting ("product", [type: "enum", value: "radar"]);   
+                app.updateSetting ("calendar", [type: "enum", value: "now"]); 
+            }
+            
+            input( type: "enum", name: "wind_units", title: "<b>Wind Speed Units</b>", required: false, multiple: false, options: windEnum, defaultValue: "miles_per_hour", submitOnChange: false);
+            input( type: "enum", name: "temp_units", title: "<b>Temperature Units</b>", required: false, multiple: false, options: tempEnum, defaultValue: "farenheit", submitOnChange: false);
             container = [];
+            container << parent.hubiForm_switch(this, title: "<b>Show Marker on Graph?</b>", 
+                                                      name: "marker", 
+                                                      default: false, 
+                                                      submit_on_change: false);
+             
+
             container << parent.hubiForm_color(this, "Background", 
                                                      "background", 
                                                      "#000000", 
@@ -254,8 +316,22 @@ def getRGBA(hex, opacity){
 def getHTML(){
     
     def fullSizeStyle = "margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden";
-    def html = """
     
+    def wind = "kt";
+    switch (wind_units){
+         case "knot" : wind = "kt"; break; 
+         case "meters_per_second" : wind = "m%2Fs"; break;
+         case "kilometers_per_hour" :  wind = "km%2Fh"; break;
+         case "miles_per_hour" :  wind = "mph"; break;   
+    }
+    
+    def temp = "%C2%B0F";
+    switch (temp_units){
+        case "farenheit": temp = "%C2%B0F";
+        case "celsius" : temp = "%C2%B0C"
+    }
+    def html = """
+
 <style>
   .wrapper {
     display: flex;
@@ -303,13 +379,12 @@ def getHTML(){
 var url = "https://embed.windy.com/embed2.html";
 var width = document.getElementById('radar').offsetWidth-5;
 var height = window.innerHeight-15;
-var latitude = ${latitude};
-var longitude = ${longitude};
-var zoom = ${zoom};
 
-var params = "?lat=" + latitude + "&lon=" + longitude + "&detailLat=" + latitude + "&detailLon=" + longitude + "&width="+width+"&height"+height+"&zoom="+zoom+"&level=surface&overlay=radar&product=radar&menu=&message=true&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=mph&metricTemp=%C2%B0F&radarRange=-1"
+var params = "?lat=${latitude}&lon=${longitude}&detailLat=${latitude}&detailLon=${longitude}&width="+width+"&height"+height+"&zoom=${zoom}&level=surface&overlay=${overlay}&product=${product}&menu=&message=true&marker=${marker==true ? 'true' : ''}&calendar=${calendar}&pressure=&type=map&location=coordinates&detail=&metricWind=${wind}&metricTemp=${temp}&radarRange=-1"
 
 var iframe_url = url + params;
+
+console.log(iframe_url);
 
 document.getElementById("windy").src = iframe_url;
 document.getElementById("windy2").src = iframe_url;
