@@ -328,7 +328,10 @@ def graphSetupPage(){
                                                          list:     veticalAlignmentEnum,
                                                          default:  "Top");
 
-                
+                container <<  parent.hubiForm_sub_section(this, "Display Order");
+                parent.hubiForm_container(this, container, 1); 
+                container = [];              
+                parent.hubiForm_list_reorder(this, "overlay_order", "background");
             }
             parent.hubiForm_container(this, container, 1); 
         }
@@ -1022,7 +1025,8 @@ def getChartOptions(){
         "graphRefreshRate" : Integer.parseInt(graph_refresh_rate),
         "overlays": [   "display_overlays" : show_overlay,
                             "horizontal_alignment" : overlay_horizontal_placement,
-                            "vertical_alignment" : overlay_vertical_placement
+                            "vertical_alignment" : overlay_vertical_placement,
+                            "order" : overlay_order
                         ],
         "graphOptions": [
             "tooltip" : ["format" : "short"], 
@@ -1649,17 +1653,25 @@ function placeMarker(dataTable) {
 def getOverlay(){
  
     def html = """<div id="graph-overlay" class="overlay"><table style="width:100%">"""
-                 
-    sensors.each { sensor ->
-        settings["attributes_${sensor.id}"].each { attribute ->
-            val = getValue(sensor.id, attribute, sensor.currentState(attribute).getValue());
-            units = settings["units_${sensor.id}_${attribute}"] ? settings["units_${sensor.id}_${attribute}"] : "";
-            name = settings["graph_name_override_${sensor.id}_${attribute}"];
-            name = name.replaceAll("%deviceName%", sensor.displayName).replaceAll("%attributeName%", attribute);
-            str = sprintf("%.1f%s", val, units);
-            html += """<tr><td class="overlay-title" id="overlay-${sensor.id}_${attribute}-name">${name}</td>
+       
+    val = new JsonSlurper().parseText(overlay_order)
+    
+    val.each{ str->
+        log.debug("Before: "+str);
+        splitStr = str.split('_');
+        log.debug(splitStr);
+        deviceId = splitStr[1];
+        attribute = splitStr[2];
+    
+        sensor = sensors.find{ it.id == deviceId } ;
+   
+        val = getValue(sensor.id, attribute, sensor.currentState(attribute).getValue());
+        units = settings["units_${sensor.id}_${attribute}"] ? settings["units_${sensor.id}_${attribute}"] : "";
+        name = settings["graph_name_override_${sensor.id}_${attribute}"];
+        name = name.replaceAll("%deviceName%", sensor.displayName).replaceAll("%attributeName%", attribute);
+        str = sprintf("%.1f%s", val, units);
+        html += """<tr><td class="overlay-title" id="overlay-${sensor.id}_${attribute}-name">${name}</td>
                            <td class="overlay-number" id="overlay-${sensor.id}_${attribute}-number">${str}</td></tr>"""
-        }
     }
     html += """</div>"""
     
