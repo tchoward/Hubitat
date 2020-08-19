@@ -1657,7 +1657,6 @@ def getOverlay(){
     val = new JsonSlurper().parseText(overlay_order)
     
     val.each{ str->
-        log.debug("Before: "+str);
         splitStr = str.split('_');
         log.debug(splitStr);
         deviceId = splitStr[1];
