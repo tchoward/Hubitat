@@ -167,14 +167,7 @@ def tileSetupPage(){
                 container << parent.hubiForm_switch     (this, title: "Display "+measurement.title+"?", name: measurement.var+"_display", default: true, submit_on_change: true);
 
                 if ((settings["${measurement.var}_display"]==null) || (settings["${measurement.var}_display"]==true)){
-                    container <<  parent.hubiForm_fontvx_size(this, title: measurement.var == "weather_icon" ? "Icon Size" : "Font Size",
-                                                                    name: measurement.var, 
-                                                                    default: measurement.font, 
-                                                                    min: 1, 
-                                                                    max: measurement.font*2, 
-                                                                    weight: measurement.font_weight,
-                                                                    icon: measurement.var == "weather_icon" ? true : false);
-                    
+                                        
                     container << parent.hubiForm_slider   (this, title: "Text Weight (400 = normal, 700= bold)", 
                                                            name:  measurement.var+"_font_weight",  
                                                            default: measurement.font_weight, 
@@ -337,11 +330,13 @@ def mainPage() {
     def unitDirection =  [["degrees": "Degrees (°)"], ["radians" : "Radians (°)"], ["cardinal": "Cardinal (N, NE, E, SE, etc)"]];
     def unitTrend =      [["trend_numeric": "Numeric (↑ < 0, → = 0, ↓ > 0)"], ["trend_text": "Text (↑ rising, → steady, ↓ falling)"]];
     def unitPercent =    [["percent_numeric": "Numeric (0 to 100)"], ["percent_decimal": "Decimal (0.0 to 1.0)"]];
+    def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
+
     
    
     atomicState.tile_dimensions = [rows: 14, columns: 26];
     
-    atomicState.selections = [[title: 'Forecast Weather Icon',          var: "weather_icon",                   
+    atomicState.selections = [[title: 'Forecast Weather Icon',          var: "weather_icon",                       
                                                                         ow:  "current.weather.0.description", can_be_overriden: "no",
                                                                         iu:  "none", icon: "mdi-alert-circle", icon_loc: "none",  icon_space: "",  
                                                                         h: 3,  w: 12, baseline_row: 1,  baseline_column:  13, 
@@ -351,7 +346,7 @@ def mainPage() {
                                                                         font: 40, font_weight: "900", 
                                                                         imperial: "none",   metric: "none"
                               ],
-                              [title: 'Current Weather',                var: "description",                   
+                              [title: 'Current Weather',                var: "description",                          
                                                                         ow: "current.weather.0.description", can_be_overriden: "no",
                                                                         iu: "none", icon: "none", icon_loc: "none",  icon_space: "",  
                                                                         h: 2,  w: 12, baseline_row: 4,  baseline_column:  13, 
@@ -361,7 +356,7 @@ def mainPage() {
                                                                         font: 20, font_weight: "400", 
                                                                         imperial: "none",   metric: "none"
                               ],
-                              [title: 'Current Temperature',            var: "current_temperature",                   
+                              [title: 'Current Temperature',            var: "current_temperature",                      
                                                                         ow: "current.temp", can_be_overriden: "yes",
                                                                         iu: "fahrenheit", icon: "none", icon_loc: "left",  icon_space: "",  
                                                                         h: 2,  w: 12, baseline_row: 1,  baseline_column:  1, 
@@ -371,7 +366,7 @@ def mainPage() {
                                                                         font: 20, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius"
                               ], 
-                              [title: 'Feels Like',                     var: "feels_like",                   
+                              [title: 'Feels Like',                     var: "feels_like",                 
                                                                         ow: "current.feels_like", can_be_overriden: "yes",
                                                                         iu: "fahrenheit", icon: "mdi-home-thermometer-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 12, baseline_row: 3,  baseline_column:  1, 
@@ -381,7 +376,7 @@ def mainPage() {
                                                                         font: 7, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius"
                               ],
-                              [title: 'Forecast High',                  var: "forecast_high",                   
+                              [title: 'Forecast High',                  var: "forecast_high",                       
                                                                         ow: "daily.0.temp.max", can_be_overriden: "no",
                                                                         iu: "fahrenheit", icon: "mdi-arrow-up-thick", icon_loc: "left",  icon_space: "",  
                                                                         h: 2,  w: 6, baseline_row: 4,  baseline_column:  7, 
@@ -391,7 +386,7 @@ def mainPage() {
                                                                         font: 7, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius"
                               ], 
-                              [title: 'Forecast Low',                 var: "forecast_low",                   
+                              [title: 'Forecast Low',                 var: "forecast_low",    
                                                                         ow: "daily.0.temp.min", can_be_overriden: "no",
                                                                         iu: "fahrenheit", icon: "mdi-arrow-down-thick", icon_loc: "left",  icon_space: "",  
                                                                         h: 2,  w: 6, baseline_row: 4,  baseline_column:  1, 
@@ -401,7 +396,7 @@ def mainPage() {
                                                                         font: 6, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius"
                               ],
-                              [title: 'Precipitation Title',           var: "precipitation_title",                   
+                              [title: 'Precipitation Title',           var: "precipitation_title",                      
                                                                         ow: "none", can_be_overriden: "no",
                                                                         iu: "none", icon: "mdi-umbrella-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 6,  baseline_column:  1, 
@@ -411,7 +406,7 @@ def mainPage() {
                                                                         font: 6, font_weight: "400", 
                                                                         imperial: "none",   metric: "none"
                               ],
-                              [title: 'Forcast Precipitation',         var: "forecast_precipitation",                   
+                              [title: 'Forcast Precipitation',         var: "forecast_precipitation",                          
                                                                         ow: "daily.0.rain", can_be_overriden: "no",
                                                                         iu: "millimeters", icon: "mdi-ruler", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 8,  baseline_column:  1, 
@@ -421,7 +416,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches",   metric: "militmeters"
                               ],
-                              [title: 'Forecast Percent Precipitation', var: "forcast_percent_precipitation",                   
+                              [title: 'Forecast Percent Precipitation', var: "forcast_percent_precipitation",                       
                                                                         ow: "daily.0.pop", can_be_overriden: "no",
                                                                         iu: "percent_decimal", icon: "mdi-cloud-question", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 7,  baseline_column: 1, 
@@ -431,8 +426,8 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "percent_numerical",   metric: "percent_numerical"
                               ],
-                              [title: 'Current Precipitation',          var: "current_precipitation",                   
-                                                                        ow: "weather.0.description", can_be_overriden: "yes",
+                              [title: 'Current Precipitation',          var: "current_precipitation",                          
+                                                                        ow: "current.rain.1h", can_be_overriden: "yes",
                                                                         iu: "millimeters", icon: "mdi-calendar-today", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 9,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
@@ -441,7 +436,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches",   metric: "millimeters"
                               ],
-                              [title: 'Wind Title',                    var: "wind_title",                   
+                              [title: 'Wind Title',                    var: "wind_title",                  
                                                                         ow: "none", can_be_overriden: "no",
                                                                         iu: "meters_per_second", icon: "mdi-weather-windy-variant", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 6,  baseline_column:  9, 
@@ -451,7 +446,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none"
                               ],
-                              [title: 'Wind Speed',                     var: "wind_speed",                   
+                              [title: 'Wind Speed',                     var: "wind_speed",                         
                                                                         ow: "current.wind_speed", can_be_overriden: "yes",
                                                                         iu: "meters_per_second", icon: "mdi-tailwind", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 7,  baseline_column:  9, 
@@ -461,7 +456,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "miles_per_hour",   metric: "meters_per_second"
                               ],
-                              [title: 'Wind Gust',                     var: "wind_gust",                   
+                              [title: 'Wind Gust',                     var: "wind_gust",                       
                                                                         ow: "current.wind_gust", can_be_overriden: "yes",
                                                                         iu: "meters_per_second", icon: "mdi-weather-windy", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 8,  baseline_column:  9, 
@@ -471,7 +466,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "miles_per_hour",   metric: "meters_per_second"
                               ],
-                              [title: 'Wind Direction',                var: "wind_direction",                   
+                              [title: 'Wind Direction',                var: "wind_direction",                      
                                                                         ow: "current.wind_deg", can_be_overriden: "yes",
                                                                         iu: "degrees", icon: "mdi-compass-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 9,  baseline_column:  9, 
@@ -484,7 +479,7 @@ def mainPage() {
                                                   
                               [title: 'Pressure Title',               var: "pressure_title",                   
                                                                         ow: "none", can_be_overriden: "no",
-                                                                        iu: "none", icon: "mdi-gauge", icon_loc: "left",  icon_space: "",  
+                                                                        iu: "none", icon: "mdi-gauge", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 6,  baseline_column:  17, 
                                                                         alignment: "center", text: "Pressure",
                                                                         lpad: 0, rpad: 0, 
@@ -492,7 +487,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none"
                               ], 
-                              [title: 'Current Pressure',             var: "current_pressure",                   
+                              [title: 'Current Pressure',             var: "current_pressure",                     
                                                                         ow: "current.pressure", can_be_overriden: "yes",
                                                                         iu: "millibars", icon: "mdi-thermostat", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 7,  baseline_column:  17, 
@@ -502,7 +497,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches_mercury",   metric: "millimeters_mercury"
                               ],
-                              [title: 'Pressure Trend',                var: "pressure_trend",                   
+                              [title: 'Pressure Trend',                var: "pressure_trend",                        
                                                                         ow: "current.pressure", can_be_overriden: "yes",
                                                                         iu: "none", icon: "none", icon_loc: "none",  icon_space: "",  
                                                                         h: 1,  w: 8, baseline_row: 8,  baseline_column:  17, 
@@ -512,15 +507,15 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none"
                               ],
-                              [title: 'Humidity',                      var: "current_humidity",                   
+                              [title: 'Humidity',                      var: "current_humidity",                         
                                                                         ow: "current.humidity", can_be_overriden: "yes",
-                                                                        iu: "farenheit", icon: "none", icon_loc: "none",  icon_space: "",  
+                                                                        iu: "percent_numeric", icon: "mdi-water-percent", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 4, baseline_row: 11,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: "none",   decimal: "no",  
+                                                                        unit: unitPercent,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "none",  metric: "none"
+                                                                        imperial: "percent_numeric",  metric: "percent_numeric"
                               ], 
                                [title: 'Dewpoint Description',          var: "dewpoint_description",                   
                                                                         ow: "current.dew_point", can_be_overriden: "no",
@@ -532,7 +527,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",  metric: "none"
                               ], 
-                              [title: 'Current Dewpoint',             var: "current_dewpoint",                   
+                              [title: 'Current Dewpoint',             var: "current_dewpoint",                          
                                                                         ow: "current.dew_point", can_be_overriden: "yes",
                                                                         iu: "farenheit", icon: "mdi-wave", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 4, baseline_row: 11,  baseline_column: 11, 
@@ -542,7 +537,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius"
                               ],
-                              [title: 'Sunrise',                        var: "sunrise",                   
+                              [title: 'Sunrise',                        var: "sunrise",                  
                                                                         ow:  "current.sunrise", can_be_overriden: "no",
                                                                         iu:  "time_seconds", icon: "mdi-weather-sunset-up", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 5, baseline_row: 11,  baseline_column:  15, 
@@ -552,7 +547,7 @@ def mainPage() {
                                                                         font: 3, font_weight: "400", 
                                                                         imperial: "time_twelve",   metric: "time_two_four"
                               ],
-                              [title: 'Sunset',                        var: "sunset",                   
+                              [title: 'Sunset',                        var: "sunset",                      
                                                                         ow: "current.sunset", can_be_overriden: "no",
                                                                         iu: "time_seconds", icon: "mdi-weather-sunset-down", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 5, baseline_row: 11,  baseline_column:  20, 
@@ -1015,50 +1010,35 @@ def defineHTML_Tile(){
     </head>
 
     <body>
-  <h1>Advanced Demo</h1>
-  <div class="row">
-    <div class="col-md-2 d-none d-md-block">
-      <div id="trash" style="padding: 15px; margin-bottom: 15px;" class="text-center">
-        <div>
-          <ion-icon name="trash" style="font-size: 400%"></ion-icon>
-        </div>
-        <div>
-          <span>Drop here to remove!</span>
-        </div>
-      </div>
-      <div class="newWidget grid-stack-item">
-        <div class="card-body grid-stack-item-content">
-          <div>
-            <ion-icon name="add-circle" style="font-size: 400%"></ion-icon>
-          </div>
-          <div>
-            <span>Drag me in into the dashboard!</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-10">
-    <div class="grid-stack grid-stack-26" data-gs-animate="yes" data-gs-verticalMargin="1" data-gs-column="26">
+  
+    <div class="grid-stack grid-stack-26" data-gs-animate="yes" data-gs-verticalMargin="1" data-gs-column="26" id="main_grid">
     """
+    fontScale = 4.6;
+    lineScale = 0.85;
+    iconScale = 3.5;
     
     atomicState.selections.each{item->
         var = item.var;
-        log.debug(var);
-        html += """ <div  class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" data-gs-y="${item.baseline_row}" data-gs-width="${item.w}" data-gs-height="${item.h}" data-gs-locked="false">
-<div class="grid-stack-item-content" style="font-size: ${3.0*item.h}vmin; line-height: ${5.0*item.h}vmin;"> """;
+        height = item.h*2;
+        html += """ <div  class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
+                                                  data-gs-y="${item.baseline_row*2-1}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
+                                                  ondblclick="setOptions('${var}')">
+
+        <div id="${var}_tile" class="grid-stack-item-content" style="font-size: ${fontScale*height}vh; line-height: ${fontScale*lineScale*height}vh;"> """;
         
         //Left Icon
         if (item.icon != "none" && item.icon_loc == "left"){
-            log.debug(item.icon);
-            html+="""<span id="${var}_icon" class="mdi ${item.icon}">${item.icon_space}</span>""";
+            html+="""<span id="${var}_icon" class="mdi ${item.icon}" style="font-size: ${iconScale*height}vh;">${item.icon_space}</span>""";
         }
+        //Text
+        html+="""<span id="${var}_text">${item.text}</span>""";
         
         //Main Content
         html += """<span id="${var}"></span>"""
         
         //Units
         units = getAbbrev(settings["${var}_units"]);
-        if (settings["${var}_display_units"] && item.imperial != "none" && units != "unknown") html+="""<span>${units}</span>""";  
+        if (settings["${var}_units"] && item.imperial != "none" && units != "unknown") html+="""<span id="${var}_units">${units}</span>""";  
         
         //Right Icon
         if (item.icon != "none" && item.icon_loc == "right"){
@@ -1071,8 +1051,28 @@ def defineHTML_Tile(){
     </div>
     </div>
     </div>
+
+    <div class="hover_bkgr_fricc">
+        <span class="helper"></span>
+        <div>
+            <div class="popupCloseButton" onclick="closeWindow()">&times;</div>
+            <p>
+                <label for="Text Color">Choose text color</label>
+                <input type="color" id="textColor" name="textColor" value="#FFFFFF">
+            </p>
+            <p>
+                <label for="Background Color">Choose tile color</label>
+                <input type="color" id="tileColor" name="bkcolor" value="#000000">
+            </p>
+            <p>
+                <label for="Tile Text">Choose tile text</label> 
+                <input type="text" id="tileText" name="name">
+            </p>
+            </div>
+        </div>
+    </div>
     """;
-        
+    
     return html;
    
 }
@@ -1090,50 +1090,8 @@ def defineScript(){
  
     def html = """
 <script type="text/javascript">
-  	var count = 12;
-    var grid = GridStack.init({
-      alwaysShowResizeHandle: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent
-      ),
-      resizable: {
-        handles: 'e, se, s, sw, w'
-      },
-      removable: '#trash',
-      removeTimeout: 100,
-      acceptWidgets: '.newWidget',
-      verticalMargin: 1,
-      float: 'true',
-      disableOneColumnMode: 'true',
-      cellHeight: "5vw",
-    });
+  	
 
-    grid.on('added removed change', function(e, items) {
-      var str = '';
-      items.forEach(function(item) { 
-      	str += item.id + ' (x,y)=' + item.x + ',' + item.y
-        console.log(item.id);
-        let doc = document.getElementById(item.id);
-        if (doc){
-            doc.style.lineHeight = 5.0*item.height+'vmin';
-            doc.style.fontSize = 3.0*item.height+'vmin';
-        } 
-
-        let icon = document.getElementById(item.id+"_icon");
-        if (icon) { 
-            icon.style.lineHeight = 5*item.height+'vmin';
-            icon.style.fontSize = 3.0*item.height+'vmin';
-        }
-      });
-      console.log(e.type + ' ' + items.length + ' items:' + str );
-    });
-
-    // TODO: switch jquery-ui out
-    jQuery('.newWidget').draggable({
-      revert: 'invalid',
-      scroll: false,
-      appendTo: 'body',
-      helper: 'clone'
-    });
   </script>
 """
     return html;
