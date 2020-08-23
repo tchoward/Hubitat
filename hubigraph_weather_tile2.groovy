@@ -344,7 +344,9 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  
                                                                         font: 40, font_weight: "900", 
-                                                                        imperial: "none",   metric: "none"
+                                                                        imperial: "none",   metric: "none",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
                               ],
                               [title: 'Current Weather',                var: "description",                          
                                                                         ow: "current.weather.0.description", can_be_overriden: "no",
@@ -354,7 +356,9 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  
                                                                         font: 20, font_weight: "400", 
-                                                                        imperial: "none",   metric: "none"
+                                                                        imperial: "none",   metric: "none",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
                               ],
                               [title: 'Current Temperature',            var: "current_temperature",                      
                                                                         ow: "current.temp", can_be_overriden: "yes",
@@ -364,7 +368,9 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "no",  
                                                                         font: 20, font_weight: "400", 
-                                                                        imperial: "farenheit",   metric: "celsius"
+                                                                        imperial: "farenheit",   metric: "celsius",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
                               ], 
                               [title: 'Feels Like',                     var: "feels_like",                 
                                                                         ow: "current.feels_like", can_be_overriden: "yes",
@@ -374,7 +380,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "no",  
                                                                         font: 7, font_weight: "400", 
-                                                                        imperial: "farenheit",   metric: "celsius"
+                                                                        imperial: "farenheit",   metric: "celsius",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Forecast High',                  var: "forecast_high",                       
                                                                         ow: "daily.0.temp.max", can_be_overriden: "no",
@@ -384,7 +393,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "no",  
                                                                         font: 7, font_weight: "400", 
-                                                                        imperial: "farenheit",   metric: "celsius"
+                                                                        imperial: "farenheit",   metric: "celsius",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ], 
                               [title: 'Forecast Low',                 var: "forecast_low",    
                                                                         ow: "daily.0.temp.min", can_be_overriden: "no",
@@ -394,7 +406,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "no",  
                                                                         font: 6, font_weight: "400", 
-                                                                        imperial: "farenheit",   metric: "celsius"
+                                                                        imperial: "farenheit",   metric: "celsius",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Precipitation Title',           var: "precipitation_title",                      
                                                                         ow: "none", can_be_overriden: "no",
@@ -404,7 +419,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitMeasure,   decimal: "no",  
                                                                         font: 6, font_weight: "400", 
-                                                                        imperial: "none",   metric: "none"
+                                                                        imperial: "none",   metric: "none",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Forcast Precipitation',         var: "forecast_precipitation",                          
                                                                         ow: "daily.0.rain", can_be_overriden: "no",
@@ -414,7 +432,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitMeasure,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "inches",   metric: "militmeters"
+                                                                        imperial: "inches",   metric: "militmeters",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Forecast Percent Precipitation', var: "forcast_percent_precipitation",                       
                                                                         ow: "daily.0.pop", can_be_overriden: "no",
@@ -424,7 +445,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitPercent,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "percent_numerical",   metric: "percent_numerical"
+                                                                        imperial: "percent_numerical",   metric: "percent_numerical",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Current Precipitation',          var: "current_precipitation",                          
                                                                         ow: "current.rain.1h", can_be_overriden: "yes",
@@ -434,7 +458,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitMeasure,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "inches",   metric: "millimeters"
+                                                                        imperial: "inches",   metric: "millimeters",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Wind Title',                    var: "wind_title",                  
                                                                         ow: "none", can_be_overriden: "no",
@@ -444,7 +471,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "none",   metric: "none"
+                                                                        imperial: "none",   metric: "none",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Wind Speed',                     var: "wind_speed",                         
                                                                         ow: "current.wind_speed", can_be_overriden: "yes",
@@ -454,7 +484,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitWind,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "miles_per_hour",   metric: "meters_per_second"
+                                                                        imperial: "miles_per_hour",   metric: "meters_per_second",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Wind Gust',                     var: "wind_gust",                       
                                                                         ow: "current.wind_gust", can_be_overriden: "yes",
@@ -464,7 +497,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitWind,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "miles_per_hour",   metric: "meters_per_second"
+                                                                        imperial: "miles_per_hour",   metric: "meters_per_second",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Wind Direction',                var: "wind_direction",                      
                                                                         ow: "current.wind_deg", can_be_overriden: "yes",
@@ -474,7 +510,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitDirection,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "cardinal",   metric: "cardinal"
+                                                                        imperial: "cardinal",   metric: "cardinal",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                                                   
                               [title: 'Pressure Title',               var: "pressure_title",                   
@@ -485,7 +524,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "none",   metric: "none"
+                                                                        imperial: "none",   metric: "none",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ], 
                               [title: 'Current Pressure',             var: "current_pressure",                     
                                                                         ow: "current.pressure", can_be_overriden: "yes",
@@ -495,7 +537,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitPressure,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "inches_mercury",   metric: "millimeters_mercury"
+                                                                        imperial: "inches_mercury",   metric: "millimeters_mercury",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Pressure Trend',                var: "pressure_trend",                        
                                                                         ow: "current.pressure", can_be_overriden: "yes",
@@ -505,7 +550,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "none",   metric: "none"
+                                                                        imperial: "none",   metric: "none",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Humidity',                      var: "current_humidity",                         
                                                                         ow: "current.humidity", can_be_overriden: "yes",
@@ -515,7 +563,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitPercent,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "percent_numeric",  metric: "percent_numeric"
+                                                                        imperial: "percent_numeric",  metric: "percent_numeric",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ], 
                                [title: 'Dewpoint Description',          var: "dewpoint_description",                   
                                                                         ow: "current.dew_point", can_be_overriden: "no",
@@ -525,7 +576,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "none",  metric: "none"
+                                                                        imperial: "none",  metric: "none",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ], 
                               [title: 'Current Dewpoint',             var: "current_dewpoint",                          
                                                                         ow: "current.dew_point", can_be_overriden: "yes",
@@ -535,7 +589,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "farenheit",   metric: "celsius"
+                                                                        imperial: "farenheit",   metric: "celsius",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Sunrise',                        var: "sunrise",                  
                                                                         ow:  "current.sunrise", can_be_overriden: "no",
@@ -545,7 +602,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTime,   decimal: "no",  
                                                                         font: 3, font_weight: "400", 
-                                                                        imperial: "time_twelve",   metric: "time_two_four"
+                                                                        imperial: "time_twelve",   metric: "time_two_four",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
                               [title: 'Sunset',                        var: "sunset",                      
                                                                         ow: "current.sunset", can_be_overriden: "no",
@@ -555,7 +615,10 @@ def mainPage() {
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTime,   decimal: "no",  
                                                                         font: 3, font_weight: "400", 
-                                                                        imperial: "time_twelve",   metric: "time_two_four"
+                                                                        imperial: "time_twelve",   metric: "time_two_four",
+                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                              
                               ],
     ];
 
@@ -714,15 +777,15 @@ private cleanupData(data){
 
 private getAbbrev(unit){
     switch (unit){
-        case "fahrenheit": return "°";
-        case "celsius": return "°";
+        case "fahrenheit": return "&deg;";
+        case "celsius": return "&deg;";
         case "kelvin": return "K";
         case "meters_per_second": return "m/s";
         case "miles_per_hour": return "mph";
         case "knots": return "kn";
         case "millimeters": return "mm";
         case "inches": return '"';
-        case "degrees": return "°";
+        case "degrees": return "&deg;";
         case "radians": return "rad";
         case "cardinal": return "";
         case "trend_numeric": return "";
@@ -862,20 +925,16 @@ def defineHTML_Header(){
         const longitude =        "${longitude}";
         const tile_key =         "${tile_key}";
     </script>
-    
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
     <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
     <script defer src="http://192.168.1.64:8080/a7af9806-4b0e-4032-a78e-a41e27e4d685-WeatherTile.js"></script>
-    <!--script defer src="/local/a7af9806-4b0e-4032-a78e-a41e27e4d685-WeatherTile.js"></script> -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@4.5.10-0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule="" src="https://unpkg.com/ionicons@4.5.10-0/dist/ionicons/ionicons.js"></script>
+    
 
-    <script src="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/jquery.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/jquery-ui.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.jQueryUI.js"></script>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js" integrity="sha512-0bEtK0USNd96MnO4XhH8jhv3nyRF0eK87pJke6pkYf3cM0uDIhNJy9ltuzqgypoIFXw3JSuiy04tVk4AjpZdZw==" crossorigin="anonymous"></script>
     
     """
     return html;
@@ -1007,8 +1066,6 @@ def defineHTML_Tile(){
       background: rgba(255, 0, 0, 0.4);
     }
     </style>
-    </head>
-
     <body>
   
     <div class="grid-stack grid-stack-26" data-gs-animate="yes" data-gs-verticalMargin="1" data-gs-column="26" id="main_grid">
@@ -1024,17 +1081,23 @@ def defineHTML_Tile(){
                                                   data-gs-y="${item.baseline_row*2-1}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
                                                   ondblclick="setOptions('${var}')">
 
-        <div id="${var}_tile" class="grid-stack-item-content" style="font-size: ${fontScale*height}vh; line-height: ${fontScale*lineScale*height}vh;"> """;
+                    <div id="${var}_title" style="display: none;">${item.title}</div>
+                    <div id="${var}_auto_font" style="display: none;">${item.font_auto_resize}</div>
+
+                    <div id="${var}_tile" class="grid-stack-item-content" style="font-size: ${fontScale*height}vh; 
+                                                                          line-height: ${fontScale*lineScale*height}vh;
+                                                                          text-align: ${item.justification};
+                                                                          background-color: ${item.background_color};"> """;
         
         //Left Icon
         if (item.icon != "none" && item.icon_loc == "left"){
-            html+="""<span id="${var}_icon" class="mdi ${item.icon}" style="font-size: ${iconScale*height}vh;">${item.icon_space}</span>""";
+            html+="""<span id="${var}_icon" class="mdi ${item.icon}" style="font-size: ${iconScale*height}vh; color: ${item.font_color};">${item.icon_space}</span>""";
         }
         //Text
-        html+="""<span id="${var}_text">${item.text}</span>""";
+        html+="""<span id="${var}_text" style="color: ${item.font_color};">${item.text}</span>""";
         
         //Main Content
-        html += """<span id="${var}"></span>"""
+        html += """<span id="${var}" style="color: ${item.font_color};"></span>"""
         
         //Units
         units = getAbbrev(settings["${var}_units"]);
@@ -1043,7 +1106,7 @@ def defineHTML_Tile(){
         //Right Icon
         if (item.icon != "none" && item.icon_loc == "right"){
             html+="""<span>${item.icon_space}</span>""";
-            html+="""<span id="${var}_icon" class="mdi ${item.icon}"></span>""";
+            html+="""<span id="${var}_icon" class="mdi ${item.icon}" style="color: ${item.font_color};"></span>""";
         }
         html += """</div></div>""";
     }        
@@ -1051,26 +1114,134 @@ def defineHTML_Tile(){
     </div>
     </div>
     </div>
+    """
+    
+    html+= """
+    <style>
+  .mdl-layout__title {
+    padding-bottom: 20px;
+    background: transparent;
+  }
 
-    <div class="hover_bkgr_fricc">
-        <span class="helper"></span>
-        <div>
-            <div class="popupCloseButton" onclick="closeWindow()">&times;</div>
-            <p>
-                <label for="Text Color">Choose text color</label>
-                <input type="color" id="textColor" name="textColor" value="#FFFFFF">
-            </p>
-            <p>
-                <label for="Background Color">Choose tile color</label>
-                <input type="color" id="tileColor" name="bkcolor" value="#000000">
-            </p>
-            <p>
-                <label for="Tile Text">Choose tile text</label> 
-                <input type="text" id="tileText" name="name">
-            </p>
+  .mdl-grid__hubitat {
+    padding: 0px !important;
+    margin: 5px !important;
+  }
+
+  .mdl-dialog__content {
+    padding: 0px !important;
+    margin: 5px !important;
+  }
+
+  .mdl-dialog {
+    width: 75vw !important;
+  }
+
+  .is-checked {}
+</style>
+<dialog class="mdl-dialog mdl-shadow--12dp" tabindex="-1">
+  <div class="mdl-dialog__content">
+
+    <div class="mdl-layout">
+      <div id="options_title" class="mdl-layout__title">
+        Options
+      </div>
+
+      <div class="mdl-grid" style="width: 100%">
+        <!-- ALIGNMENT -->
+        <div id="alignment_grid" class="mdl-grid"  style="width: 100%; padding: 0px;">
+        <div class="mdl-cell" style="width: auto; flex-grow: 1;" tabindex="-1">
+          <span>Alignment</span>
+        </div>
+        <div class="mdl-cell"  style="width: auto">
+            <button id = "left_justify_button" class="mdl-button mdl-js-button mdl-button--icon" onclick="buttonClicked('left')" tabindex="-1">
+            <i class="material-icons" tabindex="-1">align_horizontal_left</i>
+            </button>
+        </div>
+        <div class="mdl-cell" style="width: auto">
+          <button id = "center_justify_button" class="mdl-button mdl-js-button mdl-button--icon" onclick="buttonClicked('center')">
+            <i class="material-icons">align_horizontal_center</i>
+          </button>
+        </div>
+        <div class="mdl-cell" style="width: auto">
+          <button id = "right_justify_button" class="mdl-button mdl-js-button mdl-button--icon" onclick="buttonClicked('right')">
+            <i class="material-icons">align_horizontal_right</i>
+          </button>
+        </div>
+        <div class="mdl-layout-spacer"></div>
+        </div>
+
+       <div id="text_color_grid" class="mdl-grid"  style="width: 100%; padding: 0px;">
+        <!-- TEXT COLOR -->
+        <div class="mdl-cell" style="width: auto; flex-grow: 1;">
+          <span><label for="Text Color">Choose TEXT color </label></span>
+        </div>
+        <div class="mdl-cell" style="width: auto">
+          <span><input type="color" id="textColor" name="textColor" value="#FFFFFF"></span>
+        </div>
+        </div>
+        
+        <div id="tile_color_grid" class="mdl-grid"  style="width: 100%; padding: 0px;">
+        <!-- TILE COLOR -->
+        <div class="mdl-cell" style="width: auto; flex-grow: 1;">
+          <label for="Background Color">Choose TILE color </label>
+        </div>
+        <div class="mdl-cell" style="width: auto">
+          <input type="color" id="tileColor" name="bkcolor" value="#000000">
+        </div>
+        </div>
+
+        <!-- ADJUST TEXT SIZE -->
+        <div id="font_adjustment_grid" class="mdl-grid"  style="width: 100%; padding: 0px;">
+            <div class="mdl-cell" style="width: auto; flex-grow: 1;">
+                Automatic Font Size Adjustment
+            </div>
+            <div class="mdl-cell" style="width: auto">
+                <label id="tileStaticFontSwitch" class="mdl-switch mdl-js-switch mdl-js-ripple-effect is-checked" for="tileStaticFont">
+                    <input type="checkbox" id="tileStaticFont" 
+                                           class="mdl-switch__input"
+                                           onchange="enableFontSize(tileStaticFont.checked)" checked>
+                </label>
             </div>
         </div>
+
+        <!-- TEXT SIZE ADJUSTMENT -->
+        <script language="javascript">
+          function showMessage(value) {
+            document.getElementById("message").innerHTML = value;
+          }	   
+        </script>
+ 
+        <div id="fontSizeControl" class="mdl-grid"  style="width: 100%; padding: 0px;">
+            <div class="mdl-cell" style="width: auto; flex-grow: 1;">
+              <label for="tileFontSize">Adjust Font (Pixels)</label>
+              <input id="tileFontSize" class="mdl-slider mdl-js-slider" type="range" min="-100" max="100" value="0" tabindex="0"
+                oninput="showMessage(this.value)" onchange="showMessage(this.value)">
+            </div>
+            <div class="mdl-cell" style="width: auto">
+              Value: <div id="message">0</div>
+            </div>
+        </div>
+
+        <!-- CUSTOM TEXT -->
+        <div class="mdl-cell mdl-cell--12-col">
+          <div id="text_floater" class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" type="text" id="tileText">
+            <label class="mdl-textfield__label" for="tileText">Static Text</label>
+          </div>
+        </div>
+        
+        <!-- ICON -->
+        
+
+      </div>
+
     </div>
+  </div>
+  <div class="mdl-dialog__actions">
+    <button id="dialog_button" type="button" class="mdl-button close" onclick="closeWindow()"> Done </button>
+  </div>
+</dialog>
     """;
     
     return html;
@@ -1101,7 +1272,7 @@ def getWeatherTile() {
     def fullSizeStyle = "margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden";
     
     html = defineHTML_Header();
-    html += "<head><style>";
+    html += """<head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>""";
     //CSS
     html += defineHTML_CSS();
     html += """</style></head><body onload="initializeWeather()">"""
