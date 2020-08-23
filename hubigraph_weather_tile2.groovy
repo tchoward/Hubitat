@@ -346,7 +346,7 @@ def mainPage() {
                                                                         font: 40, font_weight: "900", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               ],
                               [title: 'Current Weather',                var: "description",                          
                                                                         ow: "current.weather.0.description", can_be_overriden: "no",
@@ -358,7 +358,7 @@ def mainPage() {
                                                                         font: 20, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               ],
                               [title: 'Current Temperature',            var: "current_temperature",                      
                                                                         ow: "current.temp", can_be_overriden: "yes",
@@ -370,7 +370,7 @@ def mainPage() {
                                                                         font: 20, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               ], 
                               [title: 'Feels Like',                     var: "feels_like",                 
                                                                         ow: "current.feels_like", can_be_overriden: "yes",
@@ -382,7 +382,7 @@ def mainPage() {
                                                                         font: 7, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Forecast High',                  var: "forecast_high",                       
@@ -395,7 +395,7 @@ def mainPage() {
                                                                         font: 7, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ], 
                               [title: 'Forecast Low',                 var: "forecast_low",    
@@ -408,7 +408,7 @@ def mainPage() {
                                                                         font: 6, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Precipitation Title',           var: "precipitation_title",                      
@@ -421,7 +421,7 @@ def mainPage() {
                                                                         font: 6, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Forcast Precipitation',         var: "forecast_precipitation",                          
@@ -434,7 +434,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches",   metric: "militmeters",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Forecast Percent Precipitation', var: "forcast_percent_precipitation",                       
@@ -447,7 +447,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "percent_numerical",   metric: "percent_numerical",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Current Precipitation',          var: "current_precipitation",                          
@@ -460,7 +460,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches",   metric: "millimeters",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Wind Title',                    var: "wind_title",                  
@@ -473,7 +473,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Wind Speed',                     var: "wind_speed",                         
@@ -486,7 +486,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "miles_per_hour",   metric: "meters_per_second",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Wind Gust',                     var: "wind_gust",                       
@@ -499,7 +499,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "miles_per_hour",   metric: "meters_per_second",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Wind Direction',                var: "wind_direction",                      
@@ -512,7 +512,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "cardinal",   metric: "cardinal",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                                                   
@@ -526,7 +526,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ], 
                               [title: 'Current Pressure',             var: "current_pressure",                     
@@ -539,7 +539,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches_mercury",   metric: "millimeters_mercury",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Pressure Trend',                var: "pressure_trend",                        
@@ -552,7 +552,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Humidity',                      var: "current_humidity",                         
@@ -565,7 +565,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "percent_numeric",  metric: "percent_numeric",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ], 
                                [title: 'Dewpoint Description',          var: "dewpoint_description",                   
@@ -578,7 +578,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",  metric: "none",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ], 
                               [title: 'Current Dewpoint',             var: "current_dewpoint",                          
@@ -591,7 +591,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Sunrise',                        var: "sunrise",                  
@@ -604,7 +604,7 @@ def mainPage() {
                                                                         font: 3, font_weight: "400", 
                                                                         imperial: "time_twelve",   metric: "time_two_four",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
                               [title: 'Sunset',                        var: "sunset",                      
@@ -617,7 +617,7 @@ def mainPage() {
                                                                         font: 3, font_weight: "400", 
                                                                         imperial: "time_twelve",   metric: "time_two_four",
                                                                         font_color: "#2c3e50", background_color: "#18bc9c",
-                                                                        font_auto_resize: "true", justification: "center", font_static_size: "none"
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
     ];
@@ -1082,7 +1082,7 @@ def defineHTML_Tile(){
                                                   ondblclick="setOptions('${var}')">
 
                     <div id="${var}_title" style="display: none;">${item.title}</div>
-                    <div id="${var}_auto_font" style="display: none;">${item.font_auto_resize}</div>
+                    <div id="${var}_font_adjustment" style="display: none;">${item.font_adjustment}</div>
 
                     <div id="${var}_tile" class="grid-stack-item-content" style="font-size: ${fontScale*height}vh; 
                                                                           line-height: ${fontScale*lineScale*height}vh;
@@ -1191,35 +1191,21 @@ def defineHTML_Tile(){
         </div>
         </div>
 
-        <!-- ADJUST TEXT SIZE -->
-        <div id="font_adjustment_grid" class="mdl-grid"  style="width: 100%; padding: 0px;">
-            <div class="mdl-cell" style="width: auto; flex-grow: 1;">
-                Automatic Font Size Adjustment
-            </div>
-            <div class="mdl-cell" style="width: auto">
-                <label id="tileStaticFontSwitch" class="mdl-switch mdl-js-switch mdl-js-ripple-effect is-checked" for="tileStaticFont">
-                    <input type="checkbox" id="tileStaticFont" 
-                                           class="mdl-switch__input"
-                                           onchange="enableFontSize(tileStaticFont.checked)" checked>
-                </label>
-            </div>
-        </div>
-
         <!-- TEXT SIZE ADJUSTMENT -->
         <script language="javascript">
           function showMessage(value) {
-            document.getElementById("message").innerHTML = value;
+            document.getElementById("fontSizeMessage").innerHTML = value+"%";
           }	   
         </script>
  
         <div id="fontSizeControl" class="mdl-grid"  style="width: 100%; padding: 0px;">
             <div class="mdl-cell" style="width: auto; flex-grow: 1;">
-              <label for="tileFontSize">Adjust Font (Pixels)</label>
-              <input id="tileFontSize" class="mdl-slider mdl-js-slider" type="range" min="-100" max="100" value="0" tabindex="0"
+              <label for="fontSizeAdjustment">Adjust Font (Pixels)</label>
+              <input id="fontSizeAdjustment" class="mdl-slider mdl-js-slider" type="range" min="-100" max="100" value="0" tabindex="0"
                 oninput="showMessage(this.value)" onchange="showMessage(this.value)">
             </div>
             <div class="mdl-cell" style="width: auto">
-              Value: <div id="message">0</div>
+              Value: <div id="fontSizeMessage">0%</div>
             </div>
         </div>
 
