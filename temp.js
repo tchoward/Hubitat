@@ -1156,18 +1156,14 @@ async function initializeWeather() {
         el = document.getElementById(item.id),
             text = document.getElementById(item.id + "_text");
         just = document.getElementById(item.id + '_tile');
-        auto = document.getElementById(item.id + '_auto_font').textContent;
-        console.log(auto);
-
-        auto = auto
-            == "true" ? true : false;
-
+        auto = document.getElementById(item.id + '_font_adjustment').textContent;
+       
         gridTileUpdates.set(item.id, {
             color: el.style.color,
             backgroundColor: just.style.backgroundColor,
             staticText: text.textContent,
             justification: just.style.textAlign,
-            auto_font: auto,
+            font_adjustment: auto,
         });
 
     });
@@ -1338,7 +1334,10 @@ function setText(val, id) {
     let item = grid.engine.nodes.find(function (element) {
         return (element.id == id);
     });
-    if (!item) return;
+    if (!item) {
+        console.log("Returning ("+val+", "+id+")");
+        return;
+    }
 
     let wPixels = window.innerWidth;
     let hPixels = window.innerHeight;
@@ -1382,6 +1381,14 @@ function setText(val, id) {
         fontSize = 1.25 * (pixelWidth / textWidth);
     }
 
+    obj = gridTileUpdates.get(id);
+    change = obj.font_adjustment;
+    console.log(change);
+    if (change != 0){
+        console.log("Before: "+fontSize);
+        fontSize = fontSize + (fontSize*(change/100.0));
+        console.log("After: "+ fontSize);
+    }
 
     if (el) {
         if (val != "") el.textContent = val;
@@ -1442,7 +1449,13 @@ function setFont(grid) {
     setText("", item.id)
 }
 
+function setSlider(sliderId, messageId, val){
+    document.getElementById(sliderId).value = val;
+    document.getElementById(messageId).innerHTML = val;
 
+    $("#"+sliderId)[0].MaterialSlider.change(val);
+   
+}
 
 
 
@@ -1473,27 +1486,12 @@ function setOptions(tile) {
     //Get Justification
     buttonClicked(obj.justification, true);
 
-    //Get Font AutoResize
-    console.log("Setting Font Eanble: " + obj.auto_font);
-    enableFontSize(obj.auto_font);
+    setSlider("fontSizeAdjustment", "fontSizeMessage", obj.font_adjustment);
 
     dialog.showModal();
     focusTile = tile;
 
 
-}
-function enableFontSize(value) {
-    console.log("setting "+value)
-    if (value==true) {
-        $('#tileStaticFontSwitch').addClass('is-checked');
-        $('#tileStaticFont').prop( "checked", true );
-
-        document.getElementById("fontSizeControl").style.display = "none";
-    } else {
-        $('#tileStaticFontSwitch').removeClass('is-checked');
-        $('#tileStaticFont').prop( "checked", false );
-        document.getElementById("fontSizeControl").style.display = "flex";
-    }
 }
 
 function getJustification() {
@@ -1536,6 +1534,7 @@ function setTileText(text, id) {
 function setJustification(justification, id) {
     el = document.getElementById(id);
     if (el) el.style.textAlign = justification;
+    if (el) el.style.verticalAlign = "top";
 }
 
 function setVal(key, field, val) {
@@ -1547,6 +1546,10 @@ function setVal(key, field, val) {
 function getAutoFont() {
     let temp = $('#tileStaticFont').hasClass('checked');
     return temp;
+}
+
+function setFont(val, id){
+   
 }
 
 var gridTileUpdates = new Map();
@@ -1567,11 +1570,12 @@ function closeWindow() {
     let justification = getJustification();
     setJustification(justification, focusTile + "_tile");
 
-    let auto_font = getAutoFont();
-    document.getElementById(focusTile + '_auto_font').textContent = auto_font;
+    let font_adjustment = document.getElementById('fontSizeAdjustment').value;
 
-    gridTileUpdates.set(focusTile, { color: color, backgroundColor: bkcolor, staticText: text, justification: justification, auto_font: auto_font });
+    gridTileUpdates.set(focusTile, { color: color, backgroundColor: bkcolor, staticText: text, justification: justification, font_adjustment: font_adjustment });
     
+    setText("", focusTile);
+
 
     console.log(gridTileUpdates);
 }
