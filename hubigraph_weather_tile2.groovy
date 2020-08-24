@@ -343,9 +343,9 @@ def mainPage() {
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  
-                                                                        font: 40, font_weight: "900", 
+                                                                        font: 40, font_weight: "100", 
                                                                         imperial: "none",   metric: "none",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               ],
                               [title: 'Current Weather',                var: "description",                          
@@ -357,7 +357,7 @@ def mainPage() {
                                                                         unit: "none",   decimal: "no",  
                                                                         font: 20, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               ],
                               [title: 'Current Temperature',            var: "current_temperature",                      
@@ -367,9 +367,9 @@ def mainPage() {
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "no",  
-                                                                        font: 20, font_weight: "400", 
+                                                                        font: 20, font_weight: "900", 
                                                                         imperial: "farenheit",   metric: "celsius",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               ], 
                               [title: 'Feels Like',                     var: "feels_like",                 
@@ -381,7 +381,7 @@ def mainPage() {
                                                                         unit: unitTemp,   decimal: "no",  
                                                                         font: 7, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -394,7 +394,7 @@ def mainPage() {
                                                                         unit: unitTemp,   decimal: "no",  
                                                                         font: 7, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ], 
@@ -407,7 +407,7 @@ def mainPage() {
                                                                         unit: unitTemp,   decimal: "no",  
                                                                         font: 6, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -420,7 +420,7 @@ def mainPage() {
                                                                         unit: unitMeasure,   decimal: "no",  
                                                                         font: 6, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -433,7 +433,7 @@ def mainPage() {
                                                                         unit: unitMeasure,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches",   metric: "militmeters",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -446,7 +446,7 @@ def mainPage() {
                                                                         unit: unitPercent,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "percent_numerical",   metric: "percent_numerical",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -459,7 +459,7 @@ def mainPage() {
                                                                         unit: unitMeasure,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches",   metric: "millimeters",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -472,7 +472,7 @@ def mainPage() {
                                                                         unit: "none",   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -485,7 +485,7 @@ def mainPage() {
                                                                         unit: unitWind,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "miles_per_hour",   metric: "meters_per_second",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -498,7 +498,7 @@ def mainPage() {
                                                                         unit: unitWind,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "miles_per_hour",   metric: "meters_per_second",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -511,7 +511,7 @@ def mainPage() {
                                                                         unit: unitDirection,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "cardinal",   metric: "cardinal",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -525,7 +525,7 @@ def mainPage() {
                                                                         unit: "none",   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ], 
@@ -538,7 +538,7 @@ def mainPage() {
                                                                         unit: unitPressure,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches_mercury",   metric: "millimeters_mercury",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -551,7 +551,7 @@ def mainPage() {
                                                                         unit: "none",   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -564,7 +564,7 @@ def mainPage() {
                                                                         unit: unitPercent,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "percent_numeric",  metric: "percent_numeric",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ], 
@@ -577,7 +577,7 @@ def mainPage() {
                                                                         unit: "none",   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",  metric: "none",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ], 
@@ -590,7 +590,7 @@ def mainPage() {
                                                                         unit: unitTemp,   decimal: "no",  
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -603,7 +603,7 @@ def mainPage() {
                                                                         unit: unitTime,   decimal: "no",  
                                                                         font: 3, font_weight: "400", 
                                                                         imperial: "time_twelve",   metric: "time_two_four",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -616,7 +616,7 @@ def mainPage() {
                                                                         unit: unitTime,   decimal: "no",  
                                                                         font: 3, font_weight: "400", 
                                                                         imperial: "time_twelve",   metric: "time_two_four",
-                                                                        font_color: "#2c3e50", background_color: "#18bc9c",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0
                               
                               ],
@@ -911,9 +911,12 @@ def getRGBA(hex, opacity){
 
 def defineHTML_Header(){
     def html = """
+    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <link rel="stylesheet" href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">    
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
-    <link rel="stylesheet" href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css">
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="/local/gridstack.css">
@@ -926,7 +929,7 @@ def defineHTML_Header(){
         const tile_key =         "${tile_key}";
     </script>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
-    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    
     <script defer src="http://192.168.1.64:8080/a7af9806-4b0e-4032-a78e-a41e27e4d685-WeatherTile.js"></script>
     
 
@@ -936,6 +939,116 @@ def defineHTML_Header(){
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js" integrity="sha512-0bEtK0USNd96MnO4XhH8jhv3nyRF0eK87pJke6pkYf3cM0uDIhNJy9ltuzqgypoIFXw3JSuiy04tVk4AjpZdZw==" crossorigin="anonymous"></script>
     
+    """
+    return html;
+}
+
+def addColorPicker(Map map){
+    var = map.var;
+    title = map.title;
+       
+    html = """
+    <style>
+       
+    </style>
+
+      <div id="text_box" class="flex-container">
+          <div class="flex-item" style="flex-basis: 25%;">
+            <span><label for="${var}_color">${title}</label></span>
+          </div>
+          <div class="flex-item" style="flex-basis: 75%;">
+            <span><label for="${var}_color">Opacity</label></span>
+          </div>
+       </div>
+    
+      <div id="text_color_box" class="flex-container">
+          <div class="flex-item" style="flex-basis: 25%;">
+             <span><input type="color" id="${var}_color" name="${var}_color" value="#FFFFFF"></span>
+          </div>
+          <div class="flex-item" style="flex-basis: 60%;">
+             <input id="${var}_slider" class="mdl-slider mdl-js-slider" type="range" min="0" max="100" value="100" tabindex="0"
+              oninput="${var}_showMessage(this.value)" onchange="${var}_showMessage(this.value)">
+         </div>
+         <div class="flex-item" style="flex-basis: 15%;">
+            <div class="item" id="${var}_message">100%</div>
+        </div>
+      </div>
+      <!-- JAVASCRIPT -->
+      <script language="javascript">
+        function ${var}_showMessage(value) {
+          document.getElementById("${var}_message").innerHTML = value + "%";
+        }	   
+      </script>
+"""
+    return html;
+}
+
+def addButtonMenu(Map map){
+    button_var = map.var_name;
+    default_val = map.default_value;
+    default_icon = map.default_icon;
+    item_list = map.list;
+    tooltip = map.tooltip ? map.tooltip : "";
+    
+    def html = """
+    <div class="flex-item" style="flex-grow:1;">
+        <div id = "${button_var}_value" style="display: none;">${default_val}</div>
+        <button id="${button_var}"
+            class="mdl-button mdl-js-button mdl-button--icon">
+            <i id="${button_var}_icon" class="material-icons">${default_icon}</i>
+        </button>
+        <div class = "mdl-tooltip" for = "${button_var}">${tooltip}</div>
+        <!-- Menu Items List , mdl-menu--botton-right -->
+        <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect"
+        for="${button_var}"> """
+   
+    item_list.each{item->
+        weight = item.font_weight ? item.font_weight : 400;
+        html += """ <li class="mdl-menu__item" onclick="${button_var}_itemSelected('${item.icon}',  '${item.name.toLowerCase()}')">
+                        <i id="${item.name.toLowerCase()}" class="material-icons" style="vertical-align: middle; font-weight: ${weight};">${item.icon}</i>
+                        <span>  ${item.name}</span>
+                    </li>"""
+    }
+    
+    html += """</ul>
+    </div>
+    <script>
+            function ${button_var}_itemSelected(icon, val){
+                document.getElementById("${button_var}_icon").textContent = icon;
+                document.getElementById("${button_var}_value").textContent = val;
+            } 
+        </script>
+    """
+    return html;
+}
+
+def addSlider(Map map){
+ 
+    var = map.var;
+    title = map.title;
+    min = map.min;
+    max = map.max;
+    value = map.value;
+    
+    html = """
+    <div id="${var}_box" class="flex-container">
+          <div class="flex-item" style="flex-grow: 2;">
+            <label for="${var}_slider">${title}</label>
+          </div>
+          <div class="flex-item" style="flex-grow: auto;">
+            <input id="${var}_slider" class="mdl-slider mdl-js-slider" type="range" min="${min}" max="100" value="0"
+                  tabindex="0" oninput="${var}_showMessage(this.value)" onchange="${var}_showMessage(this.value)">
+          </div>
+          <div class="flex-item" style="flex-grow: 1;">
+            <div id="${var}_message">0%</div>
+          </div>
+    </div>
+
+    <script language="javascript">
+        function ${var}_showMessage(value) {
+            document.getElementById("${var}_message").innerHTML = value + "%";
+        }	   
+    </script>
     """
     return html;
 }
@@ -1032,6 +1145,21 @@ h1 {
     right: 0;
 }
 
+.flex-container {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  background-color: DodgerBlue;
+}
+
+.flex-container > div {
+  background-color: #f1f1f1;
+  width: auto;
+  margin: 2px;
+  text-align: center;
+  line-height: 4vh;
+  font-size: vw;
+}
     """
     return html;
 }
@@ -1087,7 +1215,8 @@ def defineHTML_Tile(){
                     <div id="${var}_tile" class="grid-stack-item-content" style="font-size: ${fontScale*height}vh; 
                                                                           line-height: ${fontScale*lineScale*height}vh;
                                                                           text-align: ${item.justification};
-                                                                          background-color: ${item.background_color};"> """;
+                                                                          background-color: ${item.background_color};
+                                                                          font-weight: ${item.font_weight};"> """;
         
         //Left Icon
         if (item.icon != "none" && item.icon_loc == "left"){
@@ -1148,66 +1277,42 @@ def defineHTML_Tile(){
       </div>
 
       <div class="mdl-grid" style="width: 100%">
+"""
+    
+/********************ALIGNMENT****************************************/
+html+= """
         <!-- ALIGNMENT -->
-        <div id="alignment_grid" class="mdl-grid"  style="width: 100%; padding: 0px;">
-        <div class="mdl-cell" style="width: auto; flex-grow: 1;" tabindex="-1">
-          <span>Alignment</span>
-        </div>
-        <div class="mdl-cell"  style="width: auto">
-            <button id = "left_justify_button" class="mdl-button mdl-js-button mdl-button--icon" onclick="buttonClicked('left')" tabindex="-1">
-            <i class="material-icons" tabindex="-1">align_horizontal_left</i>
-            </button>
-        </div>
-        <div class="mdl-cell" style="width: auto">
-          <button id = "center_justify_button" class="mdl-button mdl-js-button mdl-button--icon" onclick="buttonClicked('center')">
-            <i class="material-icons">align_horizontal_center</i>
-          </button>
-        </div>
-        <div class="mdl-cell" style="width: auto">
-          <button id = "right_justify_button" class="mdl-button mdl-js-button mdl-button--icon" onclick="buttonClicked('right')">
-            <i class="material-icons">align_horizontal_right</i>
-          </button>
-        </div>
-        <div class="mdl-layout-spacer"></div>
-        </div>
+        <div id="alignment_grid" class="flex-container">
+            <div class="flex-item"  style="flex-grow: 3;" tabindex="-1">
+              <span>Font: </span>
+            </div>
+"""
+        html+= addButtonMenu(var_name: "horizontal_alignment", default_icon: "align_horizontal_center", tooltip: "Horizontal Alignment", default_value: "center", list:[[name: "Left",   icon: "align_horizontal_left"], 
+                                                                                                                                                                        [name: "Center", icon: "align_horizontal_center"], 
+                                                                                                                                                                        [name: "Right",  icon: "align_horizontal_right"]]);
+    
+        html+= addButtonMenu(var_name: "font_weight", default_icon: "exposure_zero", default_value: "center", tooltip: "Font Weight", list:[[name: "Thin",   icon: "exposure_neg_1"], 
+                                                                                                                                                     [name: "Normal", icon: "exposure_zero"], 
+                                                                                                                                                     [name: "Bold",   icon: "exposure_plus_1"],
+                                                                                                                                                     [name: "Thick",  icon: "exposure_plus_2"]]);    
+html += "</div>"
 
-       <div id="text_color_grid" class="mdl-grid"  style="width: 100%; padding: 0px;">
-        <!-- TEXT COLOR -->
-        <div class="mdl-cell" style="width: auto; flex-grow: 1;">
-          <span><label for="Text Color">Choose TEXT color </label></span>
-        </div>
-        <div class="mdl-cell" style="width: auto">
-          <span><input type="color" id="textColor" name="textColor" value="#FFFFFF"></span>
-        </div>
-        </div>
+    
+/*****************TEXT COLOR***************************************/
+      
         
-        <div id="tile_color_grid" class="mdl-grid"  style="width: 100%; padding: 0px;">
-        <!-- TILE COLOR -->
-        <div class="mdl-cell" style="width: auto; flex-grow: 1;">
-          <label for="Background Color">Choose TILE color </label>
-        </div>
-        <div class="mdl-cell" style="width: auto">
-          <input type="color" id="tileColor" name="bkcolor" value="#000000">
-        </div>
-        </div>
-
-        <!-- TEXT SIZE ADJUSTMENT -->
-        <script language="javascript">
-          function showMessage(value) {
-            document.getElementById("fontSizeMessage").innerHTML = value+"%";
-          }	   
-        </script>
- 
-        <div id="fontSizeControl" class="mdl-grid"  style="width: 100%; padding: 0px;">
-            <div class="mdl-cell" style="width: auto; flex-grow: 1;">
-              <label for="fontSizeAdjustment">Adjust Font (Pixels)</label>
-              <input id="fontSizeAdjustment" class="mdl-slider mdl-js-slider" type="range" min="-100" max="100" value="0" tabindex="0"
-                oninput="showMessage(this.value)" onchange="showMessage(this.value)">
-            </div>
-            <div class="mdl-cell" style="width: auto">
-              Value: <div id="fontSizeMessage">0%</div>
-            </div>
-        </div>
+        html+= addColorPicker(var: "text", title: "Text");
+    
+/****************BACKGROUND COLOR *********************************/
+      
+        html+= addColorPicker(var: "background", title: "Background");
+    
+/****************Font Adjustment  *********************************/
+    
+        html+= addSlider(var: "font_adjustment", title: "Adjust Font Size (%)", min: -100, value: 0, max:100);
+    
+    html+="""
+       
 
         <!-- CUSTOM TEXT -->
         <div class="mdl-cell mdl-cell--12-col">
@@ -1233,6 +1338,8 @@ def defineHTML_Tile(){
     return html;
    
 }
+
+
 
 def defineHTML_globalVariables(){
     def html = """
