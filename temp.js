@@ -1152,19 +1152,24 @@ async function initializeWeather() {
     console.log("Refreshing OpenWeather Forecast at " + minutes + " minutes");
 
     grid.engine.nodes.forEach(function (item) {
-        setFont(item);
+        
         el = document.getElementById(item.id),
-            text = document.getElementById(item.id + "_text");
-        just = document.getElementById(item.id + '_tile');
+        text = document.getElementById(item.id + "_text");
+        tile = document.getElementById(item.id + '_tile');
         auto = document.getElementById(item.id + '_font_adjustment').textContent;
        
         gridTileUpdates.set(item.id, {
             color: el.style.color,
-            backgroundColor: just.style.backgroundColor,
+            color_opacity: 100,
+            backgroundColor: tile.style.backgroundColor,
+            background_opacity: 100,
             staticText: text.textContent,
-            justification: just.style.textAlign,
+            horizontal_alignment: tile.style.textAlign,
             font_adjustment: auto,
+            font_weight: tile.style.fontWeight
         });
+
+        setFont(item);
 
     });
 
@@ -1315,8 +1320,8 @@ var grid = GridStack.init({
 
 grid.on('added removed change', function (e, items) {
     var str = '';
+    console.log("Here")
     items.forEach(function (item) {
-        str += item.id + ' (x,y)=' + item.x + ',' + item.y
         setFont(item);
     });
 });
@@ -1376,36 +1381,40 @@ function setText(val, id) {
     let pixelWidth = column_size * item.width;
     let fontWidth = fontSize * textWidth;
 
+    console.log("Font Width: "+fontWidth)
 
     if (pixelWidth < fontWidth) {
         fontSize = 1.25 * (pixelWidth / textWidth);
     }
 
+    console.log("Id: "+id);
     obj = gridTileUpdates.get(id);
+    console.log(obj);
     change = obj.font_adjustment;
-    console.log(change);
-    if (change != 0){
-        console.log("Before: "+fontSize);
-        fontSize = fontSize + (fontSize*(change/100.0));
-        console.log("After: "+ fontSize);
-    }
+
+    fontSize = fontSize + (fontSize*(change/100.0));
+    fontWeight = obj.font_weight;
 
     if (el) {
         if (val != "") el.textContent = val;
         el.style.fontSize = fontSize + "px";
         el.style.lineHeight = lineHeight + "px";
+        el.style.fontWeight = fontWeight;
     }
     if (text) {
         text.style.fontSize = fontSize + "px";
         text.style.lineHeight = lineHeight + "px";
+        text.style.fontWeight = fontWeight;
     }
     if (icon) {
-        icon.style.fontSize = (fontSize + "px");
+        icon.style.fontSize = fontSize + "px";
         icon.style.lineHeight = lineHeight + "px";
+        icon.style.fontWeight = fontWeight;
     }
     if (units) {
         units.style.fontSize = (fontSize + "px");
         units.style.lineHeight = lineHeight + "px";
+        units.style.fontWeight = fontWeight;
     }
 
 }
@@ -1445,15 +1454,15 @@ function setGridTile(weather) {
 function setFont(grid) {
 
     let item = document.getElementById(grid.id);
-
+    console.log("Here 2 "+item)
     setText("", item.id)
 }
 
-function setSlider(sliderId, messageId, val){
-    document.getElementById(sliderId).value = val;
-    document.getElementById(messageId).innerHTML = val;
+function setSlider(id, val){
+    document.getElementById(id+"_slider").value = val;
+    document.getElementById(id+"_message").innerHTML = val;
 
-    $("#"+sliderId)[0].MaterialSlider.change(val);
+    $("#"+id+"_slider")[0].MaterialSlider.change(val);
    
 }
 
@@ -1466,9 +1475,9 @@ var dialog = document.querySelector('dialog');
 function setOptions(tile) {
 
     obj = gridTileUpdates.get(tile);
-    document.getElementById("textColor").value = rgb2hex(obj.color);
+    document.getElementById("text_color").value = rgb2hex(obj.color);
 
-    document.getElementById("tileColor").value = rgb2hex(obj.backgroundColor);
+    document.getElementById("background_color").value = rgb2hex(obj.backgroundColor);
 
     text = obj.staticText;
     if (text) {
@@ -1483,10 +1492,22 @@ function setOptions(tile) {
     title = el.textContent;
     document.getElementById("options_title").textContent = title + " Options"
 
-    //Get Justification
-    buttonClicked(obj.justification, true);
+    
+    horizontal_alignment_icon = document.getElementById(obj.horizontal_alignment).textContent;
+    document.getElementById("horizontal_alignment_value").textContent = obj.horizontal_alignment;
+    document.getElementById("horizontal_alignment_icon").textContent = horizontal_alignment_icon;
 
-    setSlider("fontSizeAdjustment", "fontSizeMessage", obj.font_adjustment);
+    fname = getFontWeightName(obj.font_weight);
+    font_weight_icon = document.getElementById(fname).textContent;
+    console.log(font_weight_icon);
+    document.getElementById("font_weight_value").textContent = fname;
+    document.getElementById("font_weight_icon").textContent = font_weight_icon;
+
+
+    
+    setSlider("font_adjustment", obj.font_adjustment);
+    setSlider("text", obj.color_opacity);
+    setSlider("background", obj.background_opacity);
 
     dialog.showModal();
     focusTile = tile;
@@ -1502,6 +1523,15 @@ function getJustification() {
     console.log("Error: Justification not set");
 }
 
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+
 function rgb2hex(rgb) {
     if (/^#[0-9A-F]{6}$/i.test(rgb)) return rgb;
 
@@ -1512,29 +1542,32 @@ function rgb2hex(rgb) {
     return "#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
 }
 
-function setColor(color, id) {
+function setColor(color, opacity, id) {
+    rgb = hexToRgb(color);
+
+    colorString ="rgba("+rgb.r+", "+rgb.g+", "+rgb.b+", "+(opacity/100)+")"
+
     let el = document.getElementById(id);
     let icon = document.getElementById(id + "_icon");
     let unit = document.getElementById(id + "_units");
     let text = document.getElementById(id + "_text")
-    if (el) el.style.color = color;
-    if (icon) icon.style.color = color;
-    if (unit) unit.style.color = color;
-    if (text) text.style.color = color;
+    if (el) el.style.color = colorString;
+    if (icon) icon.style.color = colorString;
+    if (unit) unit.style.color = colorString;
+    if (text) text.style.color = colorString;
 }
-function setbkColor(color, id) {
-    let el = document.getElementById(id);
-    if (el) el.style.backgroundColor = color;
+function setbkColor(color, opacity, id) {
+
+    $('#'+id).css('background-color', color);
+    $('#'+id).css('opacity', opacity/100);
 }
 function setTileText(text, id) {
     let el = document.getElementById(id);
     if (el) el.textContent = text;
 }
 
-function setJustification(justification, id) {
-    el = document.getElementById(id);
-    if (el) el.style.textAlign = justification;
-    if (el) el.style.verticalAlign = "top";
+function setAlignment(alignment, id) {
+    $('#'+id).css('text-align', alignment);
 }
 
 function setVal(key, field, val) {
@@ -1548,31 +1581,71 @@ function getAutoFont() {
     return temp;
 }
 
-function setFont(val, id){
-   
+function getFontWeight(val){
+    switch (val){
+        case "thin": return 100;
+        case "normal": return 400;
+        case "bold": return 700;
+        case "thick": return 900;
+    }
+    return 400;
+}
+
+function getFontWeightName(val){
+    
+    if (typeof val === 'string' || val instanceof String)
+        intval = parseInt(val, 10);
+    else
+        intval = val;
+
+    switch (intval){
+        case 100: return "thin"; break;
+        case 400: return "normal"; break;
+        case 700: return "bold"; break;
+        case 900: return "thick"; break;
+    }
+    console.log ("Value: "+val+"Int Val: "+intval);
+    return "normal";
 }
 
 var gridTileUpdates = new Map();
+var controls = {
+                    justification:      {value: 'justification_value',  attribute: 'justification'},
+                    font_color:         {value: 'font_color',           attibute:  'text-color'},
+                    background_color:   {value: 'background_color',     attribute: 'background-color'}, 
+                    font_adjustment:    {value:'background_color',      attribute: 'background-color'}, 
+               }
 
 function closeWindow() {
     console.log("Closing---");
 
     dialog.close();
-    let color = document.getElementById("textColor").value;
-    setColor(color, focusTile);
+    let color = document.getElementById("text_color").value;
+    let opacity = document.getElementById("text_slider").value;
+    setColor(color, opacity, focusTile);
 
-    let bkcolor = document.getElementById("tileColor").value;
-    setbkColor(bkcolor, focusTile + "_tile");
+    let bkcolor = document.getElementById("background_color").value;
+    let bkopacity = document.getElementById("background_slider").value;
+    setbkColor(bkcolor, bkopacity, focusTile + "_tile");
 
     let text = document.getElementById("tileText").value;
     setTileText(text, focusTile + "_text");
 
-    let justification = getJustification();
-    setJustification(justification, focusTile + "_tile");
+    let horizontal_alignment = document.getElementById("horizontal_alignment_value").textContent;
+    setAlignment(horizontal_alignment, focusTile + "_tile");
 
-    let font_adjustment = document.getElementById('fontSizeAdjustment').value;
+    let font_adjustment = document.getElementById('font_adjustment_slider').value;
 
-    gridTileUpdates.set(focusTile, { color: color, backgroundColor: bkcolor, staticText: text, justification: justification, font_adjustment: font_adjustment });
+    let font_weight = getFontWeight(document.getElementById("font_weight_value").textContent);
+
+    gridTileUpdates.set(focusTile, { color: color, 
+                                     color_opacity: opacity,
+                                     backgroundColor: bkcolor,
+                                     background_opacity: bkopacity, 
+                                     staticText: text, 
+                                     horizontal_alignment: horizontal_alignment, 
+                                     font_adjustment: font_adjustment,
+                                     font_weight: font_weight});
     
     setText("", focusTile);
 
