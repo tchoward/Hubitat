@@ -346,7 +346,7 @@ def mainPage() {
                                                                         font: 40, font_weight: "100", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               ],
                               [title: 'Current Weather',                var: "description",                          
                                                                         ow: "current.weather.0.description", can_be_overriden: "no",
@@ -358,7 +358,7 @@ def mainPage() {
                                                                         font: 20, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               ],
                               [title: 'Current Temperature',            var: "current_temperature",                      
                                                                         ow: "current.temp", can_be_overriden: "yes",
@@ -370,7 +370,7 @@ def mainPage() {
                                                                         font: 20, font_weight: "900", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               ], 
                               [title: 'Feels Like',                     var: "feels_like",                 
                                                                         ow: "current.feels_like", can_be_overriden: "yes",
@@ -382,7 +382,7 @@ def mainPage() {
                                                                         font: 7, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Forecast High',                  var: "forecast_high",                       
@@ -395,7 +395,7 @@ def mainPage() {
                                                                         font: 7, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
                               [title: 'Forecast Low',                 var: "forecast_low",    
@@ -408,7 +408,7 @@ def mainPage() {
                                                                         font: 6, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Precipitation Title',           var: "precipitation_title",                      
@@ -421,7 +421,7 @@ def mainPage() {
                                                                         font: 6, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Forcast Precipitation',         var: "forecast_precipitation",                          
@@ -434,7 +434,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches",   metric: "militmeters",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Forecast Percent Precipitation', var: "forcast_percent_precipitation",                       
@@ -447,7 +447,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "percent_numerical",   metric: "percent_numerical",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Current Precipitation',          var: "current_precipitation",                          
@@ -460,7 +460,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches",   metric: "millimeters",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Wind Title',                    var: "wind_title",                  
@@ -473,7 +473,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Wind Speed',                     var: "wind_speed",                         
@@ -486,7 +486,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "miles_per_hour",   metric: "meters_per_second",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Wind Gust',                     var: "wind_gust",                       
@@ -499,7 +499,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "miles_per_hour",   metric: "meters_per_second",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Wind Direction',                var: "wind_direction",                      
@@ -512,7 +512,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "cardinal",   metric: "cardinal",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                                                   
@@ -526,7 +526,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
                               [title: 'Current Pressure',             var: "current_pressure",                     
@@ -539,7 +539,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches_mercury",   metric: "millimeters_mercury",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Pressure Trend',                var: "pressure_trend",                        
@@ -552,7 +552,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Humidity',                      var: "current_humidity",                         
@@ -565,7 +565,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "percent_numeric",  metric: "percent_numeric",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
                                [title: 'Dewpoint Description',          var: "dewpoint_description",                   
@@ -578,7 +578,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",  metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
                               [title: 'Current Dewpoint',             var: "current_dewpoint",                          
@@ -591,7 +591,7 @@ def mainPage() {
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Sunrise',                        var: "sunrise",                  
@@ -604,7 +604,7 @@ def mainPage() {
                                                                         font: 3, font_weight: "400", 
                                                                         imperial: "time_twelve",   metric: "time_two_four",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                               [title: 'Sunset',                        var: "sunset",                      
@@ -617,9 +617,22 @@ def mainPage() {
                                                                         font: 3, font_weight: "400", 
                                                                         imperial: "time_twelve",   metric: "time_two_four",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
+                              [title: 'Blank Tile',                     var: "title_1",                      
+                                                                        ow: "none", can_be_overriden: "no",
+                                                                        iu: "none", icon: "none", icon_loc: "none",  icon_space: " ",  
+                                                                        h: 1,  w: 5, baseline_row: 11,  baseline_column:  20, 
+                                                                        alignment: "center", text: "",
+                                                                        lpad: 0, rpad: 0, 
+                                                                        unit: unitTime,   decimal: "no",  
+                                                                        font: 3, font_weight: "400", 
+                                                                        imperial: "time_twelve",   metric: "time_two_four",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: false,
+                              
+                              ]
     ];
 
     dynamicPage(name: "mainPage") {        
@@ -868,6 +881,7 @@ def getTileOptions(){
         "color_icons": color_icons,
         "openweather_refresh_rate": openweather_refresh_rate,
         "measurements": [],
+        "tiles" : atomicState.selections
         ];
     
         
@@ -911,15 +925,12 @@ def getRGBA(hex, opacity){
 
 def defineHTML_Header(){
     def html = """
-    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
     <link rel="stylesheet" href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">    
-
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
-
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="/local/gridstack.css">
+    
 
     <script>
         const localURL =         "${state.localEndpointURL}";
@@ -928,17 +939,18 @@ def defineHTML_Header(){
         const longitude =        "${longitude}";
         const tile_key =         "${tile_key}";
     </script>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
-    
-    <script defer src="http://192.168.1.64:8080/a7af9806-4b0e-4032-a78e-a41e27e4d685-WeatherTile.js"></script>
-    
 
-    <script src="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.js"></script>
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://unpkg.com/@fonticonpicker/fonticonpicker/dist/js/jquery.fonticonpicker.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.jQueryUI.js"></script>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js" integrity="sha512-0bEtK0USNd96MnO4XhH8jhv3nyRF0eK87pJke6pkYf3cM0uDIhNJy9ltuzqgypoIFXw3JSuiy04tVk4AjpZdZw==" crossorigin="anonymous"></script>
-    
+    <script defer src="http://192.168.1.64:8080/a7af9806-4b0e-4032-a78e-a41e27e4d685-WeatherTile.js"></script>
+    <script src="/local/iconPicker.js"></script>
+
     """
     return html;
 }
@@ -948,9 +960,7 @@ def addColorPicker(Map map){
     title = map.title;
        
     html = """
-    <style>
-       
-    </style>
+    <div class = "border-container">
 
       <div id="text_box" class="flex-container">
           <div class="flex-item" style="flex-basis: 25%;">
@@ -973,6 +983,7 @@ def addColorPicker(Map map){
             <div class="item" id="${var}_message">100%</div>
         </div>
       </div>
+    </div>
       <!-- JAVASCRIPT -->
       <script language="javascript">
         function ${var}_showMessage(value) {
@@ -989,38 +1000,159 @@ def addButtonMenu(Map map){
     default_icon = map.default_icon;
     item_list = map.list;
     tooltip = map.tooltip ? map.tooltip : "";
+
     
     def html = """
-    <div class="flex-item" style="flex-grow:1;">
+    <div class="flex-item" style="flex-grow:1;" tabindex="-1">
         <div id = "${button_var}_value" style="display: none;">${default_val}</div>
-        <button id="${button_var}"
-            class="mdl-button mdl-js-button mdl-button--icon">
-            <i id="${button_var}_icon" class="material-icons">${default_icon}</i>
+        <div id = "${button_var}_icon" style="display: none;">${default_icon}</div>
+        <button id="${button_var}_button"
+            class="mdl-button mdl-js-button mdl-button--icon mdi mdi-${default_icon}">
         </button>
-        <div class = "mdl-tooltip" for = "${button_var}">${tooltip}</div>
-        <!-- Menu Items List , mdl-menu--botton-right -->
-        <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect"
-        for="${button_var}"> """
+        
+        <div class = "mdl-tooltip" for = "${button_var}_button">${tooltip}</div>
+        <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect"
+        for="${button_var}_button"> """
    
     item_list.each{item->
         weight = item.font_weight ? item.font_weight : 400;
         html += """ <li class="mdl-menu__item" onclick="${button_var}_itemSelected('${item.icon}',  '${item.name.toLowerCase()}')">
-                        <i id="${item.name.toLowerCase()}" class="material-icons" style="vertical-align: middle; font-weight: ${weight};">${item.icon}</i>
-                        <span>  ${item.name}</span>
+                        <div id = "${item.name.toLowerCase()}_icon" style="display: none;">${item.icon}</div>
+                        <span id="${item.name.toLowerCase()}" class=" mdi mdi-${item.icon}" style="vertical-align: middle; font-weight: ${weight};"></span
+                        <span>  ${item.text ? item.text : item.name}</span>
                     </li>"""
     }
     
     html += """</ul>
     </div>
+    """
+    html += """
     <script>
             function ${button_var}_itemSelected(icon, val){
-                document.getElementById("${button_var}_icon").textContent = icon;
+               
+                replaceIcons("${button_var}_button", icon);
                 document.getElementById("${button_var}_value").textContent = val;
+                document.getElementById("${button_var}_icon").textContent = icon;
+
             } 
         </script>
     """
     return html;
 }
+
+def addMenu(Map map){
+    
+     button_var = map.var_name;
+     default_val = map.default_value;
+     default_icon = map.default_icon;
+     item_list = map.list;
+     tooltip = map.tooltip ? map.tooltip : "";
+     title = map.title;
+    
+    def html = """
+        <div class = "border-container">
+        <div id = "${button_var}_value" style="display: none;">${default_val}</div>
+        <div id = "${button_var}_icon" style="display: none;">mdi-${default_icon}</div>
+        <span>
+            <button id="${button_var}_button" class="mdl-button mdl-js-button mdl-js-ripple-effect" tabindex="-1">
+                <i id="${button_var}_icon_display" class="mdi mdi-${default_icon}">
+                    <label id="${button_var}_text_display"> ${title}</label>
+                </i>
+                
+            </button>
+            <div class = "mdl-tooltip" for = "${button_var}_button">${tooltip}</div>
+        </span>
+        
+        
+        <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="${button_var}_button"  style="overflow-y: scroll; max-height: 50vh; line-height: 10px;"> """
+            item_list.each{item->
+                weight = item.font_weight ? item.font_weight : 400;
+                html += """ <li id = "${item.var}_list_main" class="mdl-menu__item" onclick="${button_var}_itemSelected('${item.icon}',  '${item.var}')">
+                            <div id = "${item.var}_list_item" style="display: none;">${item.icon}</div>
+                            <span id="${item.var}_list_title" class=" mdi ${item.icon}" style="vertical-align: middle; font-weight: ${weight};"></span>
+                            <span id="${item.var}_list_name">${item.text ? item.text : item.name}</span>
+                    </li>"""
+    }
+    
+    html += """</ul></div>"""
+    
+    html += """
+    <script>
+            function ${button_var}_itemSelected(icon, val){
+                let currentIcon = document.getElementById("${button_var}_icon").textContent;
+                let iconDisplay = jQuery("#${button_var}_icon_display");
+                console.log(iconDisplay.hasClass("mdi"));
+                iconDisplay.removeClass(currentIcon);
+                iconDisplay.addClass(icon);
+                document.getElementById("${button_var}_text_display").textContent = document.getElementById(val+"_list_name").textContent;
+                document.getElementById("${button_var}_value").textContent = val;
+                document.getElementById("${button_var}_icon").textContent = icon;
+
+            } 
+        </script>
+    """
+    return html;    
+}
+
+def addIconMenu(Map map){
+ 
+    button_var = map.var_name;
+    default_val = map.default_value;
+    default_icon = map.default_icon;
+    item_list = map.list;
+    tooltip = map.tooltip ? map.tooltip : "";
+
+    
+    def html = """
+    <div class="flex-item" style="flex-grow:1;" tabindex="-1">
+        <div id = "${button_var}_value" style="display: none;">${default_val}</div>
+        <div id = "${button_var}_icon" style="display: none;">${default_icon}</div>
+        <button id="${button_var}_button"
+            class="mdl-button mdl-js-button mdl-button--icon mdi mdi-${default_icon}">
+        </button>
+        
+        
+        <div class = "mdl-tooltip" for = "${button_var}_button">${tooltip}</div>
+        <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect"
+        for="${button_var}_button"> """
+    
+    count = 0;
+    item_list.each{item->
+        if (count % 5 == 0) {
+            html+="""<div class="flex-container">""";
+        }
+        weight = item.font_weight ? item.font_weight : 400;
+        html += """ <div class="flex-item" style="flex-grow:1;">
+                    <li class="mdl-menu__item" onclick="${button_var}_itemSelected('${item.icon}',  '${item.name.toLowerCase()}')">
+                        <div id = "${item.name.toLowerCase()}_icon" style="display: none;">${item.icon}</div>
+                        <span id="${item.name.toLowerCase()}" class=" mdi mdi-${item.icon}" style="vertical-align: middle; font-size: 5vw;"></span>
+                        <div class = "mdl-tooltip" for = "${item.name.toLowerCase()}">${item.name}</div>
+                    </li>
+                    </div>"""
+        if (count % 5 == 4) {
+             html+= """</div>"""  
+        }
+        count++;
+    }
+    
+           html += """</ul>
+    </div>
+    """
+    html += """
+    <script>
+            function ${button_var}_itemSelected(icon, val){
+               
+                replaceIcons("${button_var}_button", icon);
+                document.getElementById("${button_var}_value").textContent = val;
+                document.getElementById("${button_var}_icon").textContent = icon;
+
+            } 
+        </script>
+   
+    """
+    return html;
+}
+
 
 def addSlider(Map map){
  
@@ -1039,7 +1171,7 @@ def addSlider(Map map){
             <input id="${var}_slider" class="mdl-slider mdl-js-slider" type="range" min="${min}" max="100" value="0"
                   tabindex="0" oninput="${var}_showMessage(this.value)" onchange="${var}_showMessage(this.value)">
           </div>
-          <div class="flex-item" style="flex-grow: 1;">
+          <div class="flex-item" style="flex-basis: 15%;">
             <div id="${var}_message">0%</div>
           </div>
     </div>
@@ -1054,48 +1186,10 @@ def addSlider(Map map){
 }
 
 def defineHTML_CSS(){
-    
-    def num_columns = atomicState.tile_dimensions.columns;
-    def column_width = 100.0/num_columns;
-    
-    def num_rows =  atomicState.tile_dimensions.rows;
-    def row_height = 100.0/num_rows;
    
+def html = """
 
-    def html = """
-    """
-
-    def idx = 1;
-    current_row = 2; //leave top row blank  
-    atomicState.selections.each{item->
-        var = item.var;
-        if (settings["${var}_display"]){
-            color = settings["${var}_color"];
-            font = settings["${var}_font"];
-            weight = settings["${var}_font_weight"];
-            row_start = item.baseline_row;
-            row_end = item.baseline_row + item.h;
-            column_start = item.baseline_column;
-            column_end = item.baseline_column + item.w;
-            html += 
-                """
-                .${var}{
-                     grid-row-start: ${row_start};
-                     grid-row-end: ${row_end}; 
-                     grid-column-start: ${column_start};
-                     grid-column-end: ${column_end};
-                     font-size: ${font}vh;
-                     padding-top: 0vmin !important; 
-                     padding-left:  ${item.lpad}vw !important;
-                     padding-right: ${item.rpad}vw !important;
-                     text-align: ${item.alignment} !important;
-                     color: ${color} !important;
-                     font-weight: ${weight};
-                }
-               """
-        }
-    }
-    html += """
+<style>
 .grid-stack {
   background: #000000;
 }
@@ -1149,22 +1243,225 @@ h1 {
   display: flex;
   flex-wrap: nowrap;
   width: 100%;
-  background-color: DodgerBlue;
+  background-color: rgba(0,0,0,0);
 }
 
 .flex-container > div {
-  background-color: #f1f1f1;
+  background-color: rgba(0,0,0,0);
   width: auto;
   margin: 2px;
   text-align: center;
   line-height: 4vh;
   font-size: vw;
 }
+
+.border-container {
+      border-style: solid none solid none; 
+      padding-bottom: 1vh;
+      padding-top: 1vh;  
+      width: 100%;
+}
+
+.hidden{
+  display: none;
+}
+
+.ct-ip-search-input{
+  font-style: italic;
+  margin-bottom: 10px;
+}
+.ct-iconpicker{
+  display: inline-block;
+  .ct-ip-holder{
+    .ct-ip-icon{
+      width: 40px;
+      height:40px;
+      line-height:40px;
+      text-align: center;
+      border: 1px solid #eee;
+      position: relative;
+      cursor: pointer;
+      
+      &::after{
+        content: '\f107';
+        font-family: 'FontAwesome';
+        position: absolute;
+        top: -1px;
+        right: -20px;
+        width:  20px;
+        height: 40px;
+        border: 1px solid #eee;
+      }
+    }
+  }
+  .ct-ip-popup{
+    max-width: 327px;
+    max-height: 312px;
+    overflow: hidden;
+    overflow-y: scroll;
+    padding: 4px;
+    border: 1px solid #eee;
+    display: none;
+    
+    
+    ul{
+      padding:0;
+      margin:0;
+      list-style:none;
+      li{
+        display: inline-block;
+        float: left;
+        width: 50px;
+        height: 50px;
+        padding: 4px;
+        
+        a{
+          display: block;
+          color: #000;
+          line-height: 42px;
+          text-align: center;
+          border: 1px solid #eee;
+          transition: all 0.5s;
+          
+          &:hover{
+            color: #fff;
+            background-color: #06B3E6;
+            border-color: #06B3E6;
+          }
+        }
+      }
+    }
+  }
+}
+}
+</style>
+
     """
     return html;
 }
         
+def defineTileDialog(){
  
+    def html = """
+        <dialog id="tileOptions" class="mdl-dialog mdl-shadow--12dp" tabindex="-1">
+          <div class="mdl-dialog__content">
+
+            <div class="mdl-layout">
+              <div id="options_title" class="mdl-layout__title">
+                Options
+              </div>
+
+              <div class="mdl-grid" style="width: 100%">
+"""
+    
+/********************ALIGNMENT****************************************/
+html+= """
+        <!-- ALIGNMENT -->
+        <div class = "border-container">
+        <div id="alignment_grid" class="flex-container">
+        <div class="flex-item"  style="display: none;" tabindex="-1"></div> 
+            
+"""
+        html+= addButtonMenu(var_name: "horizontal_alignment", default_icon: "format-align-center", tooltip: "Horizontal Alignment", default_value: "center", list:[[name: "Left",   icon: "format-align-left"], 
+                                                                                                                                                                    [name: "Center", icon: "format-align-center"], 
+                                                                                                                                                                    [name: "Right",  icon: "format-align-right"]]);
+    
+        html+= addButtonMenu(var_name: "font_weight", default_icon: "numeric-4-circle", default_value: "center", tooltip: "Font Weight", list:[[name: "Thin",   icon: "numeric-1-circle"], 
+                                                                                                                                               [name: "Normal", icon: "numeric-4-circle"], 
+                                                                                                                                               [name: "Bold",   icon: "numeric-7-circle"],
+                                                                                                                                               [name: "Thick",  icon: "numeric-9-circle"]]); 
+html += """</div>
+         </div>"""
+           
+/*****************TEXT COLOR***************************************/
+        
+        html+= addColorPicker(var: "text", title: "Text");
+    
+/****************BACKGROUND COLOR *********************************/
+      
+        html+= addColorPicker(var: "background", title: "Background");
+    
+/****************Font Adjustment  *********************************/
+    html += """<div class = "border-container">"""
+    
+        html+= addSlider(var: "font_adjustment", title: "Relative Size", min: -100, value: 0, max:100);
+    
+    html+="""
+       </div>
+        <div class = "border-container">
+        <!-- CUSTOM TEXT -->
+        <div class="mdl-cell mdl-cell--12-col">
+          <div id="text_floater" class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <input class="mdl-textfield__input" type="text" id="tileText">
+            <label class="mdl-textfield__label" for="tileText">Static Text</label>
+          </div>
+        </div>
+       </div>
+      </div>
+    </div>
+  </div>
+  <div class="mdl-dialog__actions">
+    <button id="dialog_button" type="button" class="mdl-button close" onclick="closeWindow()"> Done </button>
+  </div>
+</dialog>
+    """;
+    return html;
+}
+
+def defineAddTileDialog(){
+    
+    list = [];
+    
+    atomicState.selections.each{item->
+        list << [name: item.title, icon: item.icon, var: item.var];   
+    }
+    
+    iconList = [[name: "Cloudy", icon: "weather-cloudy"],
+                [name: "Fog", icon: "weather-fog"],
+                [name: "Hail", icon: "weather-hail"],
+                [name: "Lightning", icon: "weather-lightning"],
+                [name: "Night", icon: "weather-night"],
+                [name: "Windy", icon: "weather-windy"],
+                [name: "Rainy", icon: "weather-rainy"],
+                [name: "Cloudy", icon: "weather-cloudy"],
+                [name: "Cloudy", icon: "weather-cloudy"],
+                [name: "Cloudy", icon: "weather-cloudy"],
+                [name: "Cloudy", icon: "weather-cloudy"],
+                [name: "Cloudy", icon: "weather-cloudy"],
+                [name: "Cloudy", icon: "weather-cloudy"],
+                [name: "Cloudy", icon: "weather-cloudy"],
+                [name: "Cloudy", icon: "weather-cloudy"],
+                [name: "Cloudy", icon: "weather-cloudy"],
+                [name: "Cloudy", icon: "weather-cloudy"]];
+    
+    def html = """
+    <dialog id="addTile" class="mdl-dialog mdl-shadow--12dp" tabindex="-1" style = "height: 75vh; background-color: white;">
+        <div class="mdl-dialog__content">
+            <div class="mdl-layout">
+              <div id="new_tile" class="mdl-layout__title">
+                New Tile
+              </div>
+                """
+    
+    html +=  addMenu(var_name: "tile_type", title: "Select Tile Type", default_icon: "form-select", default_value: "center", tooltip: "Font Weight", 
+                                                         list: list);
+    
+    html += addIconMenu(var_name: "selected_icon", title: "Select Tile Type", default_icon: "form-select", default_value: "center", tooltip: "Font Weight", 
+                                                         list: iconList)
+    html+="""
+            <div class="flex-item"  style="display: none; flex-grow: 1;">
+                Tile to Add
+            </div>
+            </div>
+            <div class="mdl-dialog__actions" >
+                <button id="dialog_button" type="button" class="mdl-button close" onclick="closeAddWindow()" style="background-color: white;"> Done </button>
+           </div>
+        </div>
+    </dialog>
+
+    """
+    return html;
+}
 
 def defineHTML_Tile(){
     
@@ -1193,9 +1490,41 @@ def defineHTML_Tile(){
     #trash {
       background: rgba(255, 0, 0, 0.4);
     }
+
     </style>
-    <body>
-  
+    <body style="background-color:black;">
+    
+     <div class="flex-container">
+        
+        <div id="trash" class="flex-item"  style="flex-grow:1;">
+            <div class="" style="background-color: rgba(0,0,0,0)">
+                <span id="trash" class="text-center mdi mdi-trash-can-outline" style="color: red; background-color: rgba(0,0,0,0); font-size: 10vh; line-height: 10vh"></span>
+            </div>
+        </div>
+        <div class="mdl-tooltip" for="trash" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">
+            <div>Drag a TILE to</div>
+            <div class = "mdi mdi-trash-can-outline" style="font-size: 5vh"></div>
+            <div>to REMOVE it</div>
+        </div>
+
+
+        <div style="flex-grow: 6;"></div>
+
+        <div id="add_tile" class="flex-item" style="flex-grow:1">
+                <div id= "newItem" class=" mdi mdi-plus-circle new_tile"
+                                                onclick="setupTile()"  
+                                                style="background-color: rgba(0,0,0,0); 
+                                                       font-size: 10vh; 
+                                                       line-height: 15vh;
+                                                       color: green;">
+                </div>
+        </div>   
+        <div class="mdl-tooltip" for="add_tile" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">
+             <div>CLICK to ADD a TILE</div>
+        </div>
+    </div>
+
+
     <div class="grid-stack grid-stack-26" data-gs-animate="yes" data-gs-verticalMargin="1" data-gs-column="26" id="main_grid">
     """
     fontScale = 4.6;
@@ -1205,6 +1534,7 @@ def defineHTML_Tile(){
     atomicState.selections.each{item->
         var = item.var;
         height = item.h*2;
+        if (item.display==true){
         html += """ <div  class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
                                                   data-gs-y="${item.baseline_row*2-1}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
                                                   ondblclick="setOptions('${var}')">
@@ -1238,7 +1568,8 @@ def defineHTML_Tile(){
             html+="""<span id="${var}_icon" class="mdi ${item.icon}" style="color: ${item.font_color};"></span>""";
         }
         html += """</div></div>""";
-    }        
+        } //if display
+    } //each        
     html += """
     </div>
     </div>
@@ -1268,78 +1599,12 @@ def defineHTML_Tile(){
 
   .is-checked {}
 </style>
-<dialog class="mdl-dialog mdl-shadow--12dp" tabindex="-1">
-  <div class="mdl-dialog__content">
 
-    <div class="mdl-layout">
-      <div id="options_title" class="mdl-layout__title">
-        Options
-      </div>
-
-      <div class="mdl-grid" style="width: 100%">
 """
-    
-/********************ALIGNMENT****************************************/
-html+= """
-        <!-- ALIGNMENT -->
-        <div id="alignment_grid" class="flex-container">
-            <div class="flex-item"  style="flex-grow: 3;" tabindex="-1">
-              <span>Font: </span>
-            </div>
-"""
-        html+= addButtonMenu(var_name: "horizontal_alignment", default_icon: "align_horizontal_center", tooltip: "Horizontal Alignment", default_value: "center", list:[[name: "Left",   icon: "align_horizontal_left"], 
-                                                                                                                                                                        [name: "Center", icon: "align_horizontal_center"], 
-                                                                                                                                                                        [name: "Right",  icon: "align_horizontal_right"]]);
-    
-        html+= addButtonMenu(var_name: "font_weight", default_icon: "exposure_zero", default_value: "center", tooltip: "Font Weight", list:[[name: "Thin",   icon: "exposure_neg_1"], 
-                                                                                                                                                     [name: "Normal", icon: "exposure_zero"], 
-                                                                                                                                                     [name: "Bold",   icon: "exposure_plus_1"],
-                                                                                                                                                     [name: "Thick",  icon: "exposure_plus_2"]]);    
-html += "</div>"
-
-    
-/*****************TEXT COLOR***************************************/
-      
-        
-        html+= addColorPicker(var: "text", title: "Text");
-    
-/****************BACKGROUND COLOR *********************************/
-      
-        html+= addColorPicker(var: "background", title: "Background");
-    
-/****************Font Adjustment  *********************************/
-    
-        html+= addSlider(var: "font_adjustment", title: "Adjust Font Size (%)", min: -100, value: 0, max:100);
-    
-    html+="""
-       
-
-        <!-- CUSTOM TEXT -->
-        <div class="mdl-cell mdl-cell--12-col">
-          <div id="text_floater" class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" type="text" id="tileText">
-            <label class="mdl-textfield__label" for="tileText">Static Text</label>
-          </div>
-        </div>
-        
-        <!-- ICON -->
-        
-
-      </div>
-
-    </div>
-  </div>
-  <div class="mdl-dialog__actions">
-    <button id="dialog_button" type="button" class="mdl-button close" onclick="closeWindow()"> Done </button>
-  </div>
-</dialog>
-    """;
     
     return html;
    
 }
-
-
 
 def defineHTML_globalVariables(){
     def html = """
@@ -1350,10 +1615,11 @@ def defineHTML_globalVariables(){
         let currentTemperature;
     """
 }
+
 def defineScript(){
  
     def html = """
-<script type="text/javascript">
+    <script type="text/javascript">
   	
 
   </script>
@@ -1365,11 +1631,17 @@ def getWeatherTile() {
     def fullSizeStyle = "margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden";
     
     html = defineHTML_Header();
-    html += """<head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>""";
+    html += """<head>
+               <meta name="viewport" content="width=device-width, initial-scale=1.0"><style>""";
     //CSS
     html += defineHTML_CSS();
-    html += """</style></head><body onload="initializeWeather()">"""
+    html += """</head>
+               <body onload="initializeWeather()">"""
+    
     html += defineHTML_Tile();
+    html += defineTileDialog();
+    html += defineAddTileDialog();
+    
     html += defineScript();
     
     html+="</body></html>"
