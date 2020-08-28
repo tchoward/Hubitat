@@ -793,6 +793,7 @@ def longTermStoragePage(){
     dynamicPage(name: "longTermStoragePage", title: "") {
         
         def total_bytes = 0;
+        def recommendedUpdateRate = 0;
         
         section() {
             if(!sensors) {
@@ -803,17 +804,23 @@ def longTermStoragePage(){
                     resp[sensor.id] = [:];
                         settings["attributes_${sensor.id}"].each {attribute ->
                             def start = new Date();
-                            events = sensor.statesSince(attribute, then, [max: 10000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
+                            events = sensor.statesSince(attribute, then, [max: 100]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
                             //events = sensor.events();
                             events = events.flatten();
                             bytes = (events.size*128.0)/1024.0
                             total_bytes += bytes;
+                            
+                            log.debug("Then = "+then);
+                            log.debug("Got "+events.size+" Events");
+                            recommendedUpdateRate = Math.round(((events[0].date-events[events.size-1].date)/1000)/60);
+                            log.debug("Update Rate = "+recommendedUpdateRate/60+" hours");
                     }
+                    
                 }
                     
                 parent.hubiForm_section(this, "Storage Options", 1, "memory"){
                     def timeEnum = ["1 Day", "2 Days", "3 Days", "4 Days", "5 Days", "6 Days", "1 Week", "2 Weeks", "3 Weeks", "1 Month", "2 Months", "Indefinite"];
-                    def updateEnum = ["1:05 am", "1:55 am", "2:30 am", "3:45 am", "4:55 am"];
+                    def updateEnum = ["5 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "2 Hours", "3 Hours", "4 Hours", "5 Hours", "6 Hours"];
                     
                     container = [];
                     container << parent.hubiForm_switch(this, title: "<b>Utilize Long Term Storage for Sensors</b>", 
@@ -831,12 +838,12 @@ def longTermStoragePage(){
                         container << parent.hubiForm_enum(this, title: "Time to Refresh/Maintain Storage",
                                                                 name: "lts_update",
                                                                 list: updateEnum,
-                                                                default: "1:55 am",
+                                                                default: "1 Hour",
                                                                 submit_on_change: false);
                         
                         if (lts_time == null) 
                             app.updateSetting("lts_time",   [type: "enum", value: "1 Week"]);
-                            app.updateSetting("lts_update", [type: "enum", value: "1:55 am"]);
+                            app.updateSetting("lts_update", [type: "enum", value: "1 Hour"]);
                         lts_time = "1 Week";
                         
                         def factor = getDays(lts_time);
@@ -852,7 +859,7 @@ def longTermStoragePage(){
                              factorString = factor+" Mb";
                         }
                         
-                        container << parent.hubiForm_text(this, "Estimated Storage Needed: "+factorString);
+                        container << parent.hubiForm_text(this, "Estimated Storage Needed: "+factorString+"<br>Recommended Update Rate: "+Math.floor((recommendedUpdateRate/60))+" hours" );
 
                
                     } else {
@@ -927,13 +934,22 @@ def updated() {
         parent.hubiTool_create_tile(this);
     }
     
+    now = new Date();
+    minutes = now.getMinutes();
+    rate = minutes % 15;
+    
+    
     if (lts){
         switch (lts_update){
-            case "1:05 am": schedule("0 05 01 * * ?", longTermStorageUpdate); break;
-            case "1:55 am": schedule("0 55 01 * * ?", longTermStorageUpdate); break;
-            case "2:30 am": schedule("0 30 02 * * ?", longTermStorageUpdate); break;
-            case "3:45 am": schedule("0 45 04 * * ?", longTermStorageUpdate); break;
-            case "4:55 am": schedule("0 55 04 * * ?", longTermStorageUpdate); break;    
+            case "5 Minutes" :  schedule("${minutes} ${minutes % 5}/5 ) * * * ? *", longTermStorageUpdate); break;
+            case "15 Minutes" : schedule("${minutes} ${minutes % 15}/15 * * * ? *", longTermStorageUpdate); break;
+            case "30 Minutes" : schedule("${minutes} ${minutes % 30}/30 * * * ? *", longTermStorageUpdate); break;
+            case "1 Hour" :     schedule("${minutes} ${minutes} 0/1 * * ? *", longTermStorageUpdate); break;
+            case "2 Hours" :    schedule("${minutes} ${minutes} 0/2 * * ? *", longTermStorageUpdate); break;
+            case "3 Hours" :    schedule("${minutes} ${minutes} 0/3 * * ? *", longTermStorageUpdate); break;
+            case "4 Hours" :    schedule("${minutes} ${minutes} 0/4 * * ? *", longTermStorageUpdate); break;
+            case "5 Hours" :    schedule("${minutes} ${minutes} 0/5 * * ? *", longTermStorageUpdate); break;
+            case "6 Hours" :    schedule("${minutes} ${minutes} 0/6 * * ? *", longTermStorageUpdate); break;
         }
     }
     
@@ -995,9 +1011,12 @@ private buildData() {
                 } else {
                      oldData = [];   
                 }
+                
                             
                 newData << sensor.statesSince(attribute, then, [max: 2000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
                 newData = newData.flatten();
+                log.debug(newData)
+                log.debug(newData.size);
                 oldData += newData.reverse();
                 
                          
