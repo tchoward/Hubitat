@@ -208,9 +208,6 @@ def parseSensor(str){
      return sensors.find( { it.id == val[0]} );
 }
 
-def tilePlacementPage(){
-    
-}
 
 def deviceSelectionPage() {
     def final_attrs;
@@ -808,11 +805,7 @@ private getAbbrev(unit){
         case "millimeters_mercury": return "mmHg";
         case "inches_mercury": return "inHg";
         case "hectopascal": return "hPa";
-        case "kilometers_per_hour" : return "km/h";
-       
-        
-
-        
+        case "kilometers_per_hour" : return "km/h";     
     }
     return "unknown";
 }
@@ -871,6 +864,56 @@ private getUnits(unit, value){
     }
     return [name: "unknown", var: "tbd"];
 }
+
+def getIconList(){
+    
+    return [
+        [name: "None",                  icon: "alpha-x-circle-outline"],
+        [name: "Cloudy",                icon: "weather-cloudy"],
+        [name: "Cloudy Alert",          icon: "weather-cloudy-alert"],
+        [name: "Cloudy Right Arrow",    icon: "weather-cloudy-arrow-right"],
+        [name: "Fog",                   icon: "weather-fog"],
+        [name: "Hail",                  icon: "weather-hail"],
+        [name: "Hazy",                  icon: "weather-hazy"],
+        [name: "Hurricane",             icon: "weather-hurricane"],
+        [name: "Lightning",             icon: "weather-lightning"],
+        [name: "Lightning Raining",     icon: "weather-lightning-rainy"],
+        [name: "Night",                 icon: "weather-night"],
+        [name: "Night Partly Cloudy",   icon: "weather-night-partly-cloudy"],
+        [name: "Partly Cloudy",         icon: "weather-partly-cloudy"],
+        [name: "Partly Lightning",      icon: "weather-partly-lightning"],
+        [name: "Partly Raining",        icon: "weather-partly-rainy"],
+        [name: "Partly Snowing",        icon: "weather-partly-snowy"],
+        [name: "Partly Snowing Raining",icon: "weather-partly-snowy-rainy"],
+        [name: "Pouring",               icon: "weather-pouring"],
+        [name: "Raining",               icon: "weather-rainy"],
+        [name: "Snowing",               icon: "weather-snowy"],
+        [name: "Heavy Snow",            icon: "weather-snowy-heavy"],
+        [name: "Snowing Raining",       icon: "weather-snowy-rainy"],
+        [name: "Sunny",                 icon: "weather-sunny"],
+        [name: "Sunny Alert",           icon: "weather-sunny-alert"],
+        [name: "Sunny Off",             icon: "weather-sunny-off"],
+        [name: "Sunset",                icon: "weather-sunset"],
+        [name: "Sunset Down",           icon: "weather-sunset-down"],
+        [name: "Sunset Up",             icon: "weather-sunset-up"],
+        [name: "Tornado",               icon: "weather-tornado"],
+        [name: "Windy",                 icon: "weather-windy"],
+        [name: "Windy 2",               icon: "weather-windy-variant"],
+        [name: "Thermometer",           icon: "home-thermometer-outline"],
+        [name: "Arrow Up",              icon: "arrow-up-thick"],
+        [name: "Arrow Down",            icon: "arrow-down-thick"],
+        [name: "Umbrella",              icon: "umbrella-outline"],
+        [name: "Ruler",                 icon: "ruler"],
+        [name: "Cloud Question",        icon: "cloud-question"],
+        [name: "Calendar",              icon: "calendar-today"],
+        [name: "Tail Wind",             icon: "tailwind"],
+        [name: "Compass",               icon: "compass-outline"],
+        [name: "Gauge",                 icon: "gauge"],
+        [name: "Thermostat",            icon: "thermostat"],
+        [name: "Water Percent",         icon: "water-percent"],
+        [name: "Wave",                  icon: "wave"]];
+}
+
 
 
 def getTileOptions(){  
@@ -1000,10 +1043,10 @@ def addButtonMenu(Map map){
     default_icon = map.default_icon;
     item_list = map.list;
     tooltip = map.tooltip ? map.tooltip : "";
+    side = map.side ? map.side : "left";
 
     
     def html = """
-    <div class="flex-item" style="flex-grow:1;" tabindex="-1">
         <div id = "${button_var}_value" style="display: none;">${default_val}</div>
         <div id = "${button_var}_icon" style="display: none;">${default_icon}</div>
         <button id="${button_var}_button"
@@ -1011,20 +1054,18 @@ def addButtonMenu(Map map){
         </button>
         
         <div class = "mdl-tooltip" for = "${button_var}_button">${tooltip}</div>
-        <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect"
-        for="${button_var}_button"> """
+            <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect mdl-menu--bottom-${side}" for="${button_var}_button"> """
    
-    item_list.each{item->
-        weight = item.font_weight ? item.font_weight : 400;
-        html += """ <li class="mdl-menu__item" onclick="${button_var}_itemSelected('${item.icon}',  '${item.name.toLowerCase()}')">
-                        <div id = "${item.name.toLowerCase()}_icon" style="display: none;">${item.icon}</div>
-                        <span id="${item.name.toLowerCase()}" class=" mdi mdi-${item.icon}" style="vertical-align: middle; font-weight: ${weight};"></span
-                        <span>  ${item.text ? item.text : item.name}</span>
-                    </li>"""
+                item_list.each{item->
+                    weight = item.font_weight ? item.font_weight : 400;
+                    html += """ <li class="mdl-menu__item" onclick="${button_var}_itemSelected('${item.icon}',  '${item.name.toLowerCase()}')">
+                                    <div id = "${item.name.toLowerCase()}_icon" style="display: none;">${item.icon}</div>
+                                    <span id="${item.name.toLowerCase()}" class=" mdi mdi-${item.icon}" style="vertical-align: middle; font-weight: ${weight};"></span>
+                                    <span>  ${item.text ? item.text : item.name}</span>
+                                </li>"""
     }
     
     html += """</ul>
-    </div>
     """
     html += """
     <script>
@@ -1035,7 +1076,7 @@ def addButtonMenu(Map map){
                 document.getElementById("${button_var}_icon").textContent = icon;
 
             } 
-        </script>
+     </script>
     """
     return html;
 }
@@ -1050,7 +1091,7 @@ def addMenu(Map map){
      title = map.title;
     
     def html = """
-        <div class = "border-container">
+        <div>
         <div id = "${button_var}_value" style="display: none;">${default_val}</div>
         <div id = "${button_var}_icon" style="display: none;">mdi-${default_icon}</div>
         <span>
@@ -1101,35 +1142,44 @@ def addIconMenu(Map map){
     default_icon = map.default_icon;
     item_list = map.list;
     tooltip = map.tooltip ? map.tooltip : "";
-
+    description = map.description ? map.description : false;
+    width = map.width;
     
+
     def html = """
-    <div class="flex-item" style="flex-grow:1;" tabindex="-1">
+        <div>
+        <div id = "${button_var}_menu" class="flex-item" style="flex-grow:1;" tabindex="-1; ">
         <div id = "${button_var}_value" style="display: none;">${default_val}</div>
         <div id = "${button_var}_icon" style="display: none;">${default_icon}</div>
+        <div>
         <button id="${button_var}_button"
             class="mdl-button mdl-js-button mdl-button--icon mdi mdi-${default_icon}">
         </button>
+        """
+    if (description) 
+        html += """ <span> <b>Icon</b> </span><span id= "${button_var}_text">(None)</span>"""
+    html += """ </div>
         
-        
-        <div class = "mdl-tooltip" for = "${button_var}_button">${tooltip}</div>
-        <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect"
-        for="${button_var}_button"> """
+    <div class = "mdl-tooltip" for = "${button_var}_menu">${tooltip}</div>
+    <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="${button_var}_menu" style = "max-height: 40vh; overflow-y: scroll !important;"> """
     
     count = 0;
     item_list.each{item->
-        if (count % 5 == 0) {
+        log.debug(ïtem);
+        if (count % width == 0) {
             html+="""<div class="flex-container">""";
         }
         weight = item.font_weight ? item.font_weight : 400;
+        icon_var = item.name.replaceAll(~/\s/,"");
+        log.debug(icon_var);
         html += """ <div class="flex-item" style="flex-grow:1;">
-                    <li class="mdl-menu__item" onclick="${button_var}_itemSelected('${item.icon}',  '${item.name.toLowerCase()}')">
-                        <div id = "${item.name.toLowerCase()}_icon" style="display: none;">${item.icon}</div>
-                        <span id="${item.name.toLowerCase()}" class=" mdi mdi-${item.icon}" style="vertical-align: middle; font-size: 5vw;"></span>
-                        <div class = "mdl-tooltip" for = "${item.name.toLowerCase()}">${item.name}</div>
+                    <li class="mdl-menu__item" onclick="${button_var}_itemSelected('${item.icon}',  '${item.name.toLowerCase()}', '${item.name}')">
+                        <div id = "${icon_var}_icon" style="display: none;">${item.icon}</div>
+                        <span id="${icon_var}" class=" mdi mdi-${item.icon}" style="vertical-align: middle; font-size: 5vw;"></span>
+                        <div class = "mdl-tooltip" for = "${icon_var}">${item.name}</div>
                     </li>
                     </div>"""
-        if (count % 5 == 4) {
+        if (count % width == width-1) {
              html+= """</div>"""  
         }
         count++;
@@ -1137,15 +1187,19 @@ def addIconMenu(Map map){
     
            html += """</ul>
     </div>
+    </div>
     """
     html += """
     <script>
-            function ${button_var}_itemSelected(icon, val){
+            function ${button_var}_itemSelected(icon, val, name){
                
                 replaceIcons("${button_var}_button", icon);
                 document.getElementById("${button_var}_value").textContent = val;
                 document.getElementById("${button_var}_icon").textContent = icon;
-
+    """
+    if (description) 
+    html += """ document.getElementById("${button_var}_text").textContent = "("+name+")";"""
+    html += """
             } 
         </script>
    
@@ -1358,19 +1412,36 @@ def defineTileDialog(){
 html+= """
         <!-- ALIGNMENT -->
         <div class = "border-container">
-        <div id="alignment_grid" class="flex-container">
-        <div class="flex-item"  style="display: none;" tabindex="-1"></div> 
-            
-"""
-        html+= addButtonMenu(var_name: "horizontal_alignment", default_icon: "format-align-center", tooltip: "Horizontal Alignment", default_value: "center", list:[[name: "Left",   icon: "format-align-left"], 
-                                                                                                                                                                    [name: "Center", icon: "format-align-center"], 
-                                                                                                                                                                    [name: "Right",  icon: "format-align-right"]]);
+        <div id="text_box" class="flex-container">
+        <div class="flex-item" style="flex-grow:1;" tabindex="-1"> """
+        
+    html +=  addIconMenu(var_name: "selected_icon", title: "Select Tile Type", default_icon: "alpha-x-circle-outline", 
+                             default_value: "center", tooltip: "Icon (none)", list: getIconList(), width: 4);
     
-        html+= addButtonMenu(var_name: "font_weight", default_icon: "numeric-4-circle", default_value: "center", tooltip: "Font Weight", list:[[name: "Thin",   icon: "numeric-1-circle"], 
-                                                                                                                                               [name: "Normal", icon: "numeric-4-circle"], 
-                                                                                                                                               [name: "Bold",   icon: "numeric-7-circle"],
-                                                                                                                                               [name: "Thick",  icon: "numeric-9-circle"]]); 
-html += """</div>
+    html += """
+                </div>
+                <div class="flex-item" style="flex-grow:1;" tabindex="-1">
+                """
+        html+= addButtonMenu(var_name: "horizontal_alignment", default_icon: "format-align-center", tooltip: "Horizontal Alignment", default_value: "center", side: "left",
+                                                                                                    list:[[name: "Left",   icon: "format-align-left"], 
+                                                                                                          [name: "Center", icon: "format-align-center"], 
+                                                                                                          [name: "Right",  icon: "format-align-right"]]);
+
+        
+
+        html += """
+                </div>
+                <div class="flex-item" style="flex-grow:1;" tabindex="-1">
+                """
+    
+        html+= addButtonMenu(var_name: "font_weight", default_icon: "numeric-4-circle", default_value: "center", tooltip: "Font Weight", side: "right",
+                                                                                        list:[[name: "Thin",   icon: "numeric-1-circle"], 
+                                                                                              [name: "Normal", icon: "numeric-4-circle"], 
+                                                                                              [name: "Bold",   icon: "numeric-7-circle"],
+                                                                                              [name: "Thick",  icon: "numeric-9-circle"]]); 
+html += """
+         </div>
+         </div>
          </div>"""
            
 /*****************TEXT COLOR***************************************/
@@ -1415,25 +1486,7 @@ def defineAddTileDialog(){
     atomicState.selections.each{item->
         list << [name: item.title, icon: item.icon, var: item.var];   
     }
-    
-    iconList = [[name: "Cloudy", icon: "weather-cloudy"],
-                [name: "Fog", icon: "weather-fog"],
-                [name: "Hail", icon: "weather-hail"],
-                [name: "Lightning", icon: "weather-lightning"],
-                [name: "Night", icon: "weather-night"],
-                [name: "Windy", icon: "weather-windy"],
-                [name: "Rainy", icon: "weather-rainy"],
-                [name: "Cloudy", icon: "weather-cloudy"],
-                [name: "Cloudy", icon: "weather-cloudy"],
-                [name: "Cloudy", icon: "weather-cloudy"],
-                [name: "Cloudy", icon: "weather-cloudy"],
-                [name: "Cloudy", icon: "weather-cloudy"],
-                [name: "Cloudy", icon: "weather-cloudy"],
-                [name: "Cloudy", icon: "weather-cloudy"],
-                [name: "Cloudy", icon: "weather-cloudy"],
-                [name: "Cloudy", icon: "weather-cloudy"],
-                [name: "Cloudy", icon: "weather-cloudy"]];
-    
+      
     def html = """
     <dialog id="addTile" class="mdl-dialog mdl-shadow--12dp" tabindex="-1" style = "height: 75vh; background-color: white;">
         <div class="mdl-dialog__content">
@@ -1441,21 +1494,29 @@ def defineAddTileDialog(){
               <div id="new_tile" class="mdl-layout__title">
                 New Tile
               </div>
+              <div class = "border-container">
+              <div class="flex-item" flex-grow: 1;">  
+                """    
+                 html +=  addMenu(var_name: "tile_type", title:  "Select Tile Type", default_icon: "form-select", default_value: "center", tooltip: "Font Weight", list: list);
+                 html +=
                 """
+              </div>
+              </div>
+              <div class = "border-container">
+              <div class="flex-item" flex-grow: 1;"> 
+               """
+                html +=  addIconMenu(var_name: "new_icon", title: "Select Tile Type", default_icon: "alpha-x-circle-outline", side: "left", description: true,
+                                 default_value: "center", tooltip: "Select Icon", list: getIconList(),  width: 5);
     
-    html +=  addMenu(var_name: "tile_type", title: "Select Tile Type", default_icon: "form-select", default_value: "center", tooltip: "Font Weight", 
-                                                         list: list);
+                html += """</div></div>"""
     
-    html += addIconMenu(var_name: "selected_icon", title: "Select Tile Type", default_icon: "form-select", default_value: "center", tooltip: "Font Weight", 
-                                                         list: iconList)
-    html+="""
-            <div class="flex-item"  style="display: none; flex-grow: 1;">
-                Tile to Add
-            </div>
-            </div>
+                html+="""
+
+
             <div class="mdl-dialog__actions" >
                 <button id="dialog_button" type="button" class="mdl-button close" onclick="closeAddWindow()" style="background-color: white;"> Done </button>
            </div>
+          </div>
         </div>
     </dialog>
 
