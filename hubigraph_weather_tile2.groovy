@@ -335,7 +335,7 @@ def mainPage() {
     
     atomicState.selections = [[title: 'Forecast Weather Icon',          var: "weather_icon",                       
                                                                         ow:  "current.weather.0.description", can_be_overriden: "no",
-                                                                        iu:  "none", icon: "mdi-alert-circle", icon_loc: "none",  icon_space: "",  
+                                                                        iu:  "none", icon: "alert-circle", icon_loc: "special",  icon_space: "",  
                                                                         h: 3,  w: 12, baseline_row: 1,  baseline_column:  13, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -371,7 +371,7 @@ def mainPage() {
                               ], 
                               [title: 'Feels Like',                     var: "feels_like",                 
                                                                         ow: "current.feels_like", can_be_overriden: "yes",
-                                                                        iu: "fahrenheit", icon: "mdi-home-thermometer-outline", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "fahrenheit", icon: "home-thermometer-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 12, baseline_row: 3,  baseline_column:  1, 
                                                                         alignment: "center", text: "Feels Like: ",
                                                                         lpad: 0, rpad: 0, 
@@ -384,7 +384,7 @@ def mainPage() {
                               ],
                               [title: 'Forecast High',                  var: "forecast_high",                       
                                                                         ow: "daily.0.temp.max", can_be_overriden: "no",
-                                                                        iu: "fahrenheit", icon: "mdi-arrow-up-thick", icon_loc: "left",  icon_space: "",  
+                                                                        iu: "fahrenheit", icon: "arrow-up-thick", icon_loc: "left",  icon_space: "",  
                                                                         h: 2,  w: 6, baseline_row: 4,  baseline_column:  7, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -397,7 +397,7 @@ def mainPage() {
                               ], 
                               [title: 'Forecast Low',                 var: "forecast_low",    
                                                                         ow: "daily.0.temp.min", can_be_overriden: "no",
-                                                                        iu: "fahrenheit", icon: "mdi-arrow-down-thick", icon_loc: "left",  icon_space: "",  
+                                                                        iu: "fahrenheit", icon: "arrow-down-thick", icon_loc: "left",  icon_space: "",  
                                                                         h: 2,  w: 6, baseline_row: 4,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -410,7 +410,7 @@ def mainPage() {
                               ],
                               [title: 'Precipitation Title',           var: "precipitation_title",                      
                                                                         ow: "none", can_be_overriden: "no",
-                                                                        iu: "none", icon: "mdi-umbrella-outline", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "none", icon: "umbrella-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 6,  baseline_column:  1, 
                                                                         alignment: "center", text: "Precipitation",
                                                                         lpad: 0, rpad: 0, 
@@ -423,7 +423,7 @@ def mainPage() {
                               ],
                               [title: 'Forcast Precipitation',         var: "forecast_precipitation",                          
                                                                         ow: "daily.0.rain", can_be_overriden: "no",
-                                                                        iu: "millimeters", icon: "mdi-ruler", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "millimeters", icon: "ruler", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 8,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -436,7 +436,7 @@ def mainPage() {
                               ],
                               [title: 'Forecast Percent Precipitation', var: "forcast_percent_precipitation",                       
                                                                         ow: "daily.0.pop", can_be_overriden: "no",
-                                                                        iu: "percent_decimal", icon: "mdi-cloud-question", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "percent_decimal", icon: "cloud-question", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 7,  baseline_column: 1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -449,7 +449,7 @@ def mainPage() {
                               ],
                               [title: 'Current Precipitation',          var: "current_precipitation",                          
                                                                         ow: "current.rain.1h", can_be_overriden: "yes",
-                                                                        iu: "millimeters", icon: "mdi-calendar-today", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "millimeters", icon: "calendar-today", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 9,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -462,7 +462,7 @@ def mainPage() {
                               ],
                               [title: 'Wind Title',                    var: "wind_title",                  
                                                                         ow: "none", can_be_overriden: "no",
-                                                                        iu: "meters_per_second", icon: "mdi-weather-windy-variant", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "meters_per_second", icon: "weather-windy-variant", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 6,  baseline_column:  9, 
                                                                         alignment: "center", text: "Wind",
                                                                         lpad: 0, rpad: 0, 
@@ -475,7 +475,7 @@ def mainPage() {
                               ],
                               [title: 'Wind Speed',                     var: "wind_speed",                         
                                                                         ow: "current.wind_speed", can_be_overriden: "yes",
-                                                                        iu: "meters_per_second", icon: "mdi-tailwind", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "meters_per_second", icon: "tailwind", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 7,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -488,7 +488,7 @@ def mainPage() {
                               ],
                               [title: 'Wind Gust',                     var: "wind_gust",                       
                                                                         ow: "current.wind_gust", can_be_overriden: "yes",
-                                                                        iu: "meters_per_second", icon: "mdi-weather-windy", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "meters_per_second", icon: "weather-windy", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 8,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -501,7 +501,7 @@ def mainPage() {
                               ],
                               [title: 'Wind Direction',                var: "wind_direction",                      
                                                                         ow: "current.wind_deg", can_be_overriden: "yes",
-                                                                        iu: "degrees", icon: "mdi-compass-outline", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "degrees", icon: "compass-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 9,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -515,7 +515,7 @@ def mainPage() {
                                                   
                               [title: 'Pressure Title',               var: "pressure_title",                   
                                                                         ow: "none", can_be_overriden: "no",
-                                                                        iu: "none", icon: "mdi-gauge", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "none", icon: "gauge", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 6,  baseline_column:  17, 
                                                                         alignment: "center", text: "Pressure",
                                                                         lpad: 0, rpad: 0, 
@@ -528,7 +528,7 @@ def mainPage() {
                               ], 
                               [title: 'Current Pressure',             var: "current_pressure",                     
                                                                         ow: "current.pressure", can_be_overriden: "yes",
-                                                                        iu: "millibars", icon: "mdi-thermostat", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "millibars", icon: "thermostat", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 7,  baseline_column:  17, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -554,7 +554,7 @@ def mainPage() {
                               ],
                               [title: 'Humidity',                      var: "current_humidity",                         
                                                                         ow: "current.humidity", can_be_overriden: "yes",
-                                                                        iu: "percent_numeric", icon: "mdi-water-percent", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "percent_numeric", icon: "water-percent", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 4, baseline_row: 11,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -580,7 +580,7 @@ def mainPage() {
                               ], 
                               [title: 'Current Dewpoint',             var: "current_dewpoint",                          
                                                                         ow: "current.dew_point", can_be_overriden: "yes",
-                                                                        iu: "farenheit", icon: "mdi-wave", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "farenheit", icon: "wave", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 4, baseline_row: 11,  baseline_column: 11, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -593,7 +593,7 @@ def mainPage() {
                               ],
                               [title: 'Sunrise',                        var: "sunrise",                  
                                                                         ow:  "current.sunrise", can_be_overriden: "no",
-                                                                        iu:  "time_seconds", icon: "mdi-weather-sunset-up", icon_loc: "left",  icon_space: " ",  
+                                                                        iu:  "time_seconds", icon: "weather-sunset-up", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 5, baseline_row: 11,  baseline_column:  15, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -606,7 +606,7 @@ def mainPage() {
                               ],
                               [title: 'Sunset',                        var: "sunset",                      
                                                                         ow: "current.sunset", can_be_overriden: "no",
-                                                                        iu: "time_seconds", icon: "mdi-weather-sunset-down", icon_loc: "left",  icon_space: " ",  
+                                                                        iu: "time_seconds", icon: "weather-sunset-down", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 5, baseline_row: 11,  baseline_column:  20, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
@@ -669,6 +669,7 @@ def mainPage() {
                         container = [];
                              
                         container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
+                        
                         if (install_device==true){ 
                              container << parent.hubiForm_text_input(this, "Name for Tile Device", "device_name", "Forecast Tile", "false");
                         }
@@ -899,7 +900,7 @@ def getIconList(){
         [name: "Tornado",               icon: "weather-tornado"],
         [name: "Windy",                 icon: "weather-windy"],
         [name: "Windy 2",               icon: "weather-windy-variant"],
-        [name: "Thermometer",           icon: "home-thermometer-outline"],
+        [name: "Home Thermometer",      icon: "home-thermometer-outline"],
         [name: "Arrow Up",              icon: "arrow-up-thick"],
         [name: "Arrow Down",            icon: "arrow-down-thick"],
         [name: "Umbrella",              icon: "umbrella-outline"],
@@ -1110,7 +1111,7 @@ def addMenu(Map map){
                 weight = item.font_weight ? item.font_weight : 400;
                 html += """ <li id = "${item.var}_list_main" class="mdl-menu__item" onclick="${button_var}_itemSelected('${item.icon}',  '${item.var}')">
                             <div id = "${item.var}_list_item" style="display: none;">${item.icon}</div>
-                            <span id="${item.var}_list_title" class=" mdi ${item.icon}" style="vertical-align: middle; font-weight: ${weight};"></span>
+                            <span id="${item.var}_list_title" class=" mdi mdi-${item.icon}" style="vertical-align: middle; font-weight: ${weight};"></span>
                             <span id="${item.var}_list_name">${item.text ? item.text : item.name}</span>
                     </li>"""
     }
@@ -1144,6 +1145,7 @@ def addIconMenu(Map map){
     tooltip = map.tooltip ? map.tooltip : "";
     description = map.description ? map.description : false;
     width = map.width;
+    if (map.tooltip == "Use Icon Name") tooltip = "No Icon Selected";
     
 
     def html = """
@@ -1160,7 +1162,7 @@ def addIconMenu(Map map){
         html += """ <span> <b>Icon</b> </span><span id= "${button_var}_text">(None)</span>"""
     html += """ </div>
         
-    <div class = "mdl-tooltip" for = "${button_var}_menu">${tooltip}</div>
+    <div id = "${button_var}_tooltip" class = "mdl-tooltip" for = "${button_var}_menu">${tooltip}</div>
     <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="${button_var}_menu" style = "max-height: 40vh; overflow-y: scroll !important;"> """
     
     count = 0;
@@ -1170,13 +1172,12 @@ def addIconMenu(Map map){
             html+="""<div class="flex-container">""";
         }
         weight = item.font_weight ? item.font_weight : 400;
-        icon_var = item.name.replaceAll(~/\s/,"");
-        log.debug(icon_var);
+        icon_var = item.icon.replaceAll("-","_");
         html += """ <div class="flex-item" style="flex-grow:1;">
                     <li class="mdl-menu__item" onclick="${button_var}_itemSelected('${item.icon}',  '${item.name.toLowerCase()}', '${item.name}')">
-                        <div id = "${icon_var}_icon" style="display: none;">${item.icon}</div>
-                        <span id="${icon_var}" class=" mdi mdi-${item.icon}" style="vertical-align: middle; font-size: 5vw;"></span>
-                        <div class = "mdl-tooltip" for = "${icon_var}">${item.name}</div>
+                        <div id = "${button_var}_${icon_var}_icon" style="display: none;">${item.icon}</div>
+                        <span id="${button_var}_${icon_var}" class=" mdi mdi-${item.icon}" style="vertical-align: middle; font-size: 5vw;"></span>
+                        <div id="${button_var}_${icon_var}_text" class = "mdl-tooltip" for = "${button_var}_${icon_var}">${item.name}</div>
                     </li>
                     </div>"""
         if (count % width == width-1) {
@@ -1191,14 +1192,16 @@ def addIconMenu(Map map){
     """
     html += """
     <script>
-            function ${button_var}_itemSelected(icon, val, name){
-               
+            function ${button_var}_itemSelected(icon, val, name){           
                 replaceIcons("${button_var}_button", icon);
                 document.getElementById("${button_var}_value").textContent = val;
                 document.getElementById("${button_var}_icon").textContent = icon;
     """
     if (description) 
-    html += """ document.getElementById("${button_var}_text").textContent = "("+name+")";"""
+        html += """ document.getElementById("${button_var}_text").textContent = "("+name+")";"""
+    if (map.tooltip == "Use Icon Name")
+        html += """ document.getElementById("${button_var}_tooltip").textContent = "Selected Icon: "+name;"""
+    
     html += """
             } 
         </script>
@@ -1218,7 +1221,7 @@ def addSlider(Map map){
     
     html = """
     <div id="${var}_box" class="flex-container">
-          <div class="flex-item" style="flex-grow: 2;">
+          <div class="flex-item" style="flex-basis: 35%;">
             <label for="${var}_slider">${title}</label>
           </div>
           <div class="flex-item" style="flex-grow: auto;">
@@ -1310,7 +1313,7 @@ h1 {
 }
 
 .border-container {
-      border-style: solid none solid none; 
+      border-style: solid none none none; 
       padding-bottom: 1vh;
       padding-top: 1vh;  
       width: 100%;
@@ -1397,15 +1400,35 @@ h1 {
 def defineTileDialog(){
  
     def html = """
-        <dialog id="tileOptions" class="mdl-dialog mdl-shadow--12dp" tabindex="-1">
+        <dialog id="tileOptions" class="mdl-dialog mdl-shadow--12dp" tabindex="-1" style = "background-color: rgba(255, 255, 255, 0.90); border-radius: 2vh; height: 95vh">
           <div class="mdl-dialog__content">
 
             <div class="mdl-layout">
-              <div id="options_title" class="mdl-layout__title">
+              <div id="options_title" class="mdl-layout__title" style = "color: black; text-align: center;">
                 Options
               </div>
 
-              <div class="mdl-grid" style="width: 100%">
+           <div class="mdl-grid" style="width: 100%">
+              <div class = "border-container">
+              <div id="text_box" class="flex-container">
+                  <div class="flex-item" style="flex-grow:1;" tabindex="-1">
+                    <button id="trash_button" type="button" class="mdl-button mdi mdi-trash-can-outline" onclick="closeWindow()" style="color: darkred; font-size: 8vh !important;"></button>
+                    <div class="mdl-tooltip" for="trash_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Delete this tile</div>
+                  </div>
+                  <div class="flex-item" style="flex-grow:1;" tabindex="-1">
+                    <button id="add_button" type="button" class="mdl-button mdi mdi-shape-rectangle-plus" onclick="closeWindow()" style="color: darkgreen; font-size: 8vh !important;"></button>
+                    <div class="mdl-tooltip" for="add_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Add a new tile</div>
+                  </div>
+                  <div class="flex-item" style="flex-grow:1;" tabindex="-1">
+                    <button id="save_button" type="button" class="mdl-button mdi mdi-content-save" onclick="closeWindow()" style="color: darkgreen; font-size: 8vh !important;"></button>
+                    <div class="mdl-tooltip" for="save_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Save/Close</div>
+                  </div>
+                  <div class="flex-item" style="flex-grow:1; padding-bottom: 0 !important; margin-top: 1vh !important;" tabindex="-1">
+                    <button id="close_button" type="button" class="mdl-button mdi mdi-close-circle" onclick="closeWindow()" style="color: darkred; font-size: 8vh !important;"></button>
+                    <div class="mdl-tooltip" for="close_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Exit/Don't Save</div>
+                  </div>
+              </div>
+              </div>
 """
     
 /********************ALIGNMENT****************************************/
@@ -1416,7 +1439,7 @@ html+= """
         <div class="flex-item" style="flex-grow:1;" tabindex="-1"> """
         
     html +=  addIconMenu(var_name: "selected_icon", title: "Select Tile Type", default_icon: "alpha-x-circle-outline", 
-                             default_value: "center", tooltip: "Icon (none)", list: getIconList(), width: 4);
+                             default_value: "center", tooltip: "Use Icon Name", list: getIconList(), width: 4);
     
     html += """
                 </div>
@@ -1453,27 +1476,22 @@ html += """
         html+= addColorPicker(var: "background", title: "Background");
     
 /****************Font Adjustment  *********************************/
-    html += """<div class = "border-container">"""
+    html += """<div class = "border-container">
+        <div id="text_box" class="flex-container">"""
     
         html+= addSlider(var: "font_adjustment", title: "Relative Size", min: -100, value: 0, max:100);
     
     html+="""
-       </div>
-        <div class = "border-container">
-        <!-- CUSTOM TEXT -->
-        <div class="mdl-cell mdl-cell--12-col">
-          <div id="text_floater" class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <input class="mdl-textfield__input" type="text" id="tileText">
-            <label class="mdl-textfield__label" for="tileText">Static Text</label>
-          </div>
         </div>
-       </div>
-      </div>
-    </div>
-  </div>
-  <div class="mdl-dialog__actions">
-    <button id="dialog_button" type="button" class="mdl-button close" onclick="closeWindow()"> Done </button>
-  </div>
+        <div class = "border-container">
+            <!-- CUSTOM TEXT -->
+            <div class="flex-item" style="flex-grow:auto;" tabindex="-1">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="text" id="tileText">
+                    <label class="mdl-textfield__label" for="tileText">Static Text</label>
+                </div>
+            </div>
+        </div>
 </dialog>
     """;
     return html;
@@ -1502,16 +1520,6 @@ def defineAddTileDialog(){
                 """
               </div>
               </div>
-              <div class = "border-container">
-              <div class="flex-item" flex-grow: 1;"> 
-               """
-                html +=  addIconMenu(var_name: "new_icon", title: "Select Tile Type", default_icon: "alpha-x-circle-outline", side: "left", description: true,
-                                 default_value: "center", tooltip: "Select Icon", list: getIconList(),  width: 5);
-    
-                html += """</div></div>"""
-    
-                html+="""
-
 
             <div class="mdl-dialog__actions" >
                 <button id="dialog_button" type="button" class="mdl-button close" onclick="closeAddWindow()" style="background-color: white;"> Done </button>
@@ -1549,18 +1557,17 @@ def defineHTML_Tile(){
     }
 
     #trash {
-      background: rgba(255, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0);
     }
 
     </style>
-    <body style="background-color:black;">
+    <body style="background-color:black; overflow: visible;">
     
-     <div class="flex-container">
+     <div class="flex-container" style="display: none;">
         
         <div id="trash" class="flex-item"  style="flex-grow:1;">
-            <div class="" style="background-color: rgba(0,0,0,0)">
-                <span id="trash" class="text-center mdi mdi-trash-can-outline" style="color: red; background-color: rgba(0,0,0,0); font-size: 10vh; line-height: 10vh"></span>
-            </div>
+            
+                <span id="trash" class="text-center mdi mdi-trash-can-outline" style="color: rgba(255, 50, 50, 0.75); background-color: rgba(0,0,0,100); font-size: 10vh; line-height: 15vh"></span>
         </div>
         <div class="mdl-tooltip" for="trash" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">
             <div>Drag a TILE to</div>
@@ -1571,15 +1578,7 @@ def defineHTML_Tile(){
 
         <div style="flex-grow: 6;"></div>
 
-        <div id="add_tile" class="flex-item" style="flex-grow:1">
-                <div id= "newItem" class=" mdi mdi-plus-circle new_tile"
-                                                onclick="setupTile()"  
-                                                style="background-color: rgba(0,0,0,0); 
-                                                       font-size: 10vh; 
-                                                       line-height: 15vh;
-                                                       color: green;">
-                </div>
-        </div>   
+           
         <div class="mdl-tooltip" for="add_tile" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">
              <div>CLICK to ADD a TILE</div>
         </div>
@@ -1591,10 +1590,11 @@ def defineHTML_Tile(){
     fontScale = 4.6;
     lineScale = 0.85;
     iconScale = 3.5;
+    header = 0.1;
     
     atomicState.selections.each{item->
         var = item.var;
-        height = item.h*2;
+        height = item.h*2.0;
         if (item.display==true){
         html += """ <div  class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
                                                   data-gs-y="${item.baseline_row*2-1}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
@@ -1610,8 +1610,8 @@ def defineHTML_Tile(){
                                                                           font-weight: ${item.font_weight};"> """;
         
         //Left Icon
-        if (item.icon != "none" && item.icon_loc == "left"){
-            html+="""<span id="${var}_icon" class="mdi ${item.icon}" style="font-size: ${iconScale*height}vh; color: ${item.font_color};">${item.icon_space}</span>""";
+        if (item.icon != "right"){
+            html+="""<span id="${var}_icon" class="mdi mdi-${item.icon}" style="font-size: ${iconScale*height}vh; color: ${item.font_color};">${item.icon_space}</span>""";
         }
         //Text
         html+="""<span id="${var}_text" style="color: ${item.font_color};">${item.text}</span>""";
@@ -1624,9 +1624,9 @@ def defineHTML_Tile(){
         if (settings["${var}_units"] && item.imperial != "none" && units != "unknown") html+="""<span id="${var}_units">${units}</span>""";  
         
         //Right Icon
-        if (item.icon != "none" && item.icon_loc == "right"){
+        if (item.icon_loc == "right"){
             html+="""<span>${item.icon_space}</span>""";
-            html+="""<span id="${var}_icon" class="mdi ${item.icon}" style="color: ${item.font_color};"></span>""";
+            html+="""<span id="${var}_icon" class="mdi mdi-${item.icon}" style="color: ${item.font_color};"></span>""";
         }
         html += """</div></div>""";
         } //if display
