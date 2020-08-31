@@ -928,8 +928,7 @@ def getTileOptions(){
         "tiles" : atomicState.selections
         ];
     
-        
-    atomicState.selections.each{measurement->
+   atomicState.selections.eachWithIndex{measurement, index->
         outUnits = settings["${measurement.var}_units"] ? settings["${measurement.var}_units"] : "none";
         decimals = measurement.decimal == "yes" ? settings["${measurement.var}_decimal"] : "none";
        
@@ -939,6 +938,7 @@ def getTileOptions(){
                                   "out_unit" : outUnits,
                                   "decimals" : decimals,
                                 ];  
+       options.tiles[index].display_unit = getAbbrev(settings["${measurement.var}_units"]);
     }
    
     return options;
@@ -1399,6 +1399,12 @@ h1 {
         
 def defineTileDialog(){
  
+    list = [];
+    
+    atomicState.selections.each{item->
+        list << [name: item.title, icon: item.icon, var: item.var];   
+    }
+      
     def html = """
         <dialog id="tileOptions" class="mdl-dialog mdl-shadow--12dp" tabindex="-1" style = "background-color: rgba(255, 255, 255, 0.90); border-radius: 2vh; height: 95vh">
           <div class="mdl-dialog__content">
@@ -1412,19 +1418,25 @@ def defineTileDialog(){
               <div class = "border-container">
               <div id="text_box" class="flex-container">
                   <div class="flex-item" style="flex-grow:1;" tabindex="-1">
-                    <button id="trash_button" type="button" class="mdl-button mdi mdi-trash-can-outline" onclick="closeWindow()" style="color: darkred; font-size: 8vh !important;"></button>
+                    <button id="trash_button" type="button" class="mdl-button mdi mdi-trash-can-outline" onclick="deleteTile()" style="color: darkred; font-size: 6vh !important;"></button>
                     <div class="mdl-tooltip" for="trash_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Delete this tile</div>
                   </div>
                   <div class="flex-item" style="flex-grow:1;" tabindex="-1">
-                    <button id="add_button" type="button" class="mdl-button mdi mdi-shape-rectangle-plus" onclick="closeWindow()" style="color: darkgreen; font-size: 8vh !important;"></button>
-                    <div class="mdl-tooltip" for="add_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Add a new tile</div>
-                  </div>
-                  <div class="flex-item" style="flex-grow:1;" tabindex="-1">
-                    <button id="save_button" type="button" class="mdl-button mdi mdi-content-save" onclick="closeWindow()" style="color: darkgreen; font-size: 8vh !important;"></button>
+"""
+                    html += addTileMenu(var_name: "add_tile", default_icon: "shape-rectangle-plus", tooltip: "Add Tile", default_value: "none", side: "left",
+                                        function_name: "addNewTile", list: list);
+    
+                    //<button id="add_button" type="button" class="mdl-button mdi mdi-shape-rectangle-plus" onclick="closeWindow()" style="color: darkgreen; font-size: 6vh !important;"></button>
+                    //<div class="mdl-tooltip" for="add_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Add a new tile</div>
+                    
+                    html+= """      
+                    </div>
+                    <div class="flex-item" style="flex-grow:1;" tabindex="-1">
+                    <button id="save_button" type="button" class="mdl-button mdi mdi-content-save" onclick="closeWindow()" style="color: darkgreen; font-size: 6vh !important;"></button>
                     <div class="mdl-tooltip" for="save_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Save/Close</div>
                   </div>
                   <div class="flex-item" style="flex-grow:1; padding-bottom: 0 !important; margin-top: 1vh !important;" tabindex="-1">
-                    <button id="close_button" type="button" class="mdl-button mdi mdi-close-circle" onclick="closeWindow()" style="color: darkred; font-size: 8vh !important;"></button>
+                    <button id="close_button" type="button" class="mdl-button mdi mdi-close-circle" onclick="closeWindow()" style="color: darkred; font-size: 6vh !important;"></button>
                     <div class="mdl-tooltip" for="close_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Exit/Don't Save</div>
                   </div>
               </div>
@@ -1497,39 +1509,41 @@ html += """
     return html;
 }
 
-def defineAddTileDialog(){
+def addTileMenu(Map map){
     
-    list = [];
     
-    atomicState.selections.each{item->
-        list << [name: item.title, icon: item.icon, var: item.var];   
-    }
-      
+     button_var = map.var_name;
+     default_val = map.default_value;
+     default_icon = map.default_icon;
+     item_list = map.list;
+     tooltip = map.tooltip ? map.tooltip : "";
+     function_name = map.function_name;
+    
     def html = """
-    <dialog id="addTile" class="mdl-dialog mdl-shadow--12dp" tabindex="-1" style = "height: 75vh; background-color: white;">
-        <div class="mdl-dialog__content">
-            <div class="mdl-layout">
-              <div id="new_tile" class="mdl-layout__title">
-                New Tile
-              </div>
-              <div class = "border-container">
-              <div class="flex-item" flex-grow: 1;">  
-                """    
-                 html +=  addMenu(var_name: "tile_type", title:  "Select Tile Type", default_icon: "form-select", default_value: "center", tooltip: "Font Weight", list: list);
-                 html +=
-                """
-              </div>
-              </div>
-
-            <div class="mdl-dialog__actions" >
-                <button id="dialog_button" type="button" class="mdl-button close" onclick="closeAddWindow()" style="background-color: white;"> Done </button>
-           </div>
-          </div>
-        </div>
-    </dialog>
-
-    """
-    return html;
+        <div>
+        <div id = "${button_var}_value" style="display: none;">${default_val}</div>
+        <div id = "${button_var}_icon" style="display: none;">mdi-${default_icon}</div>
+        <span>
+            <button id="${button_var}_button" class="mdl-button mdl-js-button mdl-js-ripple-effect" tabindex="-1">
+                <i id="${button_var}_icon_display" class="mdi mdi-${default_icon}"  style="color: darkgreen; font-size: 6vh !important;"></i>
+            </button>
+            <div class = "mdl-tooltip" for = "${button_var}_button">${tooltip}</div>
+        </span>
+        
+        
+        <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="${button_var}_button"  style="overflow-y: scroll; max-height: 50vh; line-height: 10px;"> """
+            item_list.each{item->
+                html += """ <li id = "${item.var}_list_main" class="mdl-menu__item" onclick="${function_name}('${item.var}')">
+                            <div id = "${item.var}_list_item" style="display: none;">${item.icon}</div>
+                            <span id="${item.var}_list_title" class=" mdi mdi-${item.icon}" style="vertical-align: middle; font-weight: ${weight};"></span>
+                            <span id="${item.var}_list_name">${item.text ? item.text : item.name}</span>
+                    </li>"""
+    }
+    
+    html += """</ul></div>"""
+       
+    return html;    
+                
 }
 
 def defineHTML_Tile(){
@@ -1592,11 +1606,12 @@ def defineHTML_Tile(){
     iconScale = 3.5;
     header = 0.1;
     
-    atomicState.selections.each{item->
+    atomicState.selections.eachWithIndex{item, index->
         var = item.var;
         height = item.h*2.0;
+        
         if (item.display==true){
-        html += """ <div  class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
+            html += """ <div id="${var}_tile_main" class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
                                                   data-gs-y="${item.baseline_row*2-1}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
                                                   ondblclick="setOptions('${var}')">
 
@@ -1621,6 +1636,7 @@ def defineHTML_Tile(){
         
         //Units
         units = getAbbrev(settings["${var}_units"]);
+                    
         if (settings["${var}_units"] && item.imperial != "none" && units != "unknown") html+="""<span id="${var}_units">${units}</span>""";  
         
         //Right Icon
@@ -1701,7 +1717,6 @@ def getWeatherTile() {
     
     html += defineHTML_Tile();
     html += defineTileDialog();
-    html += defineAddTileDialog();
     
     html += defineScript();
     
