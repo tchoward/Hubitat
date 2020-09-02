@@ -1,9 +1,10 @@
 import groovy.json.*;
+import java.text.SimpleDateFormat;
 /**
  *  Hubigraph Line Graph Child App
  *
  *  Copyright 2020, but let's behonest, you'll copy it
- *
+ *iu:
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
  *
@@ -162,41 +163,46 @@ def tileSetupPage(){
         
         def decimalEnum =     [[0: "None (0)"], [1: "One (0.1)"], [2: "Two (0.12)"], [3: "Three (0.123)"], [4: "Four (0.1234)"]];
         atomicState.selections.each {measurement->
-            parent.hubiForm_section(this, measurement.title, 1){
-                container = [];
-                container << parent.hubiForm_switch     (this, title: "Display "+measurement.title+"?", name: measurement.var+"_display", default: true, submit_on_change: true);
-
-                if ((settings["${measurement.var}_display"]==null) || (settings["${measurement.var}_display"]==true)){
-                                        
-                    container << parent.hubiForm_slider   (this, title: "Text Weight (400 = normal, 700= bold)", 
-                                                           name:  measurement.var+"_font_weight",  
-                                                           default: measurement.font_weight, 
-                                                           min: 100,
-                                                           max: 900, 
-                                                           units: "",
-                                                           submit_on_change: false);
-                
-                    container << parent.hubiForm_color(this, "Font", measurement.var, "#FFFFFF", false);
-                    parent.hubiForm_container(this, container, 1); 
-                    
+            if (measurement.decimal == "yes" || measurement.imperial != "none"){
+                parent.hubiForm_section(this, measurement.title, 1){
+                    container = [];    
                     if (measurement.decimal == "yes"){
-                        container = [];
-                        container << parent.hubiForm_switch     (this, title: "Display Unit Values (mm, mph, mbar, °, etc)", name: measurement.var+"_display_units", default: true, submit_on_change: false);
                         parent.hubiForm_container(this, container, 1);
                         input( type: "enum", name: measurement.var+"_decimal", title: "Decimal Places", required: false, multiple: false, options: decimalEnum, defaultValue: 1, submitOnChange: false)
                     }
                     if (measurement.imperial != "none"){
-                        input( type: "enum", name: measurement.var+"_units", title: "Displayed Units", required: false, multiple: false, options: measurement.unit, defaultValue: measurement.iu, submitOnChange: false)
+                        input( type: "enum", name: measurement.var+"_units", title: "Displayed Units", required: false, multiple: false, options: measurement.unit, defaultValue: measurement.ow_units, submitOnChange: false)
                     }
-                } else{
-                     parent.hubiForm_container(this, container, 1); 
-                }
-            } //section
+                } //section
+            }    
         }
-           
             
     }//page
 }//function
+
+void pollOpenWeather() {
+    if( tile_key == null ) {
+        log.warn 'OpenWeatherMap.org Weather Driver - WARNING: OpenWeatherMap API Key not found.  Please configure in preferences.'
+        return
+    }
+    def ParamsOWM
+    atomicState.ow_uri = 'https://api.openweathermap.org/data/2.5/onecall?lat=' + latitude + '&lon=' + longitude + '&exclude=minutely&mode=json&units=imperial&appid=' + tile_key;
+    ParamsOWM = [ uri: atomicState.ow_uri]
+    //log.debug('Poll OpenWeatherMap.org: ' + ParamsOWM)
+	asynchttpGet('openWeatherHandler', ParamsOWM)
+    return
+}
+
+void openWeatherHandler(resp, data) {
+    log.debug('Polling OpenWeatherMap.org')
+    if(resp.getStatus() != 200 && resp.getStatus() != 207) {
+        log.warn 'Calling' + atomicState.ow_uri
+        log.warn resp.getStatus() + ':' + resp.getErrorMessage()
+	} else {
+        atomicState.latest_openWeatherData = parseJson(resp.data);
+        //log.debug(atomicState.latest_openWeatherData);
+    }
+}
 
 def parseAttribute(str){
      val = str.split('_');
@@ -329,183 +335,184 @@ def mainPage() {
     def unitPercent =    [["percent_numeric": "Numeric (0 to 100)"], ["percent_decimal": "Decimal (0.0 to 1.0)"]];
     def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
 
-    
+     //for now poll
+    pollOpenWeather();
    
     atomicState.tile_dimensions = [rows: 14, columns: 26];
     
-    atomicState.selections = [[title: 'Forecast Weather Icon',          var: "weather_icon",                       
+    atomicState.selections = [[title: 'Forecast Weather Icon',          var: "weather_icon",  type: "open_weather", value: "", parse_func: "translateCondition",             
                                                                         ow:  "current.weather.0.description", can_be_overriden: "no",
-                                                                        iu:  "none", icon: "alert-circle", icon_loc: "special",  icon_space: "",  
+                                                                        in_units:  "none", icon: "alert-circle", icon_loc: "center",  icon_space: "",  
                                                                         h: 3,  w: 12, baseline_row: 1,  baseline_column:  13, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: "none",   decimal: "no",  
+                                                                        unit: "none",   decimal: "no", unit_space: "",
                                                                         font: 40, font_weight: "100", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               ],
-                              [title: 'Current Weather',                var: "description",                          
+                              [title: 'Current Weather',                var: "description", type: "open_weather",   value: 0,  parse_func: "formatConditionText",                
                                                                         ow: "current.weather.0.description", can_be_overriden: "no",
-                                                                        iu: "none", icon: "none", icon_loc: "none",  icon_space: "",  
+                                                                        in_units: "none", icon: "none", icon_loc: "none",  icon_space: "",  
                                                                         h: 2,  w: 12, baseline_row: 4,  baseline_column:  13, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: "none",   decimal: "no",  
+                                                                        unit: "none",   decimal: "no",  unit_space: "",
                                                                         font: 20, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               ],
-                              [title: 'Current Temperature',            var: "current_temperature",                      
+                              [title: 'Current Temperature',            var: "current_temperature", type: "open_weather", parse_func: "formatNumericData",          
                                                                         ow: "current.temp", can_be_overriden: "yes",
-                                                                        iu: "fahrenheit", icon: "none", icon_loc: "left",  icon_space: "",  
+                                                                        in_units: "fahrenheit", icon: "none", icon_loc: "left",  icon_space: "",  
                                                                         h: 2,  w: 12, baseline_row: 1,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitTemp,   decimal: "no",  
+                                                                        unit: unitTemp,   decimal: "yes", unit_space: "", 
                                                                         font: 20, font_weight: "900", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               ], 
-                              [title: 'Feels Like',                     var: "feels_like",                 
+                              [title: 'Feels Like',                     var: "feels_like", type: "open_weather", parse_func: "formatNumericData",           
                                                                         ow: "current.feels_like", can_be_overriden: "yes",
-                                                                        iu: "fahrenheit", icon: "home-thermometer-outline", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "fahrenheit", icon: "home-thermometer-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 12, baseline_row: 3,  baseline_column:  1, 
                                                                         alignment: "center", text: "Feels Like: ",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitTemp,   decimal: "no",  
+                                                                        unit: unitTemp,   decimal: "yes", unit_space: "", 
                                                                         font: 7, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Forecast High',                  var: "forecast_high",                       
+                              [title: 'Forecast High',                  var: "forecast_high", type: "open_weather",  parse_func: "formatNumericData",             
                                                                         ow: "daily.0.temp.max", can_be_overriden: "no",
-                                                                        iu: "fahrenheit", icon: "arrow-up-thick", icon_loc: "left",  icon_space: "",  
+                                                                        in_units: "fahrenheit", icon: "arrow-up-thick", icon_loc: "left",  icon_space: "",  
                                                                         h: 2,  w: 6, baseline_row: 4,  baseline_column:  7, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitTemp,   decimal: "no",  
+                                                                        unit: unitTemp,   decimal: "yes",  unit_space: "",
                                                                         font: 7, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
-                              [title: 'Forecast Low',                 var: "forecast_low",    
+                              [title: 'Forecast Low',                 var: "forecast_low", type: "open_weather",  parse_func: "formatNumericData", 
                                                                         ow: "daily.0.temp.min", can_be_overriden: "no",
-                                                                        iu: "fahrenheit", icon: "arrow-down-thick", icon_loc: "left",  icon_space: "",  
+                                                                        in_units: "fahrenheit", icon: "arrow-down-thick", icon_loc: "left",  icon_space: "",  
                                                                         h: 2,  w: 6, baseline_row: 4,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitTemp,   decimal: "no",  
+                                                                        unit: unitTemp,   decimal: "yes", unit_space: "",  
                                                                         font: 6, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Precipitation Title',           var: "precipitation_title",                      
+                              [title: 'Precipitation Title',           var: "precipitation_title", type: "open_weather",  parse_func: "formatTitle",               
                                                                         ow: "none", can_be_overriden: "no",
-                                                                        iu: "none", icon: "umbrella-outline", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "none", icon: "umbrella-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 6,  baseline_column:  1, 
                                                                         alignment: "center", text: "Precipitation",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitMeasure,   decimal: "no",  
+                                                                        unit: unitMeasure,   decimal: "no",  unit_space: "",
                                                                         font: 6, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Forcast Precipitation',         var: "forecast_precipitation",                          
+                              [title: 'Forcast Precipitation',         var: "forecast_precipitation", type: "open_weather", parse_func: "formatNumericData",                     
                                                                         ow: "daily.0.rain", can_be_overriden: "no",
-                                                                        iu: "millimeters", icon: "ruler", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "millimeters", icon: "ruler", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 8,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitMeasure,   decimal: "no",  
+                                                                        unit: unitMeasure,   decimal: "yes", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches",   metric: "militmeters",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Forecast Percent Precipitation', var: "forcast_percent_precipitation",                       
+                              [title: 'Forecast Percent Precipitation', var: "forcast_percent_precipitation", type: "open_weather", parse_func: "formatNumericData",                       
                                                                         ow: "daily.0.pop", can_be_overriden: "no",
-                                                                        iu: "percent_decimal", icon: "cloud-question", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "percent_decimal", icon: "cloud-question", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 7,  baseline_column: 1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitPercent,   decimal: "no",  
+                                                                        unit: unitPercent,   decimal: "yes", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "percent_numerical",   metric: "percent_numerical",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Current Precipitation',          var: "current_precipitation",                          
+                              [title: 'Current Precipitation',          var: "current_precipitation", type: "open_weather", parse_func: "formatNumericData",                       
                                                                         ow: "current.rain.1h", can_be_overriden: "yes",
-                                                                        iu: "millimeters", icon: "calendar-today", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "millimeters", icon: "calendar-today", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 9,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitMeasure,   decimal: "no",  
+                                                                        unit: unitMeasure,   decimal: "yes",  unit_space: "",
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches",   metric: "millimeters",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Wind Title',                    var: "wind_title",                  
+                              [title: 'Wind Title',                     var: "wind_title", type: "text",  parse_func: "formatTitle",               
                                                                         ow: "none", can_be_overriden: "no",
-                                                                        iu: "meters_per_second", icon: "weather-windy-variant", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "meters_per_second", icon: "weather-windy-variant", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 6,  baseline_column:  9, 
                                                                         alignment: "center", text: "Wind",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: "none",   decimal: "no",  
+                                                                        unit: "none",   decimal: "no", unit_space: "",
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Wind Speed',                     var: "wind_speed",                         
+                              [title: 'Wind Speed',                     var: "wind_speed", type: "open_weather",  parse_func: "formatNumericData",                          
                                                                         ow: "current.wind_speed", can_be_overriden: "yes",
-                                                                        iu: "meters_per_second", icon: "tailwind", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "meters_per_second", icon: "tailwind", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 7,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitWind,   decimal: "no",  
+                                                                        unit: unitWind,   decimal: "yes", unit_space: " ", 
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "miles_per_hour",   metric: "meters_per_second",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Wind Gust',                     var: "wind_gust",                       
+                              [title: 'Wind Gust',                     var: "wind_gust", type: "open_weather",  parse_func: "formatNumericData",                       
                                                                         ow: "current.wind_gust", can_be_overriden: "yes",
-                                                                        iu: "meters_per_second", icon: "weather-windy", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "meters_per_second", icon: "weather-windy", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 8,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitWind,   decimal: "no",  
+                                                                        unit: unitWind,   decimal: "yes", unit_space: " ", 
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "miles_per_hour",   metric: "meters_per_second",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Wind Direction',                var: "wind_direction",                      
+                              [title: 'Wind Direction',                var: "wind_direction", type: "open_weather", parse_func: "formatNumericData",                           
                                                                         ow: "current.wind_deg", can_be_overriden: "yes",
-                                                                        iu: "degrees", icon: "compass-outline", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "degrees", icon: "compass-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 9,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitDirection,   decimal: "no",  
+                                                                        unit: unitDirection,   decimal: "no", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "cardinal",   metric: "cardinal",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
@@ -513,117 +520,117 @@ def mainPage() {
                               
                               ],
                                                   
-                              [title: 'Pressure Title',               var: "pressure_title",                   
+                              [title: 'Pressure Title',               var: "pressure_title", type: "text", parse_func: "formatTitle",                  
                                                                         ow: "none", can_be_overriden: "no",
-                                                                        iu: "none", icon: "gauge", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "none", icon: "gauge", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 6,  baseline_column:  17, 
                                                                         alignment: "center", text: "Pressure",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: "none",   decimal: "no",  
+                                                                        unit: "none",   decimal: "yes", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
-                              [title: 'Current Pressure',             var: "current_pressure",                     
+                              [title: 'Current Pressure',             var: "current_pressure", type: "open_weather", parse_func: "formatNumericData",                     
                                                                         ow: "current.pressure", can_be_overriden: "yes",
-                                                                        iu: "millibars", icon: "thermostat", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "millibars", icon: "thermostat", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 8, baseline_row: 7,  baseline_column:  17, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitPressure,   decimal: "no",  
+                                                                        unit: unitPressure,   decimal: "yes",  unit_space: " ",
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "inches_mercury",   metric: "millimeters_mercury",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Pressure Trend',                var: "pressure_trend",                        
+                              [title: 'Pressure Trend',                var: "pressure_trend", type: "open_weather",  parse_func: "formatNumericData",                         
                                                                         ow: "current.pressure", can_be_overriden: "yes",
-                                                                        iu: "none", icon: "none", icon_loc: "none",  icon_space: "",  
+                                                                        in_units: "none", icon: "none", icon_loc: "none",  icon_space: "",  
                                                                         h: 1,  w: 8, baseline_row: 8,  baseline_column:  17, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: "none",   decimal: "no",  
+                                                                        unit: "none",   decimal: "no", unit_space: "",
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Humidity',                      var: "current_humidity",                         
+                              [title: 'Humidity',                      var: "current_humidity", type: "open_weather", parse_func: "formatNumericData",                             
                                                                         ow: "current.humidity", can_be_overriden: "yes",
-                                                                        iu: "percent_numeric", icon: "water-percent", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "percent_numeric", icon: "water-percent", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 4, baseline_row: 11,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitPercent,   decimal: "no",  
+                                                                        unit: unitPercent,   decimal: "yes", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "percent_numeric",  metric: "percent_numeric",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
-                               [title: 'Dewpoint Description',          var: "dewpoint_description",                   
+                               [title: 'Dewpoint Description',          var: "dewpoint_description", type: "open_weather", parse_func: "formatDewPoint",                      
                                                                         ow: "current.dew_point", can_be_overriden: "no",
-                                                                        iu: "none", icon: "none", icon_loc: "none",  icon_space: " ",  
+                                                                        in_units: "none", icon: "none", icon_loc: "none",  icon_space: " ",  
                                                                         h: 1,  w: 6, baseline_row: 11,  baseline_column:  5, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: "none",   decimal: "no",  
+                                                                        unit: "none",   decimal: "no",  unit_space: "",
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "none",  metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
-                              [title: 'Current Dewpoint',             var: "current_dewpoint",                          
+                              [title: 'Current Dewpoint',             var: "current_dewpoint", type: "open_weather", parse_func: "formatNumericData",                         
                                                                         ow: "current.dew_point", can_be_overriden: "yes",
-                                                                        iu: "farenheit", icon: "wave", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "farenheit", icon: "wave", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 4, baseline_row: 11,  baseline_column: 11, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitTemp,   decimal: "no",  
+                                                                        unit: unitTemp,   decimal: "yes", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
                                                                         imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Sunrise',                        var: "sunrise",                  
+                              [title: 'Sunrise',                        var: "sunrise", type: "open_weather",  parse_func: "formatNumericData",               
                                                                         ow:  "current.sunrise", can_be_overriden: "no",
-                                                                        iu:  "time_seconds", icon: "weather-sunset-up", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units:  "time_seconds", icon: "weather-sunset-up", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 5, baseline_row: 11,  baseline_column:  15, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitTime,   decimal: "no",  
+                                                                        unit: unitTime,   decimal: "no",  unit_space: "",
                                                                         font: 3, font_weight: "400", 
                                                                         imperial: "time_twelve",   metric: "time_two_four",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Sunset',                        var: "sunset",                      
+                              [title: 'Sunset',                        var: "sunset", type: "open_weather", parse_func: "formatNumericData",                         
                                                                         ow: "current.sunset", can_be_overriden: "no",
-                                                                        iu: "time_seconds", icon: "weather-sunset-down", icon_loc: "left",  icon_space: " ",  
+                                                                        in_units: "time_seconds", icon: "weather-sunset-down", icon_loc: "left",  icon_space: " ",  
                                                                         h: 1,  w: 5, baseline_row: 11,  baseline_column:  20, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitTime,   decimal: "no",  
+                                                                        unit: unitTime,   decimal: "no",  unit_space: "",
                                                                         font: 3, font_weight: "400", 
                                                                         imperial: "time_twelve",   metric: "time_two_four",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Blank Tile',                     var: "title_1",                      
+                              [title: 'Blank Tile',                     var: "text_tile", type: "text", parse_func: "formatTitle",            
                                                                         ow: "none", can_be_overriden: "no",
-                                                                        iu: "none", icon: "none", icon_loc: "none",  icon_space: " ",  
+                                                                        in_units: "none", icon: "none", icon_loc: "none",  icon_space: " ",  
                                                                         h: 1,  w: 5, baseline_row: 11,  baseline_column:  20, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
-                                                                        unit: unitTime,   decimal: "no",  
+                                                                        unit: unitTime,   decimal: "no", unit_space: "",  
                                                                         font: 3, font_weight: "400", 
                                                                         imperial: "time_twelve",   metric: "time_two_four",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
@@ -631,6 +638,8 @@ def mainPage() {
                               
                               ]
     ];
+    
+    buildWeatherData();
 
     dynamicPage(name: "mainPage") {        
        
@@ -915,9 +924,7 @@ def getIconList(){
         [name: "Wave",                  icon: "wave"]];
 }
 
-
-
-def getTileOptions(){  
+def getWeatherData(){  
     
     def options = [
         "tile_units": tile_units,
@@ -934,14 +941,442 @@ def getTileOptions(){
        
         options.measurements << [ "name": measurement.var, 
                                   "openweather": measurement.ow, 
-                                  "in_unit" : measurement.iu, 
+                                  "in_unit" : measurement.ow_units, 
                                   "out_unit" : outUnits,
                                   "decimals" : decimals,
                                 ];  
+       
        options.tiles[index].display_unit = getAbbrev(settings["${measurement.var}_units"]);
     }
    
     return options;
+}
+def getMapData(map, loc){
+    splt = loc.tokenize('.');
+    cur = map;
+    splt.each{str->
+        try{
+            if (str.isNumber()){
+                num = str.toInteger();
+                cur = cur[num];
+            } else {
+                cur = cur[str];
+            }
+        } catch (e){
+             log.debug("Cannot find data: "+e); 
+             return -1;
+        }
+    }
+    return cur;
+}
+
+def applyDecimals(tile, val){
+
+    value = val.toString();
+    if (value.isNumber()){
+        num_decimals = settings["${tile.var}_decimal"]
+        if (num_decimals) {
+            value = sprintf("%.${num_decimals}f", value.toFloat());
+            return value;
+        } else return val;
+    }
+    else return val;
+}
+
+def getWindDirection(direction) {
+    if (direction > 348.75 || direction < 11.25) return "N";
+    if (direction >= 11.25 && direction < 33.75) return "NNE";
+    if (direction >= 33.75 && direction < 56.25) return "NE";
+    if (direction >= 56.25 && direction < 78.7) return "ENE";
+    if (direction >= 78.75 && direction < 101.25) return "E";
+    if (direction >= 101.25 && direction < 123.75) return "ESE";
+    if (direction >= 123.75 && direction < 146.25) return "SE";
+    if (direction >= 146.25 && direction < 168.75) return "SSE";
+    if (direction >= 168.75 && direction < 191.25) return "S";
+    if (direction >= 191.25 && direction < 213.75) return "SSW";
+    if (direction >= 213.75 && direction < 236.25) return "SW";
+    if (direction >= 236.25 && direction < 258.75) return "WSW";
+    if (direction >= 258.75 && direction < 281.25) return "W";
+    if (direction >= 281.25 && direction < 303.75) return "WNW";
+    if (direction >= 303.75 && direction < 326.25) return "NW";
+    if (direction >= 326.25 && direction < 348.75) return "NNW";
+}
+
+def applyConversion(tile, val){
+    
+    out_units = settings["${tile.var}_units"];
+    in_units = tile.in_units;
+        
+    log.debug("In: "+val);
+    if (in_units != out_units)
+    switch (in_units) {
+            //Temperature
+            case "celsius":
+                switch (out_units) {
+                    case "fahrenheit": val = (val * 9 / 5) + 32; break;
+                    case "kelvin": val = val + 273.15; break;
+                    default: val = "UNSUPPORTED";
+                } 
+            break;
+            case "fahrenheit":
+                switch (out_units) {
+                    case "celsius": val = (val - 32.0) * (5 / 9); break;
+                    case "kelvin":  val = ((val - 32) * (5 / 9)) + 273.15; break;
+                    default: val = "UNSUPPORTED";
+                } 
+            break;
+            case "kelvin": 
+                switch (out_units) {
+                    case "fahrenheit": val = ((val - 273.15) * (9 / 5)) + 32; break;
+                    case "celsius": val = (val - 273.15); break;
+                    default: val = "UNSUPPORTED";
+                } 
+            break;
+            
+            //Precipitation
+            case "millimeters":
+                if (out_units == "inches") {
+                    val = (val / 25.4);
+                } else val = "UNSUPPORTED";
+                break;
+            case "inches":
+                if (out_units == "millimeters") {
+                    val = (val * 25.4);
+                } else val = "UNSUPPORTED";
+                break;
+        
+            //Velocity
+            case "meters_per_second":
+                switch (out_units) {
+                    case "miles_per_hour": val = (val * 2.237); break;
+                    case "knots": val = (val * 1.944); break;
+                    case "kilometers_per_hour": val = (val * 3.6); break;
+                    default: val = "UNSUPPORTED";
+                } 
+            break;
+            case "miles_per_hour":
+                switch (out_units) {
+                    case "miles_per_hour": val = (val / 2.237); break;
+                    case "knots": val = (val / 1.151); break; 
+                    case "kilometers_per_hour": val = (val * 1.609); break;
+                    default: val = "UNSUPPORTED";
+                } 
+            break;
+            case "knots":
+                switch (out_units) {
+                    case "miles_per_hour": val = (val * 1.151); break;
+                    case "meters_per_second": val = (val / 1.944); break;
+                    case "kilometers_per_hour": val = (val * 1.852); break;
+                    default: val = "UNSUPPORTED";
+                } 
+            break;
+            case "kilometers_per_hour":
+                switch (out_units) {
+                    case "miles_per_hour": val = (val / 1.609); break;
+                    case "meters_per_second": val = (val / 3.6); break;
+                    case "knots": val = (val / 1.852); break;
+                    default: val = "UNSUPPORTED";
+                } 
+            break;
+        
+            //Pressure
+            case "hectopascal":
+            case "millibars":
+                switch (out_units) {
+                    case "inches_mercury": val = (val / 33.864); break;
+                    case "millimeters_mercury": val = (val / 1.333); break;
+                    case "hectopascal": break;
+                    default: val = "UNSUPPORTED";
+                } 
+            break;
+            case "inches_mercury":
+                switch (out_units) {
+                    case "hectopascal":
+                    case "millibars": val = (val * 33.864); break;
+                    case "inches_mercury": val = (val / 25.4); break;
+                    default: val = "UNSUPPORTED";
+                } 
+            break;
+            case "millimeters_mercury":
+                switch (out_units) {
+                    case "hectopascal":
+                    case "millibars": val = (val * 1.333); break;
+                    case "millimeters_mercury": val = (val * 25.4); break;
+                    default: val = "UNSUPPORTED";
+                } 
+            break;
+            case "degrees":
+                switch (out_units) {
+                    case "cardinal": val = getWindDirection(val); break;
+                    case "radians": val = (val * 3.1415926535) * 180.0; break;
+                    default: val = "UNSUPPORTED";
+                } 
+            break;
+            case "radians":
+                switch (out_units) {
+                    case "cardinal": val = getWindDirection(((val * 3.1415926535) * 180.0)); break;
+                    case "degrees": val = ((val * 180) / 3.1415926535); break;
+                    default: val = "UNSUPPORTED";
+                }  
+            break;
+            case "cardinal":
+                switch (data.value) {
+                    case "N": val = 0; break;
+                    case "NNE": val = 22.5; break;
+                    case "NE": val = 45; break;
+                    case "ENE": val = 67.5; break;
+                    case "E": val = 90; break;
+                    case "ESE": val = 112.5; break;
+                    case "SE": val = 135; break;
+                    case "SSE": val = 157.5; break;
+                    case "S": val = 180; break;
+                    case "SSW": val = 202.5; break;
+                    case "SW": val = 225; break;
+                    case "WSW": val = 247.5; break;
+                    case "W":val = 270; break;
+                    case "WNW":  val = 292.5; break;
+                    case "NW":  val = 315; break;
+                    case "NNW":  val = 337.5; break;
+                    default:   val = -1;
+                }
+                if (val != -1) {
+                    switch (out_units) {
+                        case "radians": val = ((val * 3.1415926535) * 180.0); break;
+                        case "degrees": val = val; break;
+                        default: val = "UNSUPPORTED";
+                    }
+                } else val = "UNSUPPORTED";
+                break;
+\
+            //TEXT CONVERSIONS
+            case "time_seconds":
+                 v = val*1000L;
+                 d = new Date(v);
+                 log.debug(val+" "+v);
+
+                switch (out_units) {
+                    case "time_twelve":
+                        val = d.getTimeString();
+                        break;
+                    case "time_two_four":
+                        SimpleDateFormat simpDate;
+                        simpDate = new SimpleDateFormat("kk:mm:ss");
+                        val = simpDate.format(d);
+                        break;
+                    default:
+                        val = "UNSUPPORTED";
+                }
+                break;
+            case "time_milliseconds":
+                 d = new Date(val);
+
+                switch (out_units) {
+                    case "time_twelve":
+                        val = d.getTimeString();
+                        break;
+                    case "time_two_four":
+                        val = d.getTimeString();
+                        break;
+                    default:
+                        val = "UNSUPPORTED";
+                }
+                break;
+           case "percent_numeric":
+                if (out_units == "percent_decimal") val = val / 100.0;
+                else val = "UNSUPPORTED";
+                break;
+            case "percent_decimal":
+                if (out_units == "percent_numeric") val = val * 100.0;
+                else val = "UNSUPPORTED";
+                break;
+        }
+    
+        return val;
+
+    }
+    
+   
+    
+
+
+
+def translateCondition(tile, condition) {
+
+    icon = "mdi-weather-sunny-off";
+    
+    def now = new Date().getTime() / 1000;
+    
+    pairings = [
+        [name: "thunderstorm with light rain",      icon: "weather-lightning-rainy"],
+        [name: "thunderstorm with rain",            icon: "weather-lightning-rainy"],     
+        [name: "thunderstorm with heavy rain",      icon: "weather-lightning-rainy"], 
+        [name: "light thunderstorm",                icon: "weather-lightning"],
+        [name: "thunderstorm",                      icon: "weather-lightning"],
+        [name: "heavy thunderstorm",                icon: "weather-lightning"],
+        [name: "ragged thunderstorm",               icon: "weather-lightning"],
+        [name: "thunderstorm with light drizzle",   icon: "weather-lightning-rainy"],
+        [name: "thunderstorm with drizzle",         icon: "weather-lightning-rainy"],
+        [name: "thunderstorm with heavy drizzle",   icon: "weather-lightning-rainy"],
+        [name: "light intensity drizzle",           icon: "weather-partly-rainy"],
+        [name: "drizzle",                           icon: "weather-partly-rainy"],
+        [name: "heavy intensity drizzle",           icon: "weather-partly-rainy"],
+        [name: "light intensity drizzle rain",      icon: "weather-partly-rainy"],
+        [name: "drizzle rain",                      icon: "weather-partly-rainy"],
+        [name: "heavy intensity drizzle rain",      icon: "weather-rainy"],
+        [name: "shower rain and drizzle",           icon: "weather-rainy"],
+        [name: "heavy shower rain and drizzle",     icon: "weather-pouring"],
+        [name: "shower drizzle",                    icon: "weather-rainy"],
+        [name: "light rain",                        icon: "weather-rainy"],
+        [name: "moderate rain",                     icon: "weather-pouring"],
+        [name: "heavy intensity rain",              icon: "weather-pouring"],
+        [name: "very heavy rain",                   icon: "weather-pouring"],
+        [name: "extreme rain",                      icon: "weather-pouring"],
+        [name: "freezing rain",                     icon: "weather-snowy-rainy"],
+        [name: "light intensity shower rain",       icon: "weather-rainy"],
+        [name: "shower rain",                       icon: "weather-rainy"],
+        [name: "heavy intensity shower rain",       icon: "weather-pouring"],
+        [name: "ragged shower rain",                icon: "weather-partly-rainy"],
+        [name: "light snow",                        icon: "weather-snowy"],
+        [name: "snow",                              icon: "weather-snowy"],
+        [name: "heavy snow",                        icon: "weather-snowy-heavy"],
+        [name: "sleet",                             icon: "weather-hail"],
+        [name: "light shower sleet",                icon: "weather-hail"],
+        [name: "shower sleet",                      icon: "weather-hail"],
+        [name: "light rain and snow",               icon: "weather-snowy-rainy"],
+        [name: "rain and snow",                     icon: "weather-snowy-rainy"],
+        [name: "light shower snow",                 icon: "weather-partly-snowy"],
+        [name: "shower snow",                       icon: "weather-partly-snowy"],
+        [name: "heavy shower snow",                 icon: "weather-partly-snowy"],
+        [name: "mist",                              icon: "weather-fog"],
+        [name: "smoke",                             icon: "weather-fog"],
+        [name: "haze",                              icon: "weather-hazy"],
+        [name: "sand dust whirls",                  icon: "weather-tornado"],
+        [name: "fog",                               icon: "weather-fog"],
+        [name: "sand",                              icon: "weather-fog"],
+        [name: "dust",                              icon: "weather-fog"],
+        [name: "volcanic ash",                      icon: "weather-fog"],
+        [name: "squalls",                           icon: "weather-tornado"],
+        [name: "tornado",                           icon: "weather-tornado"],
+        [name: "clear sky night",                   icon: "weather-night"],
+        [name: "clear sky day ",                    icon: "weather-sunny"],
+        [name: "few clouds night",                  icon: "weather-night-partly-cloudy"],
+        [name: "few clouds day",                    icon: "weather-partly-cloudy"],
+        [name: "scattered clouds night",            icon: "weather-night-partly-cloudy"],
+        [name: "scattered clouds night",            icon: "weather-partly-cloudy"],
+        [name: "broken clouds",                     icon: "weather-cloudy"],
+        [name: "overcast clouds",                   icon: "weather-cloudy"]
+    ];
+   
+    return ["icon", pairings.find{el->  el.name == condition.toLowerCase()}.icon];
+    //return ["icon", "mdi-weather-cloudy"];
+}
+
+def formatNumericData(tile, val){
+    if (val == null)
+        val = 0;
+    
+    return ["value",  applyDecimals(tile, applyConversion(tile, val))];   
+
+}
+
+def formatConditionText(tile, val){
+    return ["value", val.split(" ").collect{it.capitalize()}.join(" ")];
+}
+
+def formatTitle(tile, val){
+    return["value", ""];   
+}
+
+def formatDewPoint(tile, val) {
+    def text = "";
+    
+    if (dewPoint < 50) text = "DRY"; 
+    else if (dewPoint < 55) text =  "NORMAL"; 
+    else if (dewPoint < 60) text =  "OPTIMAL"; 
+    else if (dewPoint < 65) text =  "STICKY"; 
+    else if (dewPoint < 70) text =  "MOIST"; 
+    else if (dewPoint < 75) text =  "WET"; 
+    else text "MISERABLE";
+    
+    return ["value", text];
+
+}
+
+
+def buildWeatherData(){
+    
+    def val; 
+    def tSelections = atomicState.selections;
+    
+    tSelections.eachWithIndex{tile, index-> 
+       val = getMapData(atomicState.latest_openWeatherData, tile.ow);
+       log.debug(tile.title+": "+val);
+       returnVal = "${tile.parse_func}"(tile, val);
+       tSelections[index]."${returnVal[0]}" = returnVal[1];
+    }
+   
+    
+    atomicState.selections = tSelections;
+}
+
+def getTileHTML(item){
+    var = item.var;
+    
+    fontScale = 4.6;
+    lineScale = 0.85;
+    iconScale = 3.5;
+    header = 0.1;
+    
+    
+    height = item.h*2.0;
+    html = "";    
+    
+    if (item.display==true){
+            html += """ <div id="${var}_tile_main" class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
+                                                  data-gs-y="${item.baseline_row*2-1}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
+                                                  ondblclick="setOptions('${var}')">
+
+                    <div id="${var}_title" style="display: none;">${item.title}</div>
+                    <div id="${var}_font_adjustment" style="display: none;">${item.font_adjustment}</div>
+                    <div class="mdl-tooltip" for="${var}_tile_main" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">${item.title}</div>
+
+
+                    <div id="${var}_tile" class="grid-stack-item-content" style="font-size: ${fontScale*height}vh; 
+                                                                          line-height: ${fontScale*lineScale*height}vh;
+                                                                          text-align: ${item.justification};
+                                                                          background-color: ${item.background_color};
+                                                                          font-weight: ${item.font_weight};"> """;
+        
+        //Compute Icon and other spacing
+        
+        //Left Icon
+        if (item.icon_loc != "right"){
+            html+="""<span id="${var}_icon" class="mdi mdi-${item.icon}" style="font-size: ${iconScale*height}vh; color: ${item.font_color};">${item.icon_space}</span>""";
+        }
+        //Text
+        html+="""<span id="${var}_text" style="color: ${item.font_color};">${item.text}</span>""";
+        
+        //Main Content
+        html += """<span id="${var}" style="color: ${item.font_color};">${item.value}</span>"""
+        
+        //Units
+        units = getAbbrev(settings["${var}_units"]);
+        if (units == "unknown") units="";
+        
+        //Unit Spacing
+        html += """<span id="${var}_unit_space">${item.unit_space}</span>"""
+                    
+        html += """<span id="${var}_units">${units}</span>""";  
+        
+        //Right Icon
+        if (item.icon_loc == "right"){
+            html+="""<span>${item.icon_space}</span>""";
+            html+="""<span id="${var}_icon" class="mdi mdi-${item.icon}" style="color: ${item.font_color};"></span>""";
+        }
+        html += """</div></div>""";
+    } //if display    
+    
+    return html;
 }
         
 def getDrawType(){
@@ -1167,7 +1602,6 @@ def addIconMenu(Map map){
     
     count = 0;
     item_list.each{item->
-        log.debug(ïtem);
         if (count % width == 0) {
             html+="""<div class="flex-container">""";
         }
@@ -1562,7 +1996,7 @@ def defineHTML_Tile(){
         wind_units = ' m/sec';
         pressure_units = 'mmHg';
     }
-        
+       
     def html = """
     <style type="text/css">
     .grid-stack-item-removing {
@@ -1601,52 +2035,12 @@ def defineHTML_Tile(){
 
     <div class="grid-stack grid-stack-26" data-gs-animate="yes" data-gs-verticalMargin="1" data-gs-column="26" id="main_grid">
     """
-    fontScale = 4.6;
-    lineScale = 0.85;
-    iconScale = 3.5;
-    header = 0.1;
-    
+   
+    //Main Tile Building Code
     atomicState.selections.eachWithIndex{item, index->
-        var = item.var;
-        height = item.h*2.0;
-        
-        if (item.display==true){
-            html += """ <div id="${var}_tile_main" class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
-                                                  data-gs-y="${item.baseline_row*2-1}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
-                                                  ondblclick="setOptions('${var}')">
-
-                    <div id="${var}_title" style="display: none;">${item.title}</div>
-                    <div id="${var}_font_adjustment" style="display: none;">${item.font_adjustment}</div>
-
-                    <div id="${var}_tile" class="grid-stack-item-content" style="font-size: ${fontScale*height}vh; 
-                                                                          line-height: ${fontScale*lineScale*height}vh;
-                                                                          text-align: ${item.justification};
-                                                                          background-color: ${item.background_color};
-                                                                          font-weight: ${item.font_weight};"> """;
-        
-        //Left Icon
-        if (item.icon != "right"){
-            html+="""<span id="${var}_icon" class="mdi mdi-${item.icon}" style="font-size: ${iconScale*height}vh; color: ${item.font_color};">${item.icon_space}</span>""";
-        }
-        //Text
-        html+="""<span id="${var}_text" style="color: ${item.font_color};">${item.text}</span>""";
-        
-        //Main Content
-        html += """<span id="${var}" style="color: ${item.font_color};"></span>"""
-        
-        //Units
-        units = getAbbrev(settings["${var}_units"]);
-                    
-        if (settings["${var}_units"] && item.imperial != "none" && units != "unknown") html+="""<span id="${var}_units">${units}</span>""";  
-        
-        //Right Icon
-        if (item.icon_loc == "right"){
-            html+="""<span>${item.icon_space}</span>""";
-            html+="""<span id="${var}_icon" class="mdi mdi-${item.icon}" style="color: ${item.font_color};"></span>""";
-        }
-        html += """</div></div>""";
-        } //if display
-    } //each        
+       html += getTileHTML(item);
+    } //each  
+    
     html += """
     </div>
     </div>
@@ -1749,11 +2143,11 @@ def getTile() {
 }
 
 def getData() {
-    def timeline = getPWSData();
-    return render(contentType: "text/json", data: JsonOutput.toJson(timeline));
+    //def timeline = getPWSData();
+    //return render(contentType: "text/json", data: JsonOutput.toJson(timeline));
 }
 
 def getOptions() {
-    render(contentType: "text/json", data: JsonOutput.toJson(getTileOptions()));
+    render(contentType: "text/json", data: JsonOutput.toJson(getWeatherData()));
 }
 
