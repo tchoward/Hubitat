@@ -1142,27 +1142,23 @@ async function initializeForecast() {
 }
 
 async function initializeWeather() {
+
     await getOptions();
 
     console.log(options);
     setInterval(() => {
-        getCurrentWeather();
+        //getCurrentWeather();
     }, options.openweather_refresh_rate);
     let minutes = (options.openweather_refresh_rate / 1000) / 60;
     console.log("Refreshing OpenWeather Forecast at " + minutes + " minutes");
 
     grid.engine.nodes.forEach(function (item) {
 
-        el = document.getElementById(item.id),
-            text = document.getElementById(item.id + "_text");
-        tile = document.getElementById(item.id + '_tile');
-        auto = document.getElementById(item.id + '_font_adjustment').textContent;
-
-        setFont(item);
+       setFont(item);
 
     });
 
-    getCurrentWeather();
+    //getCurrentWeather();
 }
 
 function lookup(data, value) {
@@ -1309,11 +1305,22 @@ var grid = GridStack.init({
 
 grid.on('added change', function (e, items) {
     var str = '';
-    console.log(e);
     items.forEach(function (item) {
-        if (item.id != undefined)
+        if (item.id != undefined){
+            obj = getTile(item.id);
+            console.log("x: "+item.x+" y: "+item.y);
+            console.log("height: "+item.height+" width: "+item.width)
+            obj.baseline_row = item.y;
+            obj.baseline_column = item.x;
+            obj.h = item.height;
+            obj.w = item.width;
+
             setFont(item);
+
+        }
+            
     });
+    updateGroovy();
 });
 
 function setText(val, id) {
@@ -1332,10 +1339,11 @@ function setText(val, id) {
     let row_size = hPixels / num_rows;
 
     let textWidth = 0;
+    let obj = getTile(id);
 
     let el = document.getElementById(id);
     if (el) {
-        if (val != "") textWidth = val.length;
+        if (val != null) textWidth = val.length;
         else {
             textWidth = el.textContent.length;
         }
@@ -1344,14 +1352,17 @@ function setText(val, id) {
     let text = document.getElementById(id + "_text");
     if (text) textWidth += text.textContent.length;
 
+
     let icon = document.getElementById(id + "_icon");
-    if (icon)
-        if (textWidth > 0) textWidth += 2;
-        else textWidth = 1;
+    if (icon) textWidth += icon.textContent.length;
+    if (obj.icon != "none") textWidth++; 
 
     let units = document.getElementById(id + "_units");
-    if (units)
-        textWidth += units.textContent.length;
+    if (units) textWidth += units.textContent.length;
+
+    let unit_space = document.getElementById(id + "_unit_space");
+    if (unit_space) textWidth += unit_space.textContent.length;
+    
 
 
     let fontSize = row_size * item.height;
@@ -1366,7 +1377,7 @@ function setText(val, id) {
         fontSize = 1.25 * (pixelWidth / textWidth);
     }
 
-    obj = getTile(id);
+    
 
     change = obj.font_adjustment;
 
@@ -1374,7 +1385,10 @@ function setText(val, id) {
     fontWeight = obj.font_weight;
 
     if (el) {
-        if (val != "") el.textContent = val;
+        if (val != null) 
+            el.textContent = val;
+        
+             
         el.style.fontSize = fontSize + "px";
         el.style.lineHeight = lineHeight + "px";
         el.style.fontWeight = fontWeight;
@@ -1393,6 +1407,11 @@ function setText(val, id) {
         units.style.fontSize = (fontSize + "px");
         units.style.lineHeight = lineHeight + "px";
         units.style.fontWeight = fontWeight;
+    }
+    if (unit_space){
+        unit_space.style.fontSize = (fontSize + "px");
+        unit_space.style.lineHeight = lineHeight + "px";
+        unit_space.style.fontWeight = fontWeight;
     }
 
 }
@@ -1436,7 +1455,7 @@ function setGridTile(weather) {
 function setFont(grid) {
 
     let item = document.getElementById(grid.id);
-    setText("", item.id)
+    setText(null, item.id)
 }
 
 function setSlider(id, units, val) {
@@ -1460,8 +1479,6 @@ function getJustification() {
     if ($('#left_justify_button').hasClass("mdl-button--colored")) return "left";
     if ($('#mid_justify_button').hasClass("mdl-button--colored")) return "center";
     if ($('#right_justify_button').hasClass("mdl-button--colored")) return "right";
-
-    console.log("Error: Justification not set");
 }
 
 function hexToRgb(hex) {
@@ -1623,8 +1640,11 @@ function setOptions(tile) {
     focusTile = tile;
 
 }
-
 function closeWindow() {
+    dialog.close();
+}
+
+function saveWindow() {
 
     dialog.close();
     let color = document.getElementById("text_color").value;
@@ -1646,7 +1666,6 @@ function closeWindow() {
     let font_weight = getFontWeight(document.getElementById("font_weight_value").textContent);
 
     let icon = document.getElementById("selected_icon_icon").textContent;
-    console.log("Icon: "+icon)
     if (icon == "alpha-x-circle-outline"){
         replaceIcons(focusTile+"_icon", "none");
     }
@@ -1655,7 +1674,9 @@ function closeWindow() {
     }
 
     obj = getTile(focusTile);
-
+    if (obj.value==undefined) {
+      obj.value="";
+    }
     obj.font_color = color;
     obj.font_opacity = opacity;
     obj.background_color = bkcolor;
@@ -1666,7 +1687,8 @@ function closeWindow() {
     obj.font_weight = font_weight;
     obj.icon = icon;
 
-    setText("", focusTile);
+    setText(null, focusTile);
+    updateGroovy();
 }
 
 function setButton(t1, t2, t3) {
@@ -1699,7 +1721,6 @@ function buttonClicked(justification) {
 
 function replaceIcons(id, icon) {
 
-    console.log("Setting "+id+": "+icon);
     $("#" + id).removeClass(function (index, className) {
         return (className.match(/(^|\s)mdi-\S+/g) || []).join(' ');
     });
@@ -1757,7 +1778,8 @@ function createNewTile(item){
     let header = 0.1;
     let var_ = item.var;
     let height = item.h*2.0;
-    let units = item.display_unit == "unknown" ? "" : item.display_unit; 
+    let units = item.display_unit == "unknown" ? "" : item.display_unit;
+     
 
     let html = "";
     html += `<div id="${var_}_tile_main" class="grid-stack-item" data-gs-id = "${var_}" data-gs-x="${item.baseline_column}" 
@@ -1766,6 +1788,7 @@ function createNewTile(item){
 
                     <div id="${var_}_title" style="display: none;">${item.title}</div>
                     <div id="${var_}_font_adjustment" style="display: none;">${item.font_adjustment}</div>
+                    <div class="mdl-tooltip" for="${var_}_tile_main" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);">${item.title}</div>
 
                     <div id="${var_}_tile" class="grid-stack-item-content" style="font-size: ${fontScale*height}vh; 
                                                                           line-height: ${fontScale*lineScale*height}vh;
@@ -1795,4 +1818,10 @@ function createNewTile(item){
     
     return html;
 
+}
+
+function updateGroovy() {
+    let data =  JSON.stringify(options.tiles);
+    let el = jQuery("#settingsupdateDataLocation", parent.document);
+    el.attr('value', data);
 }
