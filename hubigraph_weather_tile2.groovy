@@ -171,7 +171,7 @@ def tileSetupPage(){
                         input( type: "enum", name: measurement.var+"_decimal", title: "Decimal Places", required: false, multiple: false, options: decimalEnum, defaultValue: 1, submitOnChange: false)
                     }
                     if (measurement.imperial != "none"){
-                        input( type: "enum", name: measurement.var+"_units", title: "Displayed Units", required: false, multiple: false, options: measurement.unit, defaultValue: measurement.ow_units, submitOnChange: false)
+                        input( type: "enum", name: measurement.var+"_units", title: "Displayed Units", required: false, multiple: false, options: measurement.unit, defaultValue: measurement.in_units, submitOnChange: false)
                     }
                 } //section
             }    
@@ -193,14 +193,15 @@ void pollOpenWeather() {
     return
 }
 
+
 void openWeatherHandler(resp, data) {
     log.debug('Polling OpenWeatherMap.org')
+    
     if(resp.getStatus() != 200 && resp.getStatus() != 207) {
         log.warn 'Calling' + atomicState.ow_uri
         log.warn resp.getStatus() + ':' + resp.getErrorMessage()
 	} else {
         atomicState.latest_openWeatherData = parseJson(resp.data);
-        //log.debug(atomicState.latest_openWeatherData);
     }
 }
 
@@ -336,14 +337,19 @@ def mainPage() {
     def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
 
      //for now poll
-    pollOpenWeather();
+    if (tile_key) {
+            pollOpenWeather();
+            buildWeatherData();
+    }
    
     atomicState.tile_dimensions = [rows: 14, columns: 26];
     
+    
+    if (!atomicState.selections)
     atomicState.selections = [[title: 'Forecast Weather Icon',          var: "weather_icon",  type: "open_weather", value: "", parse_func: "translateCondition",             
                                                                         ow:  "current.weather.0.description", can_be_overriden: "no",
                                                                         in_units:  "none", icon: "alert-circle", icon_loc: "center",  icon_space: "",  
-                                                                        h: 3,  w: 12, baseline_row: 1,  baseline_column:  13, 
+                                                                        h: 6,  w: 12, baseline_row: 1,  baseline_column:  13, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no", unit_space: "",
@@ -355,7 +361,7 @@ def mainPage() {
                               [title: 'Current Weather',                var: "description", type: "open_weather",   value: 0,  parse_func: "formatConditionText",                
                                                                         ow: "current.weather.0.description", can_be_overriden: "no",
                                                                         in_units: "none", icon: "none", icon_loc: "none",  icon_space: "",  
-                                                                        h: 2,  w: 12, baseline_row: 4,  baseline_column:  13, 
+                                                                        h: 4,  w: 12, baseline_row: 7,  baseline_column:  13, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  unit_space: "",
@@ -367,7 +373,7 @@ def mainPage() {
                               [title: 'Current Temperature',            var: "current_temperature", type: "open_weather", parse_func: "formatNumericData",          
                                                                         ow: "current.temp", can_be_overriden: "yes",
                                                                         in_units: "fahrenheit", icon: "none", icon_loc: "left",  icon_space: "",  
-                                                                        h: 2,  w: 12, baseline_row: 1,  baseline_column:  1, 
+                                                                        h: 4,  w: 12, baseline_row: 1,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "yes", unit_space: "", 
@@ -379,7 +385,7 @@ def mainPage() {
                               [title: 'Feels Like',                     var: "feels_like", type: "open_weather", parse_func: "formatNumericData",           
                                                                         ow: "current.feels_like", can_be_overriden: "yes",
                                                                         in_units: "fahrenheit", icon: "home-thermometer-outline", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 12, baseline_row: 3,  baseline_column:  1, 
+                                                                        h: 2,  w: 12, baseline_row: 5,  baseline_column:  1, 
                                                                         alignment: "center", text: "Feels Like: ",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "yes", unit_space: "", 
@@ -392,7 +398,7 @@ def mainPage() {
                               [title: 'Forecast High',                  var: "forecast_high", type: "open_weather",  parse_func: "formatNumericData",             
                                                                         ow: "daily.0.temp.max", can_be_overriden: "no",
                                                                         in_units: "fahrenheit", icon: "arrow-up-thick", icon_loc: "left",  icon_space: "",  
-                                                                        h: 2,  w: 6, baseline_row: 4,  baseline_column:  7, 
+                                                                        h: 4,  w: 6, baseline_row: 7,  baseline_column:  7, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "yes",  unit_space: "",
@@ -405,7 +411,7 @@ def mainPage() {
                               [title: 'Forecast Low',                 var: "forecast_low", type: "open_weather",  parse_func: "formatNumericData", 
                                                                         ow: "daily.0.temp.min", can_be_overriden: "no",
                                                                         in_units: "fahrenheit", icon: "arrow-down-thick", icon_loc: "left",  icon_space: "",  
-                                                                        h: 2,  w: 6, baseline_row: 4,  baseline_column:  1, 
+                                                                        h: 4,  w: 6, baseline_row: 7,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "yes", unit_space: "",  
@@ -418,7 +424,7 @@ def mainPage() {
                               [title: 'Precipitation Title',           var: "precipitation_title", type: "open_weather",  parse_func: "formatTitle",               
                                                                         ow: "none", can_be_overriden: "no",
                                                                         in_units: "none", icon: "umbrella-outline", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 8, baseline_row: 6,  baseline_column:  1, 
+                                                                        h: 2,  w: 8, baseline_row: 11,  baseline_column:  1, 
                                                                         alignment: "center", text: "Precipitation",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitMeasure,   decimal: "no",  unit_space: "",
@@ -431,7 +437,7 @@ def mainPage() {
                               [title: 'Forcast Precipitation',         var: "forecast_precipitation", type: "open_weather", parse_func: "formatNumericData",                     
                                                                         ow: "daily.0.rain", can_be_overriden: "no",
                                                                         in_units: "millimeters", icon: "ruler", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 8, baseline_row: 8,  baseline_column:  1, 
+                                                                        h: 2,  w: 8, baseline_row: 15,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitMeasure,   decimal: "yes", unit_space: "", 
@@ -444,7 +450,7 @@ def mainPage() {
                               [title: 'Forecast Percent Precipitation', var: "forcast_percent_precipitation", type: "open_weather", parse_func: "formatNumericData",                       
                                                                         ow: "daily.0.pop", can_be_overriden: "no",
                                                                         in_units: "percent_decimal", icon: "cloud-question", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 8, baseline_row: 7,  baseline_column: 1, 
+                                                                        h: 2,  w: 8, baseline_row: 13,  baseline_column: 1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitPercent,   decimal: "yes", unit_space: "", 
@@ -457,7 +463,7 @@ def mainPage() {
                               [title: 'Current Precipitation',          var: "current_precipitation", type: "open_weather", parse_func: "formatNumericData",                       
                                                                         ow: "current.rain.1h", can_be_overriden: "yes",
                                                                         in_units: "millimeters", icon: "calendar-today", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 8, baseline_row: 9,  baseline_column:  1, 
+                                                                        h: 2,  w: 8, baseline_row: 17,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitMeasure,   decimal: "yes",  unit_space: "",
@@ -470,7 +476,7 @@ def mainPage() {
                               [title: 'Wind Title',                     var: "wind_title", type: "text",  parse_func: "formatTitle",               
                                                                         ow: "none", can_be_overriden: "no",
                                                                         in_units: "meters_per_second", icon: "weather-windy-variant", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 8, baseline_row: 6,  baseline_column:  9, 
+                                                                        h: 2,  w: 8, baseline_row: 11,  baseline_column:  9, 
                                                                         alignment: "center", text: "Wind",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no", unit_space: "",
@@ -483,7 +489,7 @@ def mainPage() {
                               [title: 'Wind Speed',                     var: "wind_speed", type: "open_weather",  parse_func: "formatNumericData",                          
                                                                         ow: "current.wind_speed", can_be_overriden: "yes",
                                                                         in_units: "meters_per_second", icon: "tailwind", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 8, baseline_row: 7,  baseline_column:  9, 
+                                                                        h: 2,  w: 8, baseline_row: 13,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitWind,   decimal: "yes", unit_space: " ", 
@@ -496,7 +502,7 @@ def mainPage() {
                               [title: 'Wind Gust',                     var: "wind_gust", type: "open_weather",  parse_func: "formatNumericData",                       
                                                                         ow: "current.wind_gust", can_be_overriden: "yes",
                                                                         in_units: "meters_per_second", icon: "weather-windy", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 8, baseline_row: 8,  baseline_column:  9, 
+                                                                        h: 2,  w: 8, baseline_row: 15,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitWind,   decimal: "yes", unit_space: " ", 
@@ -509,7 +515,7 @@ def mainPage() {
                               [title: 'Wind Direction',                var: "wind_direction", type: "open_weather", parse_func: "formatNumericData",                           
                                                                         ow: "current.wind_deg", can_be_overriden: "yes",
                                                                         in_units: "degrees", icon: "compass-outline", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 8, baseline_row: 9,  baseline_column:  9, 
+                                                                        h: 2,  w: 8, baseline_row: 17,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitDirection,   decimal: "no", unit_space: "", 
@@ -523,7 +529,7 @@ def mainPage() {
                               [title: 'Pressure Title',               var: "pressure_title", type: "text", parse_func: "formatTitle",                  
                                                                         ow: "none", can_be_overriden: "no",
                                                                         in_units: "none", icon: "gauge", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 8, baseline_row: 6,  baseline_column:  17, 
+                                                                        h: 2,  w: 8, baseline_row: 11,  baseline_column:  17, 
                                                                         alignment: "center", text: "Pressure",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "yes", unit_space: "", 
@@ -536,7 +542,7 @@ def mainPage() {
                               [title: 'Current Pressure',             var: "current_pressure", type: "open_weather", parse_func: "formatNumericData",                     
                                                                         ow: "current.pressure", can_be_overriden: "yes",
                                                                         in_units: "millibars", icon: "thermostat", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 8, baseline_row: 7,  baseline_column:  17, 
+                                                                        h: 2,  w: 8, baseline_row: 13,  baseline_column:  17, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitPressure,   decimal: "yes",  unit_space: " ",
@@ -549,7 +555,7 @@ def mainPage() {
                               [title: 'Pressure Trend',                var: "pressure_trend", type: "open_weather",  parse_func: "formatNumericData",                         
                                                                         ow: "current.pressure", can_be_overriden: "yes",
                                                                         in_units: "none", icon: "none", icon_loc: "none",  icon_space: "",  
-                                                                        h: 1,  w: 8, baseline_row: 8,  baseline_column:  17, 
+                                                                        h: 2,  w: 8, baseline_row: 15,  baseline_column:  17, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no", unit_space: "",
@@ -562,7 +568,7 @@ def mainPage() {
                               [title: 'Humidity',                      var: "current_humidity", type: "open_weather", parse_func: "formatNumericData",                             
                                                                         ow: "current.humidity", can_be_overriden: "yes",
                                                                         in_units: "percent_numeric", icon: "water-percent", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 4, baseline_row: 11,  baseline_column:  1, 
+                                                                        h: 2,  w: 4, baseline_row: 20,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitPercent,   decimal: "yes", unit_space: "", 
@@ -575,7 +581,7 @@ def mainPage() {
                                [title: 'Dewpoint Description',          var: "dewpoint_description", type: "open_weather", parse_func: "formatDewPoint",                      
                                                                         ow: "current.dew_point", can_be_overriden: "no",
                                                                         in_units: "none", icon: "none", icon_loc: "none",  icon_space: " ",  
-                                                                        h: 1,  w: 6, baseline_row: 11,  baseline_column:  5, 
+                                                                        h: 2,  w: 6, baseline_row: 20,  baseline_column:  5, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  unit_space: "",
@@ -588,7 +594,7 @@ def mainPage() {
                               [title: 'Current Dewpoint',             var: "current_dewpoint", type: "open_weather", parse_func: "formatNumericData",                         
                                                                         ow: "current.dew_point", can_be_overriden: "yes",
                                                                         in_units: "farenheit", icon: "wave", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 4, baseline_row: 11,  baseline_column: 11, 
+                                                                        h: 2,  w: 4, baseline_row: 20,  baseline_column: 11, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "yes", unit_space: "", 
@@ -601,7 +607,7 @@ def mainPage() {
                               [title: 'Sunrise',                        var: "sunrise", type: "open_weather",  parse_func: "formatNumericData",               
                                                                         ow:  "current.sunrise", can_be_overriden: "no",
                                                                         in_units:  "time_seconds", icon: "weather-sunset-up", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 5, baseline_row: 11,  baseline_column:  15, 
+                                                                        h: 2,  w: 5, baseline_row: 20,  baseline_column:  15, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTime,   decimal: "no",  unit_space: "",
@@ -614,7 +620,7 @@ def mainPage() {
                               [title: 'Sunset',                        var: "sunset", type: "open_weather", parse_func: "formatNumericData",                         
                                                                         ow: "current.sunset", can_be_overriden: "no",
                                                                         in_units: "time_seconds", icon: "weather-sunset-down", icon_loc: "left",  icon_space: " ",  
-                                                                        h: 1,  w: 5, baseline_row: 11,  baseline_column:  20, 
+                                                                        h: 2,  w: 5, baseline_row: 20,  baseline_column:  20, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTime,   decimal: "no",  unit_space: "",
@@ -627,7 +633,7 @@ def mainPage() {
                               [title: 'Blank Tile',                     var: "text_tile", type: "text", parse_func: "formatTitle",            
                                                                         ow: "none", can_be_overriden: "no",
                                                                         in_units: "none", icon: "none", icon_loc: "none",  icon_space: " ",  
-                                                                        h: 1,  w: 5, baseline_row: 11,  baseline_column:  20, 
+                                                                        h: 2,  w: 5, baseline_row: 20,  baseline_column:  20, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTime,   decimal: "no", unit_space: "",  
@@ -638,8 +644,6 @@ def mainPage() {
                               
                               ]
     ];
-    
-    buildWeatherData();
 
     dynamicPage(name: "mainPage") {        
        
@@ -662,17 +666,16 @@ def mainPage() {
                     container << parent.hubiForm_text(this, "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
                     
                     parent.hubiForm_container(this, container, 1); 
-                }
-                
-                  
+                }                  
                 
                 if (tile_key){
                      parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
                          container = [];
+                         container << defineUpdateDataHTML("updateDataLocation");
                          container << parent.hubiForm_graph_preview(this)
                          
                          parent.hubiForm_container(this, container, 1); 
-                     } //graph_timespan
+                     } 
             
                     parent.hubiForm_section(this, "Hubigraph Tile Installation", 2, "apps"){
                         container = [];
@@ -1258,15 +1261,16 @@ def translateCondition(tile, condition) {
         [name: "squalls",                           icon: "weather-tornado"],
         [name: "tornado",                           icon: "weather-tornado"],
         [name: "clear sky night",                   icon: "weather-night"],
-        [name: "clear sky day ",                    icon: "weather-sunny"],
+        [name: "clear sky",                         icon: "weather-sunny"],
         [name: "few clouds night",                  icon: "weather-night-partly-cloudy"],
-        [name: "few clouds day",                    icon: "weather-partly-cloudy"],
+        [name: "few clouds",                        icon: "weather-partly-cloudy"],
         [name: "scattered clouds night",            icon: "weather-night-partly-cloudy"],
-        [name: "scattered clouds night",            icon: "weather-partly-cloudy"],
+        [name: "scattered clouds",                  icon: "weather-partly-cloudy"],
         [name: "broken clouds",                     icon: "weather-cloudy"],
         [name: "overcast clouds",                   icon: "weather-cloudy"]
     ];
    
+    log.debug(condition.toLowerCase());
     return ["icon", pairings.find{el->  el.name == condition.toLowerCase()}.icon];
     //return ["icon", "mdi-weather-cloudy"];
 }
@@ -1308,14 +1312,13 @@ def buildWeatherData(){
     def val; 
     def tSelections = atomicState.selections;
     
+    if (!atomicState.latest_openWeatherData) 
+    
     tSelections.eachWithIndex{tile, index-> 
        val = getMapData(atomicState.latest_openWeatherData, tile.ow);
-       log.debug(tile.title+": "+val);
        returnVal = "${tile.parse_func}"(tile, val);
        tSelections[index]."${returnVal[0]}" = returnVal[1];
-    }
-   
-    
+    }    
     atomicState.selections = tSelections;
 }
 
@@ -1328,12 +1331,12 @@ def getTileHTML(item){
     header = 0.1;
     
     
-    height = item.h*2.0;
+    height = item.h;
     html = "";    
     
     if (item.display==true){
             html += """ <div id="${var}_tile_main" class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
-                                                  data-gs-y="${item.baseline_row*2-1}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
+                                                  data-gs-y="${item.baseline_row}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
                                                   ondblclick="setOptions('${var}')">
 
                     <div id="${var}_title" style="display: none;">${item.title}</div>
@@ -1351,9 +1354,11 @@ def getTileHTML(item){
         
         //Left Icon
         if (item.icon_loc != "right"){
+            item.icon_space = item.icon_space ? item.icon_space : "";
             html+="""<span id="${var}_icon" class="mdi mdi-${item.icon}" style="font-size: ${iconScale*height}vh; color: ${item.font_color};">${item.icon_space}</span>""";
         }
         //Text
+        if (item.text == "null" || item.text == null) item.text=""; 
         html+="""<span id="${var}_text" style="color: ${item.font_color};">${item.text}</span>""";
         
         //Main Content
@@ -1516,6 +1521,8 @@ def addButtonMenu(Map map){
     """
     return html;
 }
+
+
 
 def addMenu(Map map){
     
@@ -1752,79 +1759,6 @@ h1 {
       padding-top: 1vh;  
       width: 100%;
 }
-
-.hidden{
-  display: none;
-}
-
-.ct-ip-search-input{
-  font-style: italic;
-  margin-bottom: 10px;
-}
-.ct-iconpicker{
-  display: inline-block;
-  .ct-ip-holder{
-    .ct-ip-icon{
-      width: 40px;
-      height:40px;
-      line-height:40px;
-      text-align: center;
-      border: 1px solid #eee;
-      position: relative;
-      cursor: pointer;
-      
-      &::after{
-        content: '\f107';
-        font-family: 'FontAwesome';
-        position: absolute;
-        top: -1px;
-        right: -20px;
-        width:  20px;
-        height: 40px;
-        border: 1px solid #eee;
-      }
-    }
-  }
-  .ct-ip-popup{
-    max-width: 327px;
-    max-height: 312px;
-    overflow: hidden;
-    overflow-y: scroll;
-    padding: 4px;
-    border: 1px solid #eee;
-    display: none;
-    
-    
-    ul{
-      padding:0;
-      margin:0;
-      list-style:none;
-      li{
-        display: inline-block;
-        float: left;
-        width: 50px;
-        height: 50px;
-        padding: 4px;
-        
-        a{
-          display: block;
-          color: #000;
-          line-height: 42px;
-          text-align: center;
-          border: 1px solid #eee;
-          transition: all 0.5s;
-          
-          &:hover{
-            color: #fff;
-            background-color: #06B3E6;
-            border-color: #06B3E6;
-          }
-        }
-      }
-    }
-  }
-}
-}
 </style>
 
     """
@@ -1859,14 +1793,11 @@ def defineTileDialog(){
 """
                     html += addTileMenu(var_name: "add_tile", default_icon: "shape-rectangle-plus", tooltip: "Add Tile", default_value: "none", side: "left",
                                         function_name: "addNewTile", list: list);
-    
-                    //<button id="add_button" type="button" class="mdl-button mdi mdi-shape-rectangle-plus" onclick="closeWindow()" style="color: darkgreen; font-size: 6vh !important;"></button>
-                    //<div class="mdl-tooltip" for="add_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Add a new tile</div>
                     
                     html+= """      
                     </div>
                     <div class="flex-item" style="flex-grow:1;" tabindex="-1">
-                    <button id="save_button" type="button" class="mdl-button mdi mdi-content-save" onclick="closeWindow()" style="color: darkgreen; font-size: 6vh !important;"></button>
+                    <button id="save_button" type="button" class="mdl-button mdi mdi-content-save" onclick="saveWindow()" style="color: darkgreen; font-size: 6vh !important;"></button>
                     <div class="mdl-tooltip" for="save_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Save/Close</div>
                   </div>
                   <div class="flex-item" style="flex-grow:1; padding-bottom: 0 !important; margin-top: 1vh !important;" tabindex="-1">
@@ -1895,6 +1826,18 @@ html+= """
                                                                                                     list:[[name: "Left",   icon: "format-align-left"], 
                                                                                                           [name: "Center", icon: "format-align-center"], 
                                                                                                           [name: "Right",  icon: "format-align-right"]]);
+       
+       html+=
+       """
+       </div>
+       <div class="flex-item" style="flex-grow:1;" tabindex="-1">
+       """
+    
+     
+       html+= addButtonMenu(var_name: "icon_spacing", default_icon: "keyboard-space", tooltip: "Icon Spacing", default_value: "Single Space", side: "left",
+                                                                                                    list:[[name: "No Space",     icon: "arrow-collapse-horizontal"], 
+                                                                                                          [name: "Single Space", icon: "keyboard-space"], 
+                                                                                                          [name: "Double Space", icon: "arrow-expand-horizontal"]]);
 
         
 
@@ -1908,7 +1851,18 @@ html+= """
                                                                                               [name: "Normal", icon: "numeric-4-circle"], 
                                                                                               [name: "Bold",   icon: "numeric-7-circle"],
                                                                                               [name: "Thick",  icon: "numeric-9-circle"]]); 
-html += """
+ html += """
+                </div>
+                <div class="flex-item" style="flex-grow:1;" tabindex="-1">
+                """
+    
+            html+= addButtonMenu(var_name: "units_spacing", default_icon: "keyboard-space", tooltip: "Units Spacing", default_value: "Single Space", side: "right",
+                                                                                                    list:[[name: "No Space",     icon: "arrow-collapse-horizontal"], 
+                                                                                                          [name: "Single Space", icon: "keyboard-space"], 
+                                                                                                          [name: "Double Space", icon: "arrow-expand-horizontal"]]);
+    
+            
+html +=  """
          </div>
          </div>
          </div>"""
@@ -2087,6 +2041,32 @@ def defineHTML_globalVariables(){
     """
 }
 
+def defineUpdateDataHTML(var){
+    
+    if (!settings["$var"]){
+        app.updateSetting("${var}", [value: "Test", type: "string"]);
+    } else {
+        try{
+            data = settings["${var}"];
+            if (data != null) {
+                def jsonSlurper = new JsonSlurper()
+                atomicState.selections = jsonSlurper.parseText(data);       
+            }
+        } catch (e){
+             log.debug("Bad JSON");
+        }
+    }
+
+    html = """
+                <input type="text" id="settings${var}" name="settings[${var}]" value="${settings[var]}" style="display: none;" />
+                <div class="form-group">
+                   <input type="hidden" name="${var}.type" value="text">
+                   <input type="hidden" name="${var}.multiple" value="false">
+                </div>"""
+            
+    return html;
+}
+
 def defineScript(){
  
     def html = """
@@ -2108,9 +2088,10 @@ def getWeatherTile() {
     html += defineHTML_CSS();
     html += """</head>
                <body onload="initializeWeather()">"""
-    
     html += defineHTML_Tile();
     html += defineTileDialog();
+    
+    
     
     html += defineScript();
     
