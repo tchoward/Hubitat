@@ -1785,25 +1785,34 @@ def defineTileDialog(){
            <div class="mdl-grid" style="width: 100%">
               <div class = "border-container">
               <div id="text_box" class="flex-container">
-                  <div class="flex-item" style="flex-grow:1;" tabindex="-1">
-                    <button id="trash_button" type="button" class="mdl-button mdi mdi-trash-can-outline" onclick="deleteTile()" style="color: darkred; font-size: 6vh !important;"></button>
+                  <div class="flex-item" style="max-width:18%; flex-basis: 18%;" tabindex="-1">
+                    <button id="trash_button" type="button" class="mdl-button mdi mdi-trash-can-outline" onclick="deleteTile()" style="color: darkred; font-size: 4vh !important;"></button>
                     <div class="mdl-tooltip" for="trash_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Delete this tile</div>
                   </div>
-                  <div class="flex-item" style="flex-grow:1;" tabindex="-1">
+                               
+                  <div class="flex-item" style="max-width:18%; flex-basis: 18%;" tabindex="-1">
 """
                     html += addTileMenu(var_name: "add_tile", default_icon: "shape-rectangle-plus", tooltip: "Add Tile", default_value: "none", side: "left",
                                         function_name: "addNewTile", list: list);
                     
                     html+= """      
                     </div>
-                    <div class="flex-item" style="flex-grow:1;" tabindex="-1">
-                    <button id="save_button" type="button" class="mdl-button mdi mdi-content-save" onclick="saveWindow()" style="color: darkgreen; font-size: 6vh !important;"></button>
-                    <div class="mdl-tooltip" for="save_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Save/Close</div>
+                    <div class="flex-item" style="max-width:10%; flex-basis: 10%;" tabindex="-1">
+                    <span class="mdi mdi-drag-vertical-variant" style="color: gray; font-size: 6vh !important; line-height: 6vh !important;"></span>
                   </div>
-                  <div class="flex-item" style="flex-grow:1; padding-bottom: 0 !important; margin-top: 1vh !important;" tabindex="-1">
-                    <button id="close_button" type="button" class="mdl-button mdi mdi-close-circle" onclick="closeWindow()" style="color: darkred; font-size: 6vh !important;"></button>
-                    <div class="mdl-tooltip" for="close_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Exit/Don't Save</div>
-                  </div>
+                    
+                    <div class="flex-item" style="max-width:18%; flex-basis: 18%" tabindex="-1">
+                        <button id="save_button" type="button" class="mdl-button mdi mdi-content-save" onclick="saveWindow()" style="color: darkgreen; font-size: 4vh !important;"></button>
+                        <div class="mdl-tooltip" for="save_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Save/Close</div>
+                    </div>
+                    <div class="flex-item" style="max-width:18%; flex-basis: 18%" tabindex="-1">
+                        <button id="save_all_button" type="button" class="mdl-button mdi mdi-content-save-all" onclick="saveAllWindow()" style="color: darkgreen; font-size: 4vh !important;"></button>
+                        <div class="mdl-tooltip" for="save_all_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Save Colors and Opacity to All Tiles</div>
+                    </div>
+                    <div class="flex-item" style="max-width:18%; flex-basis: 18% padding-bottom: 0 !important;" tabindex="-1">
+                        <button id="close_button" type="button" class="mdl-button mdi mdi-close-circle" onclick="closeWindow()" style="color: darkred; font-size: 4vh !important;"></button>
+                        <div class="mdl-tooltip" for="close_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Exit/Don't Save</div>
+                    </div>
               </div>
               </div>
 """
