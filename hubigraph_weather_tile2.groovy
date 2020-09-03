@@ -125,6 +125,16 @@ def tileSetupPage(){
     
     def location = getLocation();
     
+    def childDevice = app.getDevices();
+     
+    //if (!childDevice) {
+    //      if (!device_name) device_name="Hubigraph Openweather Device";
+   //       log.debug("Creating Device $device_name");
+   //       childDevice = addChildDevice("tchoward", "OpenWeather Hubigraph Driver", "OWD-01", null,[completedSetup: true, label: device_name]) 
+   // }
+    
+    log.debug("ChildDevice"+childDevice);
+    
     dynamicPage(name: "tileSetupPage") {      
       
         parent.hubiForm_section(this,"General Options", 1)
@@ -179,31 +189,6 @@ def tileSetupPage(){
             
     }//page
 }//function
-
-void pollOpenWeather() {
-    if( tile_key == null ) {
-        log.warn 'OpenWeatherMap.org Weather Driver - WARNING: OpenWeatherMap API Key not found.  Please configure in preferences.'
-        return
-    }
-    def ParamsOWM
-    atomicState.ow_uri = 'https://api.openweathermap.org/data/2.5/onecall?lat=' + latitude + '&lon=' + longitude + '&exclude=minutely&mode=json&units=imperial&appid=' + tile_key;
-    ParamsOWM = [ uri: atomicState.ow_uri]
-    //log.debug('Poll OpenWeatherMap.org: ' + ParamsOWM)
-	asynchttpGet('openWeatherHandler', ParamsOWM)
-    return
-}
-
-
-void openWeatherHandler(resp, data) {
-    log.debug('Polling OpenWeatherMap.org')
-    
-    if(resp.getStatus() != 200 && resp.getStatus() != 207) {
-        log.warn 'Calling' + atomicState.ow_uri
-        log.warn resp.getStatus() + ':' + resp.getErrorMessage()
-	} else {
-        atomicState.latest_openWeatherData = parseJson(resp.data);
-    }
-}
 
 def parseAttribute(str){
      val = str.split('_');
@@ -337,10 +322,8 @@ def mainPage() {
     def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
 
      //for now poll
-    if (tile_key) {
-            pollOpenWeather();
-            buildWeatherData();
-    }
+     buildWeatherData();
+    
    
     atomicState.tile_dimensions = [rows: 14, columns: 26];
     
@@ -1312,11 +1295,13 @@ def buildWeatherData(){
     def val; 
     def tSelections = atomicState.selections;
     
-    if (!atomicState.latest_openWeatherData) 
+    data = parent.getOpenWeatherData();
+    data = parseJson(data);
     
     tSelections.eachWithIndex{tile, index-> 
-       val = getMapData(atomicState.latest_openWeatherData, tile.ow);
+       val = getMapData(data, tile.ow);
        returnVal = "${tile.parse_func}"(tile, val);
+       
        tSelections[index]."${returnVal[0]}" = returnVal[1];
     }    
     atomicState.selections = tSelections;
