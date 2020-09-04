@@ -1147,7 +1147,7 @@ async function initializeWeather() {
 
     console.log(options);
     setInterval(() => {
-        //getCurrentWeather();
+        getWeatherData();
     }, options.openweather_refresh_rate);
     let minutes = (options.openweather_refresh_rate / 1000) / 60;
     console.log("Refreshing OpenWeather Forecast at " + minutes + " minutes");
@@ -1157,8 +1157,6 @@ async function initializeWeather() {
        setFont(item);
 
     });
-
-    //getCurrentWeather();
 }
 
 function lookup(data, value) {
@@ -1239,9 +1237,9 @@ function getWeeklyForecastWeather() {
 
 function getCurrentWeather() {
 
-    const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=` + latitude + `&lon=` + longitude + `&exclude=minutely&appid=` + tile_key + `&units=imperial`;
+    //const currentWeatherUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=` + latitude + `&lon=` + longitude + `&exclude=minutely&appid=` + tile_key + `&units=imperial`;
 
-    const url = `https://api.openweathermap.org/data/2.5/onecall?lat=` + latitude + `&lon=` + longitude + `&exclude=minutely&appid=` + tile_key + `&units=imperial`;
+    //const url = `https://api.openweathermap.org/data/2.5/onecall?lat=` + latitude + `&lon=` + longitude + `&exclude=minutely&appid=` + tile_key + `&units=imperial`;
 
 
     let now = new Date();
@@ -1471,7 +1469,13 @@ var dialog = document.getElementById('tileOptions');
 var addTile = document.getElementById('addTile');
 
 function getTile(name){
-    return options.tiles.find(tile=> tile.var == name);
+    
+    tile = options.tiles.find(tile=> tile.var == name);
+    if (tile==undefined){
+        console.log("Could not find "+name);
+        console.log(options.tiles);
+    }
+    return tile;
 }
 
 
@@ -1518,7 +1522,6 @@ function setbkColor(color, opacity, id) {
 
     $('#' + id).css('background-color', color);
     $('#' + id).css('opacity', opacity / 100);
-    $('#' + id).css('border-right', '5px solid red');
 }
 function setTileText(text, id) {
     let el = document.getElementById(id);
@@ -1571,6 +1574,14 @@ function setupNewTileMenu(){
             $('#' + tile.var + "_list_main").css("display", "none");
         } 
     })
+}
+function setSpacingIcon(space, menu){
+
+    let icon = "arrow-collapse-horizontal";
+    if (space == " ") icon = "keyboard-space";
+    if (space == "  ") icon = "arrow-expand-horizontal";
+
+    replaceIcons(menu+"_button", icon);
 }
 
 function setOptions(tile) {
@@ -1625,6 +1636,10 @@ function setOptions(tile) {
         }
     replaceIcons("selected_icon_button", main_icon);
     
+    setSpacingIcon(obj.icon_space, "icon_spacing");
+    setSpacingIcon(obj.unit_space, "units_spacing");
+
+    
     //Set all the sliders and thier options
     setSlider("font_adjustment", "%", obj.font_adjustment);
     setSlider("text", "%", obj.font_opacity);
@@ -1642,6 +1657,17 @@ function setOptions(tile) {
 }
 function closeWindow() {
     dialog.close();
+}
+
+function setSpacing(item_name, spacing){
+    text = document.getElementById(item_name);
+    switch (spacing.toLowerCase()){
+        case "no space": text.textContent = ""; return "";
+        case "single space": text.textContent = " "; return " ";
+        case "double space": text.textContent = "  "; return "  ";
+    }
+    return "";
+
 }
 
 function saveWindow() {
@@ -1673,6 +1699,12 @@ function saveWindow() {
         replaceIcons(focusTile+"_icon", icon);
     }
 
+    let icon_spacing = document.getElementById("icon_spacing_value").textContent;
+    icon_spacing = setSpacing(focusTile+"_icon", icon_spacing);
+    
+    let units_spacing = document.getElementById("units_spacing_value").textContent;
+    unit_spacing = setSpacing(focusTile+"_unit_space", units_spacing);
+
     obj = getTile(focusTile);
     if (obj.value==undefined) {
       obj.value="";
@@ -1686,8 +1718,35 @@ function saveWindow() {
     obj.font_adjustment = font_adjustment;
     obj.font_weight = font_weight;
     obj.icon = icon;
+    obj.icon_space = icon_spacing;
+    obj.unit_space = unit_spacing;
 
     setText(null, focusTile);
+    updateGroovy();
+}
+
+function saveAllWindow() {
+
+    dialog.close();
+    
+    let color = document.getElementById("text_color").value;
+    let opacity = document.getElementById("text_slider").value;
+    let bkcolor = document.getElementById("background_color").value;
+    let bkopacity = document.getElementById("background_slider").value;
+
+    options.tiles.forEach((obj) => {
+        if (!obj.display == false || !obj.display == "false"){
+            id = obj.var;
+            setColor(color, opacity, id);
+            setbkColor(bkcolor, bkopacity, id + "_tile");
+
+            obj.font_color = color;
+            obj.font_opacity = opacity;
+            obj.background_color = bkcolor;
+            obj.background_opacity = bkopacity;
+        }
+    });
+   
     updateGroovy();
 }
 
@@ -1755,19 +1814,42 @@ function deleteTile(){
 }
 
 function addNewTile(var_name) {
+    
+    //close the dialog
+    dialog.close();
 
     let obj = getTile(var_name);
 
+    if (var_name != "text_tile"){
+        obj.display = true;
+    } else {
+
+        length = options.tiles.length;
+        options.tiles.push({title: 'Blank Tile #'+length,   var: "text_tile_"+length, type: "text", parse_func: "formatTitle",            
+                            ow: "none", can_be_overriden: "no",
+                            in_units: "none", icon: "none", icon_loc: "none",  icon_space: " ",  
+                            h: 2,  w: 5, baseline_row: 20,  baseline_column:  20, 
+                            alignment: "center", text: "Blank Tile", value: "",
+                            lpad: 0, rpad: 0, 
+                            unit: "",   decimal: "no", unit_space: "",  
+                            font: 3, font_weight: "400", 
+                            imperial: "time_twelve",   metric: "time_two_four",
+                            font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
+                            font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true });
+
+        var_name = "text_tile_"+length;
+
+        obj = getTile(var_name);
+    }
+    console.log(options.tiles);
     var $el = $(createNewTile(obj)); 
-    grid.addWidget($el, 0, 0, obj.w, obj.h*2, true);
+    grid.addWidget($el, 0, 0, obj.w, obj.h, true);
 
-    obj.display = true;
+    setText( null, var_name );
+    updateGroovy();
+    getWeatherData();
+    updateGroovy();
 
-    dialog.close();
-
-    getCurrentWeather();
-
-    //setText("", var_name);
 }
 
 function createNewTile(item){
@@ -1777,13 +1859,13 @@ function createNewTile(item){
     let iconScale = 3.5;
     let header = 0.1;
     let var_ = item.var;
-    let height = item.h*2.0;
+    let height = item.h;
     let units = item.display_unit == "unknown" ? "" : item.display_unit;
      
 
     let html = "";
     html += `<div id="${var_}_tile_main" class="grid-stack-item" data-gs-id = "${var_}" data-gs-x="${item.baseline_column}" 
-                    data-gs-y="${item.baseline_row*2-1}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
+                    data-gs-y="${item.baseline_row}" data-gs-width="${item.w}" data-gs-height="${item.w}" data-gs-locked="false"
                                                   ondblclick="setOptions('${var_}')">
 
                     <div id="${var_}_title" style="display: none;">${item.title}</div>
@@ -1791,10 +1873,10 @@ function createNewTile(item){
                     <div class="mdl-tooltip" for="${var_}_tile_main" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);">${item.title}</div>
 
                     <div id="${var_}_tile" class="grid-stack-item-content" style="font-size: ${fontScale*height}vh; 
-                                                                          line-height: ${fontScale*lineScale*height}vh;
-                                                                          text-align: ${item.justification};
-                                                                          background-color: ${item.background_color};
-                                                                          font-weight: ${item.font_weight};"> `;
+                                                                           line-height: ${fontScale*lineScale*height}vh;
+                                                                           text-align: ${item.justification};
+                                                                           background-color: ${item.background_color};
+                                                                           font-weight: ${item.font_weight};"> `;
         
     //Left Icon
     if (item.icon != "right"){
@@ -1804,11 +1886,14 @@ function createNewTile(item){
     html+=`<span id="${var_}_text" style="color: ${item.font_color};">${item.text}</span>`;
         
     //Main Content
-    html += `<span id="${var_}" style="color: ${item.font_color};"></span>`;
+    html += `<span id="${var_}" style="color: ${item.font_color};">${item.value}</span>`;
         
     //Units
-    html+=`<span id="${var_}_units">${units}</span>`;  
-        
+    html += `<span id="${var_}_units" style="color: ${item.font_color};">${item.unit}</span>`;  
+
+    //Unit Spacing
+    html += `<span id="${var_}_unit_space">${item.unit_space}</span>`;
+
     //Right Icon
     if (item.icon_loc == "right"){
         html+=`<span>${item.icon_space}</span>`;
@@ -1822,6 +1907,23 @@ function createNewTile(item){
 
 function updateGroovy() {
     let data =  JSON.stringify(options.tiles);
-    let el = jQuery("#settingsupdateDataLocation", parent.document);
+    let el = jQuery("#settingstile_settings_HTML", parent.document);
     el.attr('value', data);
+}
+
+function getWeatherData() {
+    return jQuery.get(localURL + "getData/?access_token=" + secretEndpoint, (data) => {
+
+        data.forEach(tile=>{
+            obj = getTile(tile.var);
+            if (obj!=undefined){
+                obj.value = tile.value;
+                obj.icon = tile.icon; 
+                setText(tile.value, tile.var);   
+            }
+
+        });
+        console.log(options.tiles)
+    });
+
 }
