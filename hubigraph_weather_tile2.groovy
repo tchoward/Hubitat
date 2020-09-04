@@ -125,16 +125,7 @@ def tileSetupPage(){
     
     def location = getLocation();
     
-    def childDevice = app.getDevices();
-     
-    //if (!childDevice) {
-    //      if (!device_name) device_name="Hubigraph Openweather Device";
-   //       log.debug("Creating Device $device_name");
-   //       childDevice = addChildDevice("tchoward", "OpenWeather Hubigraph Driver", "OWD-01", null,[completedSetup: true, label: device_name]) 
-   // }
-    
-    log.debug("ChildDevice"+childDevice);
-    
+       
     dynamicPage(name: "tileSetupPage") {      
       
         parent.hubiForm_section(this,"General Options", 1)
@@ -172,7 +163,8 @@ def tileSetupPage(){
         } 
         
         def decimalEnum =     [[0: "None (0)"], [1: "One (0.1)"], [2: "Two (0.12)"], [3: "Three (0.123)"], [4: "Four (0.1234)"]];
-        atomicState.selections.each {measurement->
+        atomicState.tile_settings.each {measurement->
+            log.debug(measurement);
             if (measurement.decimal == "yes" || measurement.imperial != "none"){
                 parent.hubiForm_section(this, measurement.title, 1){
                     container = [];    
@@ -243,8 +235,9 @@ def deviceSelectionPage() {
                 }
                   
                 parent.hubiForm_section(this,"Override Values - Select Attribute Units", 1){ 
-                    atomicState.selections.each{feature->
+                    atomicState.tile_settings.each{feature->
                         container = [];
+                        log.debug(feature);
                         
                         if (feature.can_be_overriden == "yes"){
                             container <<  parent.hubiForm_sub_section(this, feature.title); 
@@ -321,15 +314,12 @@ def mainPage() {
     def unitPercent =    [["percent_numeric": "Numeric (0 to 100)"], ["percent_decimal": "Decimal (0.0 to 1.0)"]];
     def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
 
-     //for now poll
-     buildWeatherData();
-    
-   
     atomicState.tile_dimensions = [rows: 14, columns: 26];
     
     
-    if (!atomicState.selections)
-    atomicState.selections = [[title: 'Forecast Weather Icon',          var: "weather_icon",  type: "open_weather", value: "", parse_func: "translateCondition",             
+    if (!atomicState.tile_settings){
+    
+        atomicState.tile_settings = [[title: 'Forecast Weather Icon',          var: "weather_icon",  type: "open_weather", value: "", parse_func: "translateCondition",             
                                                                         ow:  "current.weather.0.description", can_be_overriden: "no",
                                                                         in_units:  "none", icon: "alert-circle", icon_loc: "center",  icon_space: "",  
                                                                         h: 6,  w: 12, baseline_row: 1,  baseline_column:  13, 
@@ -340,8 +330,8 @@ def mainPage() {
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
-                              ],
-                              [title: 'Current Weather',                var: "description", type: "open_weather",   value: 0,  parse_func: "formatConditionText",                
+                                  ],
+                                  [title: 'Current Weather',                var: "description", type: "open_weather",   value: 0,  parse_func: "formatConditionText",                
                                                                         ow: "current.weather.0.description", can_be_overriden: "no",
                                                                         in_units: "none", icon: "none", icon_loc: "none",  icon_space: "",  
                                                                         h: 4,  w: 12, baseline_row: 7,  baseline_column:  13, 
@@ -352,8 +342,8 @@ def mainPage() {
                                                                         imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
-                              ],
-                              [title: 'Current Temperature',            var: "current_temperature", type: "open_weather", parse_func: "formatNumericData",          
+                                  ],
+                                  [title: 'Current Temperature',            var: "current_temperature", type: "open_weather", parse_func: "formatNumericData",          
                                                                         ow: "current.temp", can_be_overriden: "yes",
                                                                         in_units: "fahrenheit", icon: "none", icon_loc: "left",  icon_space: "",  
                                                                         h: 4,  w: 12, baseline_row: 1,  baseline_column:  1, 
@@ -625,8 +615,22 @@ def mainPage() {
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: false,
                               
-                              ]
-    ];
+                              ],
+                              [title: 'Tommorow: Weather Icon',          var: "tommorow_weather_icon", type: "open_weather", value: "", parse_func: "translateCondition",             
+                                                                        ow:  "daily.1.weather.0.description", can_be_overriden: "no",
+                                                                        in_units:  "none", icon: "alert-circle", icon_loc: "center",  icon_space: "",  
+                                                                        h: 4,  w: 8, baseline_row: 1,  baseline_column:  1, 
+                                                                        alignment: "center", text: "",
+                                                                        lpad: 0, rpad: 0, 
+                                                                        unit: "none",   decimal: "no", unit_space: "",
+                                                                        font: 40, font_weight: "100", 
+                                                                        imperial: "none",   metric: "none",
+                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
+                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: false,
+                              ],                        
+        ];
+        
+    }
 
     dynamicPage(name: "mainPage") {        
        
@@ -654,9 +658,8 @@ def mainPage() {
                 if (tile_key){
                      parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
                          container = [];
-                         container << defineUpdateDataHTML("updateDataLocation");
-                         container << parent.hubiForm_graph_preview(this)
-                         
+                         container << defineUpdateDataHTML("tile_settings_HTML");
+                         container << parent.hubiForm_graph_preview(this) 
                          parent.hubiForm_container(this, container, 1); 
                      } 
             
@@ -918,10 +921,10 @@ def getWeatherData(){
         "color_icons": color_icons,
         "openweather_refresh_rate": openweather_refresh_rate,
         "measurements": [],
-        "tiles" : atomicState.selections
+        "tiles" : atomicState.tile_settings
         ];
     
-   atomicState.selections.eachWithIndex{measurement, index->
+  atomicState.tile_settings.eachWithIndex{measurement, index->
         outUnits = settings["${measurement.var}_units"] ? settings["${measurement.var}_units"] : "none";
         decimals = measurement.decimal == "yes" ? settings["${measurement.var}_decimal"] : "none";
        
@@ -992,8 +995,7 @@ def applyConversion(tile, val){
     
     out_units = settings["${tile.var}_units"];
     in_units = tile.in_units;
-        
-    log.debug("In: "+val);
+      
     if (in_units != out_units)
     switch (in_units) {
             //Temperature
@@ -1253,9 +1255,13 @@ def translateCondition(tile, condition) {
         [name: "overcast clouds",                   icon: "weather-cloudy"]
     ];
    
-    log.debug(condition.toLowerCase());
-    return ["icon", pairings.find{el->  el.name == condition.toLowerCase()}.icon];
-    //return ["icon", "mdi-weather-cloudy"];
+    try {
+        return_val = ["icon", pairings.find{el->  el.name == condition.toLowerCase()}.icon]; 
+    } catch (e){
+        log.debug ("Unable to return "+condition+": "+e);
+        return_val = ["icon", "alert-circle"];  
+    }
+    return return_val;
 }
 
 def formatNumericData(tile, val){
@@ -1293,18 +1299,31 @@ def formatDewPoint(tile, val) {
 def buildWeatherData(){
     
     def val; 
-    def tSelections = atomicState.selections;
+    def selections = settings["tile_settings"];
+    
+    //Update the Tile Locations/Colors/Etc
+    if (tile_settings_HTML){
+         try{
+             def jsonSlurper = new JsonSlurper()
+             text = jsonSlurper.parseText(tile_settings_HTML);
+             if (text) {
+                 atomicState.tile_settings = text;
+             }
+         } catch (e){
+             log.debug("Bad Data from updateDataLocation: "+e);
+        }
+    }
     
     data = parent.getOpenWeatherData();
     data = parseJson(data);
     
-    tSelections.eachWithIndex{tile, index-> 
+    temp = atomicState.tile_settings;
+    temp.eachWithIndex{tile, index-> 
        val = getMapData(data, tile.ow);
        returnVal = "${tile.parse_func}"(tile, val);
-       
-       tSelections[index]."${returnVal[0]}" = returnVal[1];
-    }    
-    atomicState.selections = tSelections;
+       tile."${returnVal[0]}" = returnVal[1];
+    }
+    atomicState.tile_settings = temp;
 }
 
 def getTileHTML(item){
@@ -1318,7 +1337,7 @@ def getTileHTML(item){
     
     height = item.h;
     html = "";    
-    
+    log.debug(item);
     if (item.display==true){
             html += """ <div id="${var}_tile_main" class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
                                                   data-gs-y="${item.baseline_row}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
@@ -1356,7 +1375,7 @@ def getTileHTML(item){
         //Unit Spacing
         html += """<span id="${var}_unit_space">${item.unit_space}</span>"""
                     
-        html += """<span id="${var}_units">${units}</span>""";  
+        html += """<span id="${var}_units" style="font-size: ${iconScale*height}vh; color: ${item.font_color};">${units}</span>""";  
         
         //Right Icon
         if (item.icon_loc == "right"){
@@ -1754,7 +1773,7 @@ def defineTileDialog(){
  
     list = [];
     
-    atomicState.selections.each{item->
+    atomicState.tile_settings.each{item->
         list << [name: item.title, icon: item.icon, var: item.var];   
     }
       
@@ -1985,7 +2004,7 @@ def defineHTML_Tile(){
     """
    
     //Main Tile Building Code
-    atomicState.selections.eachWithIndex{item, index->
+    atomicState.tile_settings.eachWithIndex{item, index->
        html += getTileHTML(item);
     } //each  
     
@@ -2034,31 +2053,23 @@ def defineHTML_globalVariables(){
         let currentTemperature;
     """
 }
-
+//tile_settings_HTML
 def defineUpdateDataHTML(var){
     
-    if (!settings["$var"]){
-        app.updateSetting("${var}", [value: "Test", type: "string"]);
-    } else {
-        try{
-            data = settings["${var}"];
-            if (data != null) {
-                def jsonSlurper = new JsonSlurper()
-                atomicState.selections = jsonSlurper.parseText(data);       
-            }
-        } catch (e){
-             log.debug("Bad JSON");
-        }
-    }
+   if (!settings["$var"]){
+       app.updateSetting("${var}", [value: "", type: "string"]);
+   } 
 
-    html = """
+   html = """
                 <input type="text" id="settings${var}" name="settings[${var}]" value="${settings[var]}" style="display: none;" />
                 <div class="form-group">
                    <input type="hidden" name="${var}.type" value="text">
                    <input type="hidden" name="${var}.multiple" value="false">
-                </div>"""
+                </div>
+                
+            """
             
-    return html;
+   return html;
 }
 
 def defineScript(){
@@ -2074,6 +2085,8 @@ def defineScript(){
 
 def getWeatherTile() {
     def fullSizeStyle = "margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden";
+   
+    buildWeatherData();
     
     html = defineHTML_Header();
     html += """<head>
@@ -2118,8 +2131,8 @@ def getTile() {
 }
 
 def getData() {
-    //def timeline = getPWSData();
-    //return render(contentType: "text/json", data: JsonOutput.toJson(timeline));
+    buildWeatherData();
+    return render(contentType: "text/json", data: JsonOutput.toJson(atomicState.tile_settings));
 }
 
 def getOptions() {
