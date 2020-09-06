@@ -1466,7 +1466,7 @@ function setSlider(id, units, val) {
 
 var focusTile;
 var dialog = document.getElementById('tileOptions');
-var addTile = document.getElementById('addTile');
+var newTileDialog = document.getElementById('addTileDialog');
 
 function getTile(name){
     
@@ -1926,4 +1926,22 @@ function getWeatherData() {
         console.log(options.tiles)
     });
 
+}
+
+function newTile(){
+    dialog.close();
+
+    newTileDialog.showModal();
+
+}
+
+function closeAddTileWindow(){
+
+    newTileDialog.close();
+
+}
+
+function addNewTileClose(){
+
+    newTileDialog.close();
 }
