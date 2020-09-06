@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat;
  *  Hubigraph Line Graph Child App
  *
  *  Copyright 2020, but let's behonest, you'll copy it
- *iu:
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
  *
@@ -164,7 +164,6 @@ def tileSetupPage(){
         
         def decimalEnum =     [[0: "None (0)"], [1: "One (0.1)"], [2: "Two (0.12)"], [3: "Three (0.123)"], [4: "Four (0.1234)"]];
         atomicState.tile_settings.each {measurement->
-            log.debug(measurement);
             if (measurement.decimal == "yes" || measurement.imperial != "none"){
                 parent.hubiForm_section(this, measurement.title, 1){
                     container = [];    
@@ -237,8 +236,7 @@ def deviceSelectionPage() {
                 parent.hubiForm_section(this,"Override Values - Select Attribute Units", 1){ 
                     atomicState.tile_settings.each{feature->
                         container = [];
-                        log.debug(feature);
-                        
+                       
                         if (feature.can_be_overriden == "yes"){
                             container <<  parent.hubiForm_sub_section(this, feature.title); 
                             parent.hubiForm_container(this, container, 1);
@@ -307,7 +305,7 @@ def enableAPIPage() {
 def mainPage() {
     def unitTemp =       [["fahrenheit": "Fahrenheit (°F)"], ["celsius" : "Celsius (°C)"], ["kelvin" : "Kelvin (K)"]];
     def unitWind =       [["meters_per_second": "Meters per Second (m/s)"], ["miles_per_hour": "Miles per Hour (mph)"], ["knots": "Knots (kn)"], ["kilometers_per_hour": "Kilometers per Hour (km/h)"]];
-    def unitMeasure =     [["millimeters": "Millimeters (mm)"], ["inches": """Inches (") """]];
+    def unitDepth =      [["millimeters": "Millimeters (mm)"], ["inches": """Inches (") """]];
     def unitPressure =   [["millibars": "Millibars (mbar)"], ["millimeters_mercury": "Millimeters of Mercury (mmHg)"], ["inches_mercury": "Inches of Mercury (inHg)"], ["hectopascal" : "Hectopascal (hPa)"]];
     def unitDirection =  [["degrees": "Degrees (°)"], ["radians" : "Radians (°)"], ["cardinal": "Cardinal (N, NE, E, SE, etc)"]];
     def unitTrend =      [["trend_numeric": "Numeric (↑ < 0, → = 0, ↓ > 0)"], ["trend_text": "Text (↑ rising, → steady, ↓ falling)"]];
@@ -316,321 +314,312 @@ def mainPage() {
 
     atomicState.tile_dimensions = [rows: 14, columns: 26];
     
+      
+    //if (!atomicState.tile_settings){
+        atomicState.unit_type = [ temperature:          [name: "Temperature",         enum: unitTemp,     out:  "fahrenheit"],
+                                  percent:              [name: "Percentage",          enum: unitPercent,  out:  "percent_numeric"],
+                                  weather_icon:         [name: "Weather Icons",       enum: "none",       out:  "none"],
+                                  weather_description:  [name: "Weather Description", enum: "none",       out:  "none"],
+                                  pressure:             [name: "Pressure",            enum: unitPressure, out:  "inches_mercury"],
+                                  velocity:             [name: "Velocity",            enum: unitWind,     out:  "miles_per_hour"], 
+                                  time:                 [name: "Time",                enum: unitTime,     out:  "time_twelve"],
+                                  depth:                [name: "Depth",               enum: unitDepth,    out:  "inches"],
+                                  direction:            [name: "Direction",           enum: unitDirection,out:  "cardinal"],
+                                 ];
+                                 
+                                  
+                                 
+        
+        atomicState.tile_type = [
+                                 weather_icon:          [name: "Weather Icon",          type: "weather_icon",         parse_func: "translateCondition",  ow: "weather.0.description", in_units: "none",                current: "yes", hourly: "yes", daily: "yes"],
+                                 weather_description:   [name: "Weather Description",   type: "weather_description",  parse_func: "formatConditionText", ow: "weather.0.description", in_units: "none",                current: "yes", hourly: "yes", daily: "yes"],
+                                 
+                                 feels_like:            [name: "Feels Like",            type: "temperature",          parse_func: "formatNumericData",   ow: "feels_like",            in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "no" ],
+                                 feels_like_morning:    [name: "Morning Feels Like",    type: "temperature",          parse_func: "formatNumericData",   ow: "feels_like.morn",       in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes"],
+                                 feels_like_day:        [name: "Day Feels Like",        type: "temperature",          parse_func: "formatNumericData",   ow: "feels_like.day",        in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes"],
+                                 feels_like_evening:    [name: "Evening Feels Like",    type: "temperature",          parse_func: "formatNumericData",   ow: "feels_like.eve",        in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes"],                          
+                                 feels_like_night:      [name: "Night Feels Like",      type: "temperature",          parse_func: "formatNumericData",   ow: "feels_like.night",      in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes"],
+                                
+                                 temperature:           [name: "Temperature",            type: "temperature",          parse_func: "formatNumericData",   ow: "temp",                 in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "no"],
+                                 temperature_max:       [name: "Maximum Temperature",    type: "temperature",          parse_func: "formatNumericData",   ow: "temp.max",             in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "yes"],
+                                 temperature_min:       [name: "Minimum Temperature",    type: "temperature",          parse_func: "formatNumericData",   ow: "temp.min",             in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "yes"],
+                                 temperature_morning:   [name: "Morning Temperature",    type: "temperature",          parse_func: "formatNumericData",   ow: "temp.morn",            in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "yes"],
+                                 temperature_day:       [name: "Day Temperature",        type: "temperature",          parse_func: "formatNumericData",   ow: "temp.day",             in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "yes"],
+                                 temperature_evening:   [name: "Evening Temperature",    type: "temperature",          parse_func: "formatNumericData",   ow: "temp.eve",             in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "yes"],                          
+                                 temperature_night:     [name: "Night Temperature",      type: "temperature",          parse_func: "formatNumericData",   ow: "temp.night",           in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "yes"],
+                                 
+                                 humidity:              [name: "Humidity",               type: "percent",              parse_func: "formatNumericData",   ow: "humidity",             in_units: "percent_numeric",     current: "yes", hourly: "yes", daily: "yes"],
+
+                                 dew_point:             [name: "Dew Point",              type: "temperature",          parse_func: "formatNumericData",   ow: "dew_point",            in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "yes"],
+                                 dew_point_description: [name: "Dew Point Description",  type: "weather_description",  parse_func: "formatDewPoint",      ow: "dew_point",            in_units: "none",                current: "yes", hourly: "yes", daily: "yes"],
+                                 
+                                 pressure:              [name: "Pressure",               type: "pressure",             parse_func: "formatNumericData",   ow: "pressure",             in_units: "millibars",           current: "yes", hourly: "yes", daily: "yes"],
+                                 pressure_trend:        [name: "Pressure Trend",         type: "pressure",             parse_func: "formatPressure",      ow: "pressure",             in_units: "millibars",           current: "yes", hourly: "yes", daily: "yes"],
+     
+                                 uv_index:              [name: "UV Index",               type: "uvi",                  parse_func: "formatNumericData",   ow: "uvi",                  in_units: "uvi",                 current: "yes", hourly: "yes", daily: "yes"],
+                                 cloud_coverage:        [name: "Cloud Coverage",         type: "percent",              parse_func: "formatNumericData",   ow: "clouds",               in_units: "percent_numeric",     current: "yes", hourly: "yes", daily: "yes"],
+                                 visibility:            [name: "Visibility",             type: "distance",             parse_func: "formatNumericData",   ow: "visibility",           in_units: "miles",               current: "yes", hourly: "yes", daily: "yes"],
+                                 
+                                 wind_speed:            [name: "Wind Speed",             type: "velocity",             parse_func: "formatNumericData",   ow: "wind_speed",           in_units: "meters_per_second",   current: "yes", hourly: "yes", daily: "yes"],
+                                 wind_gust:             [name: "Wind Gust",              type: "velocity",             parse_func: "formatNumericData",   ow: "wind_gust",            in_units: "meters_per_second",   current: "yes", hourly: "yes", daily: "yes"],
+                                 wind_direction:        [name: "Wind Direction",         type: "direction",            parse_func: "formatNumericData",   ow: "wind_direction",       in_units: "degrees",             current: "yes", hourly: "yes", daily: "yes"],
+                                 
+                                 rain_past_hour:        [name: "Rain past Hour",         type: "depth",                parse_func: "formatNumericData",   ow: "rain.1h",              in_units: "millimeters",         current: "yes", hourly: "yes", daily: "yes"],
+                                 snow_past_hour:        [name: "Snow past Hour",         type: "depth",                parse_func: "formatNumericData",   ow: "snow.1h",              in_units: "millimeters",         current: "yes", hourly: "yes", daily: "yes"],
+                                 rain:                  [name: "Rain",                   type: "depth",                parse_func: "formatNumericData",   ow: "rain",                 in_units: "millimeters",         current: "yes", hourly: "yes", daily: "yes"],
+                                 snow:                  [name: "Snow",                   type: "depth",                parse_func: "formatNumericData",   ow: "snow",                 in_units: "millimeters",         current: "yes", hourly: "yes", daily: "yes"],
+                                 chance_precipitation:  [name: "Chance of Precipitation",type: "percent",              parse_func: "formatNumericData",   ow: "pop",                  in_units: "percent_numeric",     current: "yes", hourly: "yes", daily: "yes"],
+                                 
+                                 sunrise:               [name: "Sunrise",                type: "time",                 parse_func: "formatNumericData",   ow: "sunrise",              in_units: "time_seconds",        current: "yes", hourly: "yes", daily: "yes"],
+                                 sunset:                [name: "Sunset",                 type: "time",                 parse_func: "formatNumericData",   ow: "sunset",               in_units: "time_seconds",        current: "yes", hourly: "yes", daily: "yes"],
+                            
+                                 blank:                 [name: "Blank Tile",             type: "blank",                parse_func: "none",                ow: "none",                 in_units: "none",                current: "yes", hourly: "yes", daily: "yes"]
+        ];
     
-    if (!atomicState.tile_settings){
-    
-        atomicState.tile_settings = [[title: 'Forecast Weather Icon',          var: "weather_icon",  type: "open_weather", value: "", parse_func: "translateCondition",             
-                                                                        ow:  "current.weather.0.description", can_be_overriden: "no",
-                                                                        in_units:  "none", icon: "alert-circle", icon_loc: "center",  icon_space: "",  
-                                                                        h: 6,  w: 12, baseline_row: 1,  baseline_column:  13, 
-                                                                        alignment: "center", text: "",
-                                                                        lpad: 0, rpad: 0, 
-                                                                        unit: "none",   decimal: "no", unit_space: "",
-                                                                        font: 40, font_weight: "100", 
-                                                                        imperial: "none",   metric: "none",
-                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
+        atomicState.tile_settings = [[title: 'Forecast Weather Icon',          var: "weather_icon",  type: "weather_icon", period:"current", value: "",            
+                                                                               icon: "alert-circle", icon_loc: "center",  icon_space: "",  
+                                                                               h: 6,  w: 12, baseline_row: 1,  baseline_column:  13, 
+                                                                               alignment: "center", text: "",
+                                                                               lpad: 0, rpad: 0, 
+                                                                               unit: "none",   decimal: "no", unit_space: "",
+                                                                               font: 40, font_weight: "100", 
+                                                                               font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
+                                                                               font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                                   ],
-                                  [title: 'Current Weather',                var: "description", type: "open_weather",   value: 0,  parse_func: "formatConditionText",                
-                                                                        ow: "current.weather.0.description", can_be_overriden: "no",
-                                                                        in_units: "none", icon: "none", icon_loc: "none",  icon_space: "",  
+                                  [title: 'Current Weather',            var: "description", type: "weather_description", period:"current", value: 0,                
+                                                                        icon: "none", icon_loc: "none",  icon_space: "",  
                                                                         h: 4,  w: 12, baseline_row: 7,  baseline_column:  13, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  unit_space: "",
                                                                         font: 20, font_weight: "400", 
-                                                                        imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                                   ],
-                                  [title: 'Current Temperature',            var: "current_temperature", type: "open_weather", parse_func: "formatNumericData",          
-                                                                        ow: "current.temp", can_be_overriden: "yes",
-                                                                        in_units: "fahrenheit", icon: "none", icon_loc: "left",  icon_space: "",  
+                                  [title: 'Current Temperature',        var: "current_temperature", type: "temperature", period:"current",     
+                                                                        icon: "none", icon_loc: "left",  icon_space: "",  
                                                                         h: 4,  w: 12, baseline_row: 1,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "yes", unit_space: "", 
                                                                         font: 20, font_weight: "900", 
-                                                                        imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               ], 
-                              [title: 'Feels Like',                     var: "feels_like", type: "open_weather", parse_func: "formatNumericData",           
-                                                                        ow: "current.feels_like", can_be_overriden: "yes",
-                                                                        in_units: "fahrenheit", icon: "home-thermometer-outline", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Feels Like',                     var: "feels_like", type: "feels_like", period:"current", 
+                                                                        icon: "home-thermometer-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 12, baseline_row: 5,  baseline_column:  1, 
                                                                         alignment: "center", text: "Feels Like: ",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "yes", unit_space: "", 
                                                                         font: 7, font_weight: "400", 
-                                                                        imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Forecast High',                  var: "forecast_high", type: "open_weather",  parse_func: "formatNumericData",             
-                                                                        ow: "daily.0.temp.max", can_be_overriden: "no",
-                                                                        in_units: "fahrenheit", icon: "arrow-up-thick", icon_loc: "left",  icon_space: "",  
+                              [title: 'Forecast High',                  var: "forecast_high", type: "temperature_max",  period:"daily.0",           
+                                                                        icon: "arrow-up-thick", icon_loc: "left",  icon_space: "",  
                                                                         h: 4,  w: 6, baseline_row: 7,  baseline_column:  7, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "yes",  unit_space: "",
                                                                         font: 7, font_weight: "400", 
-                                                                        imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
-                              [title: 'Forecast Low',                 var: "forecast_low", type: "open_weather",  parse_func: "formatNumericData", 
-                                                                        ow: "daily.0.temp.min", can_be_overriden: "no",
-                                                                        in_units: "fahrenheit", icon: "arrow-down-thick", icon_loc: "left",  icon_space: "",  
+                              [title: 'Forecast Low',                 var: "forecast_low", type: "temperature_min",  period:"daily.0", 
+                                                                        icon: "arrow-down-thick", icon_loc: "left",  icon_space: "",  
                                                                         h: 4,  w: 6, baseline_row: 7,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "yes", unit_space: "",  
                                                                         font: 6, font_weight: "400", 
-                                                                        imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Precipitation Title',           var: "precipitation_title", type: "open_weather",  parse_func: "formatTitle",               
-                                                                        ow: "none", can_be_overriden: "no",
-                                                                        in_units: "none", icon: "umbrella-outline", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Precipitation Title',           var: "precipitation_title", type: "blank",  period:"none",             
+                                                                        icon: "umbrella-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 8, baseline_row: 11,  baseline_column:  1, 
                                                                         alignment: "center", text: "Precipitation",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitMeasure,   decimal: "no",  unit_space: "",
                                                                         font: 6, font_weight: "400", 
-                                                                        imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Forcast Precipitation',         var: "forecast_precipitation", type: "open_weather", parse_func: "formatNumericData",                     
-                                                                        ow: "daily.0.rain", can_be_overriden: "no",
-                                                                        in_units: "millimeters", icon: "ruler", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Forcast Precipitation',         var: "forecast_precipitation", type: "rain", period:"daily.0",                      
+                                                                        icon: "ruler", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 8, baseline_row: 15,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitMeasure,   decimal: "yes", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "inches",   metric: "militmeters",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Forecast Percent Precipitation', var: "forcast_percent_precipitation", type: "open_weather", parse_func: "formatNumericData",                       
-                                                                        ow: "daily.0.pop", can_be_overriden: "no",
-                                                                        in_units: "percent_decimal", icon: "cloud-question", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Forecast Percent Precipitation', var: "forcast_percent_precipitation", type: "chance_precipitation", period:"daily.0",                    
+                                                                        icon: "cloud-question", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 8, baseline_row: 13,  baseline_column: 1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitPercent,   decimal: "yes", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "percent_numerical",   metric: "percent_numerical",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Current Precipitation',          var: "current_precipitation", type: "open_weather", parse_func: "formatNumericData",                       
-                                                                        ow: "current.rain.1h", can_be_overriden: "yes",
-                                                                        in_units: "millimeters", icon: "calendar-today", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Current Precipitation',          var: "current_precipitation", type: "rain_past_hour", period:"current",                      
+                                                                        icon: "calendar-today", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 8, baseline_row: 17,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitMeasure,   decimal: "yes",  unit_space: "",
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "inches",   metric: "millimeters",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Wind Title',                     var: "wind_title", type: "text",  parse_func: "formatTitle",               
-                                                                        ow: "none", can_be_overriden: "no",
-                                                                        in_units: "meters_per_second", icon: "weather-windy-variant", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Wind Title',                     var: "wind_title", type: "blank",   period:"none",               
+                                                                        icon: "weather-windy-variant", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 8, baseline_row: 11,  baseline_column:  9, 
                                                                         alignment: "center", text: "Wind",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no", unit_space: "",
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Wind Speed',                     var: "wind_speed", type: "open_weather",  parse_func: "formatNumericData",                          
-                                                                        ow: "current.wind_speed", can_be_overriden: "yes",
-                                                                        in_units: "meters_per_second", icon: "tailwind", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Wind Speed',                     var: "wind_speed", type: "wind_speed",  period:"current",                         
+                                                                        icon: "tailwind", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 8, baseline_row: 13,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitWind,   decimal: "yes", unit_space: " ", 
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "miles_per_hour",   metric: "meters_per_second",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Wind Gust',                     var: "wind_gust", type: "open_weather",  parse_func: "formatNumericData",                       
-                                                                        ow: "current.wind_gust", can_be_overriden: "yes",
-                                                                        in_units: "meters_per_second", icon: "weather-windy", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Wind Gust',                     var: "wind_gust", type: "wind_gust",  period:"current",                        
+                                                                        icon: "weather-windy", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 8, baseline_row: 15,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitWind,   decimal: "yes", unit_space: " ", 
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "miles_per_hour",   metric: "meters_per_second",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Wind Direction',                var: "wind_direction", type: "open_weather", parse_func: "formatNumericData",                           
-                                                                        ow: "current.wind_deg", can_be_overriden: "yes",
-                                                                        in_units: "degrees", icon: "compass-outline", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Wind Direction',                var: "wind_direction", type: "wind_direction",  period:"current",                           
+                                                                        icon: "compass-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 8, baseline_row: 17,  baseline_column:  9, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitDirection,   decimal: "no", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "cardinal",   metric: "cardinal",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
                                                   
-                              [title: 'Pressure Title',               var: "pressure_title", type: "text", parse_func: "formatTitle",                  
-                                                                        ow: "none", can_be_overriden: "no",
-                                                                        in_units: "none", icon: "gauge", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Pressure Title',               var: "pressure_title", type: "blank", period:"current",                   
+                                                                        icon: "gauge", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 8, baseline_row: 11,  baseline_column:  17, 
                                                                         alignment: "center", text: "Pressure",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "yes", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
-                              [title: 'Current Pressure',             var: "current_pressure", type: "open_weather", parse_func: "formatNumericData",                     
-                                                                        ow: "current.pressure", can_be_overriden: "yes",
-                                                                        in_units: "millibars", icon: "thermostat", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Current Pressure',             var: "current_pressure", type: "pressure", period:"current",                     
+                                                                        icon: "thermostat", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 8, baseline_row: 13,  baseline_column:  17, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitPressure,   decimal: "yes",  unit_space: " ",
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "inches_mercury",   metric: "millimeters_mercury",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Pressure Trend',                var: "pressure_trend", type: "open_weather",  parse_func: "formatNumericData",                         
-                                                                        ow: "current.pressure", can_be_overriden: "yes",
-                                                                        in_units: "none", icon: "none", icon_loc: "none",  icon_space: "",  
+                              [title: 'Pressure Trend',                var: "pressure_trend", type: "pressure_trend",  period:"current",                          
+                                                                        icon: "none", icon_loc: "none",  icon_space: "",  
                                                                         h: 2,  w: 8, baseline_row: 15,  baseline_column:  17, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no", unit_space: "",
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "none",   metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Humidity',                      var: "current_humidity", type: "open_weather", parse_func: "formatNumericData",                             
-                                                                        ow: "current.humidity", can_be_overriden: "yes",
-                                                                        in_units: "percent_numeric", icon: "water-percent", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Humidity',                      var: "current_humidity", type: "humidity", period:"current",                              
+                                                                        icon: "water-percent", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 4, baseline_row: 20,  baseline_column:  1, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitPercent,   decimal: "yes", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "percent_numeric",  metric: "percent_numeric",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
-                               [title: 'Dewpoint Description',          var: "dewpoint_description", type: "open_weather", parse_func: "formatDewPoint",                      
-                                                                        ow: "current.dew_point", can_be_overriden: "no",
-                                                                        in_units: "none", icon: "none", icon_loc: "none",  icon_space: " ",  
+                               [title: 'Dewpoint Description',          var: "dewpoint_description", type: "dew_point_description", period:"current",                       
+                                                                        icon: "none", icon_loc: "none",  icon_space: " ",  
                                                                         h: 2,  w: 6, baseline_row: 20,  baseline_column:  5, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  unit_space: "",
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "none",  metric: "none",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
-                              [title: 'Current Dewpoint',             var: "current_dewpoint", type: "open_weather", parse_func: "formatNumericData",                         
-                                                                        ow: "current.dew_point", can_be_overriden: "yes",
-                                                                        in_units: "farenheit", icon: "wave", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Current Dewpoint',             var: "current_dewpoint", type: "dew_point", period:"current",                          
+                                                                        icon: "wave", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 4, baseline_row: 20,  baseline_column: 11, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTemp,   decimal: "yes", unit_space: "", 
                                                                         font: 4, font_weight: "400", 
-                                                                        imperial: "farenheit",   metric: "celsius",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Sunrise',                        var: "sunrise", type: "open_weather",  parse_func: "formatNumericData",               
-                                                                        ow:  "current.sunrise", can_be_overriden: "no",
-                                                                        in_units:  "time_seconds", icon: "weather-sunset-up", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Sunrise',                        var: "sunrise", type: "sunrise",  period:"current",                
+                                                                        icon: "weather-sunset-up", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 5, baseline_row: 20,  baseline_column:  15, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTime,   decimal: "no",  unit_space: "",
                                                                         font: 3, font_weight: "400", 
-                                                                        imperial: "time_twelve",   metric: "time_two_four",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Sunset',                        var: "sunset", type: "open_weather", parse_func: "formatNumericData",                         
-                                                                        ow: "current.sunset", can_be_overriden: "no",
-                                                                        in_units: "time_seconds", icon: "weather-sunset-down", icon_loc: "left",  icon_space: " ",  
+                              [title: 'Sunset',                        var: "sunset", type: "sunset",  period:"current",                          
+                                                                        icon: "weather-sunset-down", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 5, baseline_row: 20,  baseline_column:  20, 
                                                                         alignment: "center", text: "",
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: unitTime,   decimal: "no",  unit_space: "",
                                                                         font: 3, font_weight: "400", 
-                                                                        imperial: "time_twelve",   metric: "time_two_four",
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
-                              ],
-                              [title: 'Blank Tile',                     var: "text_tile", type: "text", parse_func: "formatTitle",            
-                                                                        ow: "none", can_be_overriden: "no",
-                                                                        in_units: "none", icon: "none", icon_loc: "none",  icon_space: " ",  
-                                                                        h: 2,  w: 5, baseline_row: 20,  baseline_column:  20, 
-                                                                        alignment: "center", text: "",
-                                                                        lpad: 0, rpad: 0, 
-                                                                        unit: unitTime,   decimal: "no", unit_space: "",  
-                                                                        font: 3, font_weight: "400", 
-                                                                        imperial: "time_twelve",   metric: "time_two_four",
-                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: false,
+                             ],
                               
-                              ],
-                              [title: 'Tommorow: Weather Icon',          var: "tommorow_weather_icon", type: "open_weather", value: "", parse_func: "translateCondition",             
-                                                                        ow:  "daily.1.weather.0.description", can_be_overriden: "no",
-                                                                        in_units:  "none", icon: "alert-circle", icon_loc: "center",  icon_space: "",  
-                                                                        h: 4,  w: 8, baseline_row: 1,  baseline_column:  1, 
-                                                                        alignment: "center", text: "",
-                                                                        lpad: 0, rpad: 0, 
-                                                                        unit: "none",   decimal: "no", unit_space: "",
-                                                                        font: 40, font_weight: "100", 
-                                                                        imperial: "none",   metric: "none",
-                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: false,
-                              ],                        
         ];
         
-    }
+    //}
 
     dynamicPage(name: "mainPage") {        
        
@@ -928,13 +917,7 @@ def getWeatherData(){
         outUnits = settings["${measurement.var}_units"] ? settings["${measurement.var}_units"] : "none";
         decimals = measurement.decimal == "yes" ? settings["${measurement.var}_decimal"] : "none";
        
-        options.measurements << [ "name": measurement.var, 
-                                  "openweather": measurement.ow, 
-                                  "in_unit" : measurement.ow_units, 
-                                  "out_unit" : outUnits,
-                                  "decimals" : decimals,
-                                ];  
-       
+           
        options.tiles[index].display_unit = getAbbrev(settings["${measurement.var}_units"]);
     }
    
@@ -952,7 +935,7 @@ def getMapData(map, loc){
                 cur = cur[str];
             }
         } catch (e){
-             log.debug("Cannot find data: "+e); 
+             log.debug(loc+": Cannot find data: "+e); 
              return -1;
         }
     }
@@ -993,8 +976,13 @@ def getWindDirection(direction) {
 
 def applyConversion(tile, val){
     
-    out_units = settings["${tile.var}_units"];
-    in_units = tile.in_units;
+    try {
+        tile_type = atomicState.tile_type."${tile.type}";
+        out_units = atomicState.unit_type."${tile_type.type}".out;
+        in_units = tile_type.in_units;
+    } catch (e){
+         log.debug("Unable to find units:"+tile);    
+    }
       
     if (in_units != out_units)
     switch (in_units) {
@@ -1140,7 +1128,6 @@ def applyConversion(tile, val){
             case "time_seconds":
                  v = val*1000L;
                  d = new Date(v);
-                 log.debug(val+" "+v);
 
                 switch (out_units) {
                     case "time_twelve":
@@ -1258,7 +1245,7 @@ def translateCondition(tile, condition) {
     try {
         return_val = ["icon", pairings.find{el->  el.name == condition.toLowerCase()}.icon]; 
     } catch (e){
-        log.debug ("Unable to return "+condition+": "+e);
+        log.debug (tile.name+": Unable to return "+condition+": "+e);
         return_val = ["icon", "alert-circle"];  
     }
     return return_val;
@@ -1318,10 +1305,28 @@ def buildWeatherData(){
     data = parseJson(data);
     
     temp = atomicState.tile_settings;
+    
     temp.eachWithIndex{tile, index-> 
-       val = getMapData(data, tile.ow);
-       returnVal = "${tile.parse_func}"(tile, val);
-       tile."${returnVal[0]}" = returnVal[1];
+       try {
+           period = tile.period;
+           measurement = atomicState.tile_type."${tile.type}".ow;
+           if (period != "none" && measurement != "none")
+               val = getMapData(data, period+"."+measurement);
+       } catch (e){
+             log.debug(tile.name+": Unable to get data: "+period+", "+measurement);    
+       } 
+        
+        parse_func = atomicState.tile_type."${tile.type}".parse_func;
+        try{
+            if (parse_func!="none"){
+                returnVal = "${parse_func}"(tile, val);
+                tile."${returnVal[0]}" = returnVal[1];
+            } else {
+                tile.value = "";
+            }
+        } catch (error){
+             log.debug(tile.name+": Unable to find parse function: $parse_func" + e);   
+        }
     }
     atomicState.tile_settings = temp;
 }
@@ -1337,7 +1342,6 @@ def getTileHTML(item){
     
     height = item.h;
     html = "";    
-    log.debug(item);
     if (item.display==true){
             html += """ <div id="${var}_tile_main" class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
                                                   data-gs-y="${item.baseline_row}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
@@ -1369,7 +1373,15 @@ def getTileHTML(item){
         html += """<span id="${var}" style="color: ${item.font_color};">${item.value}</span>"""
         
         //Units
-        units = getAbbrev(settings["${var}_units"]);
+        try{
+            tile_type = atomicState.tile_type."${item.type}";
+            out_units = atomicState.unit_type."${tile_type.type}".out;
+            units = getAbbrev(out_units);
+        } catch (e){
+            log.debug(item.title+": Unable to get output units -- "+tile_type+" :: "+out_units);
+            units = "";
+        }
+        
         if (units == "unknown") units="";
         
         //Unit Spacing
@@ -1768,6 +1780,50 @@ h1 {
     """
     return html;
 }
+
+def defineNewTileDialog(){
+    
+    html = "";
+    html += """<dialog id="addTileDialog" class="mdl-dialog mdl-shadow--12dp" tabindex="-1" style = "background-color: rgba(255, 255, 255, 0.90); border-radius: 2vh; height: 95vh">
+                   <div class="mdl-dialog__content">
+                      <div class="mdl-layout">
+                          <div id="options_title" class="mdl-layout__title" style = "color: black; text-align: center;">
+                            New Tile Options
+                          </div>
+
+                         <div class="mdl-grid" style="width: 100%">
+                             <div class = "border-container">
+                                 <div id="menu_items" class="flex-container">
+                                     <div class="flex-item" style="max-width:18%; flex-basis: 18%" tabindex="-1">
+                                         <button id="save_button" type="button" class="mdl-button mdi mdi-content-save" onclick="addNewTileClose()" style="color: darkgreen; font-size: 4vh !important;"></button>
+                                         <div class="mdl-tooltip" for="save_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Save/Close</div>
+                                    </div>
+                                    <div class="flex-item" style="max-width:18%; flex-basis: 18% padding-bottom: 0 !important;" tabindex="-1">
+                                        <button id="close_button" type="button" class="mdl-button mdi mdi-close-circle" onclick="closeAddTileWindow()" style="color: darkred; font-size: 4vh !important;"></button>
+                                        <div class="mdl-tooltip" for="close_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Exit/Don't Save</div>
+                                    </div>
+                                </div>
+                           </div>
+
+                           <div class = "border-container">
+                                 <div id="menu_items" class="flex-container">
+
+
+                                </div>
+                          </div>
+                            
+
+                        </div>
+
+                        
+    """
+        
+    html += """      
+
+                </div></div></dialog>"""
+    
+    return html;
+}
         
 def defineTileDialog(){
  
@@ -1794,13 +1850,11 @@ def defineTileDialog(){
                     <div class="mdl-tooltip" for="trash_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Delete this tile</div>
                   </div>
                                
-                  <div class="flex-item" style="max-width:18%; flex-basis: 18%;" tabindex="-1">
-"""
-                    html += addTileMenu(var_name: "add_tile", default_icon: "shape-rectangle-plus", tooltip: "Add Tile", default_value: "none", side: "left",
-                                        function_name: "addNewTile", list: list);
-                    
-                    html+= """      
+                     <div class="flex-item" style="max-width:18%; flex-basis: 18%" tabindex="-1">
+                        <button id="new_tile" type="button" class="mdl-button mdi mdi-shape-rectangle-plus"" onclick="newTile()" style="color: darkgreen; font-size: 4vh !important;"></button>
+                        <div class="mdl-tooltip" for="new_tile" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Place New Tile</div>
                     </div>
+
                     <div class="flex-item" style="max-width:10%; flex-basis: 10%;" tabindex="-1">
                     <span class="mdi mdi-drag-vertical-variant" style="color: gray; font-size: 6vh !important; line-height: 6vh !important;"></span>
                   </div>
@@ -1882,19 +1936,21 @@ html +=  """
            
 /*****************TEXT COLOR***************************************/
         
-        html+= addColorPicker(var: "text", title: "Text");
+    html+= addColorPicker(var: "text", title: "Text");
     
 /****************BACKGROUND COLOR *********************************/
       
-        html+= addColorPicker(var: "background", title: "Background");
+    html+= addColorPicker(var: "background", title: "Background");
     
 /****************Font Adjustment  *********************************/
-    html += """<div class = "border-container">
-        <div id="text_box" class="flex-container">"""
+    html += """
+        <div class = "border-container">
+            <div id="text_box" class="flex-container">"""
     
-        html+= addSlider(var: "font_adjustment", title: "Relative Size", min: -100, value: 0, max:100);
+                html+= addSlider(var: "font_adjustment", title: "Relative Size", min: -100, value: 0, max:100);
     
-    html+="""
+                html+="""
+            </div>
         </div>
         <div class = "border-container">
             <!-- CUSTOM TEXT -->
@@ -1905,43 +1961,105 @@ html +=  """
                 </div>
             </div>
         </div>
+        </div></div></div>
 </dialog>
     """;
     return html;
 }
 
+def getTileListItem(Map map){
+    function = map.function;
+    var: map.name;
+    menu = map.list;
+    selections = map.selections.clone();
+    selections << var;
+    
+    
+    return "";
+    if (!menu.list) onclick = """onclick="${map.function}('${selections}')" """
+    
+    html = """<span id=${var}_menu ${onclick}>"""
+    if (menu.icon){
+            html += """<button id="${var}_button" class="mdl-button mdl-js-button mdl-js-ripple-effect" tabindex="-1">
+                       <i id="${var}_icon_display" class="mdi mdi-${default_icon}"  style="color: darkgreen; font-size: 6vh !important;"></i>
+                       </button>
+                    """
+    }
+    if (menu.text){
+            html += """<span id=${var}_text>${text}</span> """  
+    }   
+    if (menu.tooltip){
+            html += """<div class = "mdl-tooltip" for = "${button_var}_button">${tooltip}</div>"""
+    }
+    html += """</span>"""
+
+    if (menu.list) {
+            html += """<ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="${var}_menu" style="overflow-y: scroll; max-height: 50vh; line-height: 10px;"> """
+            
+            menu.list.each{item->
+                html+= getTileListItem(name: var+"_"+item.name, list: item.list, selections: selections, function: function);
+            }
+        
+            html += """</ul>"""
+    } else {
+        var = item.name.replaceAll(" ","");
+        var = parent_+var;
+        select = selections.clone();
+        select << [item.name];
+        
+        func = """onclick="${function_name}('${select}')" """;
+        if (item.list){
+            html +=  getTileListItem(name: item.name, parent: var, function: function, list: item.list, selections: select);
+        }
+        else {
+            html += """ <li id = "${var}_list_main" class="mdl-menu__item" ${func}>
+                            <span id="${var}_list_name">${item.name}</span>
+                        </li>"""
+        }
+        
+    }
+    
+    html += """</ul>"""
+    return html;
+}
+
+
 def addTileMenu(Map map){
     
     
-     button_var = map.var_name;
+     var = map.var_name;
      default_val = map.default_value;
      default_icon = map.default_icon;
      item_list = map.list;
      tooltip = map.tooltip ? map.tooltip : "";
      function_name = map.function_name;
     
-    def html = """
-        <div>
-        <div id = "${button_var}_value" style="display: none;">${default_val}</div>
-        <div id = "${button_var}_icon" style="display: none;">mdi-${default_icon}</div>
-        <span>
-            <button id="${button_var}_button" class="mdl-button mdl-js-button mdl-js-ripple-effect" tabindex="-1">
-                <i id="${button_var}_icon_display" class="mdi mdi-${default_icon}"  style="color: darkgreen; font-size: 6vh !important;"></i>
-            </button>
-            <div class = "mdl-tooltip" for = "${button_var}_button">${tooltip}</div>
-        </span>
-        
-        
-        <ul class="mdl-menu mdl-js-menu mdl-js-ripple-effect" for="${button_var}_button"  style="overflow-y: scroll; max-height: 50vh; line-height: 10px;"> """
-            item_list.each{item->
-                html += """ <li id = "${item.var}_list_main" class="mdl-menu__item" onclick="${function_name}('${item.var}')">
-                            <div id = "${item.var}_list_item" style="display: none;">${item.icon}</div>
-                            <span id="${item.var}_list_title" class=" mdi mdi-${item.icon}" style="vertical-align: middle; font-weight: ${weight};"></span>
-                            <span id="${item.var}_list_name">${item.text ? item.text : item.name}</span>
-                    </li>"""
-    }
+    current_condition_list = [
+                               [name: "Temperature"], 
+                               [name:"Real Feel"], 
+                               [name: "Humidity"], 
+                               [name:  "Dew Point"], 
+                               [name: "Wind Speed"]
+                            ];
+     forecast_list =          [[name: "High Temperature"], [name: "Low Temperature"], [name:"Real Feel"], [name: "Humidity"], [name:  "Dew Point"], [name: "Wind Speed"], [name:  "Wind Gust"]]; 
+     daily_list =             [[name: "Today",     list: forecast_list], 
+                               [name: "Tommorrow", list: forecast_list], 
+                               [name: "2 Days",    list: forecast_list], 
+                               [name: "3 Days",    list: forecast_list], 
+                               [name: "4 Days",    list: forecast_list], 
+                               [name: "5 Days",    list: forecast_list]];
+                                                                                                                 
+    testList = [name: "Main", icon: default_icon, list:[[name: "Current",         list: current_condition_list], 
+                                                        [name: "Daily Forecast",  list: daily_list],
+                                                        [name: "Blank Tile"]],
+                                   
+               ];
     
-    html += """</ul></div>"""
+    def html = """ <div> """
+        
+        html += getTileListItem(var: var, title: testList.name,  list: testList.list, parent: "", function: function_name, selections: []);
+    
+        html += """</div>"""
        
     return html;    
                 
@@ -2097,7 +2215,7 @@ def getWeatherTile() {
                <body onload="initializeWeather()">"""
     html += defineHTML_Tile();
     html += defineTileDialog();
-    
+    html += defineNewTileDialog();
     
     
     html += defineScript();
