@@ -810,10 +810,7 @@ def longTermStoragePage(){
                             bytes = (events.size*128.0)/1024.0
                             total_bytes += bytes;
                             
-                            log.debug("Then = "+then);
-                            log.debug("Got "+events.size+" Events");
                             recommendedUpdateRate = Math.round(((events[0].date-events[events.size-1].date)/1000)/60);
-                            log.debug("Update Rate = "+recommendedUpdateRate/60+" hours");
                     }
                     
                 }
@@ -1015,8 +1012,6 @@ private buildData() {
                             
                 newData << sensor.statesSince(attribute, then, [max: 2000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
                 newData = newData.flatten();
-                log.debug(newData)
-                log.debug(newData.size);
                 oldData += newData.reverse();
                 
                          
