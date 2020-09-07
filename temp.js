@@ -1945,3 +1945,32 @@ function addNewTileClose(){
 
     newTileDialog.close();
 }
+
+function showTileType(tileType){
+    console.log(tileType);
+
+    switch (tileType){
+        case "daily" :
+            $("#current_nt_main").css("display", "none");
+            $("#hourly_nt_main").css("display", "none");
+            $("#daily_nt_main").css("display", "flex");
+            $("#daily_time_main").css("display", "flex");
+            $("#hourly_time_main").css("display", "none");
+        break;
+        case "current" :
+            $("#daily_nt_main").css("display", "none");
+            $("#hourly_nt_main").css("display", "none");
+            $("#current_nt_main").css("display", "flex");
+            $("#daily_time_main").css("display", "none");
+            $("#hourly_time_main").css("display", "none");
+        break;
+        case "hourly" :
+            $("#daily_nt_main").css("display", "none");
+            $("#current_nt_main").css("display", "none");
+            $("#hourly_nt_main").css("display", "flex");
+            $("#daily_time_main").css("display", "none");
+            $("#hourly_time_main").css("display", "flex");
+        break;
+    }
+
+}
