@@ -1,5 +1,7 @@
 import groovy.json.*;
 import java.text.SimpleDateFormat;
+
+
 /**
  *  Hubigraph Line Graph Child App
  *
@@ -72,6 +74,12 @@ preferences {
         path("/getSubscriptions/") {
             action: [
                 GET: "getSubscriptions"
+            ]
+        }
+        
+        path("/updateSettings/") {
+            action: [
+                POST: "updateSettings"
             ]
         }
     }
@@ -309,9 +317,11 @@ def mainPage() {
     def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
 
     atomicState.tile_dimensions = [rows: 14, columns: 26];
-    
       
-    //if (!atomicState.tile_settings){
+    if (!atomicState.tile_settings){
+        
+        log.debug("Reload");
+        
         atomicState.unit_type = [ temperature:          [name: "Temperature",         enum: unitTemp,     out:  "fahrenheit"],
                                   percent:              [name: "Percentage",          enum: unitPercent,  out:  "percent_numeric"],
                                   weather_icon:         [name: "Weather Icons",       enum: "none",       out:  "none"],
@@ -615,7 +625,7 @@ def mainPage() {
                               
         ];
         
-    //}
+    }
 
     dynamicPage(name: "mainPage") {        
        
@@ -630,7 +640,7 @@ def mainPage() {
                     container = [];
                     container << parent.hubiForm_page_button(this, "Select Device/Data", "deviceSelectionPage", "100%", "vibration");
                     container << parent.hubiForm_page_button(this, "Configure Tile", "tileSetupPage", "100%", "poll");              
-                    parent.hubiForm_container(this, container, 1); 
+                    parent.hubiForm_container(this, container, 0); 
                 }
                 
                 parent.hubiForm_section(this, "Local Tile URL", 1, "link"){
@@ -643,9 +653,9 @@ def mainPage() {
                 if (openweather_refresh_rate){
                      parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
                          container = [];
-                         container << defineUpdateDataHTML("tile_settings_HTML");
-                         container << parent.hubiForm_graph_preview(this) 
-                         parent.hubiForm_container(this, container, 1); 
+                         container << getPreviewWindow("tile_settings_HTML", "mainPage");
+                         parent.hubiForm_container(this, container, 0); 
+                         
                      } 
             
                     parent.hubiForm_section(this, "Hubigraph Tile Installation", 2, "apps"){
@@ -678,6 +688,65 @@ def mainPage() {
             } //else 
         
     } //dynamicPage
+}
+
+def verifyDeviceCallback(response, data) {
+     log.debug("Got Data");   
+}
+
+def getPreviewWindow(var, page){
+    
+    def params = [
+        uri: "${state.localEndpointURL}",
+		path: "graph/?access_token=${state.endpointSecret}",
+        requestContentType: "application/json",
+    ]
+    
+    asynchttpGet(verifyDeviceCallback, params);
+    
+    
+    
+    if (!settings["$var"]){
+       app.updateSetting("${var}", [value: "", type: "string"]);
+   } 
+
+   html = """
+                <style> 
+                   .iframe-container {
+                        overflow: hidden;
+                        width: 55vmin;
+                        height: 65vmin;
+                        position: relative;
+                   }
+                   .iframe-container iframe {
+                        border: 0;
+                        left: 0;
+                        position: absolute;
+                        top: 0;
+                   }
+                </style>
+                 
+                """
+                //<input type="text" id="settings${var}" name="settings[${var}]" value="${settings[var]}" style="display: none;" >
+                //<div class="form-group" style="display:none;">
+                //   <input type="hidden" name="${var}.type" value="text">
+                //   <input type="hidden" name="${var}.multiple" value="false">
+                //</div>
+                //<div>
+                html+="""
+                <div class="iframe-container">
+                        <iframe id="preview_frame" style="width: 100%; height: 100%; position: relative; z-index: 1; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}" data-fullscreen="false" 
+                            onload="(() => {
+                         })()""></iframe>
+                </div>
+                <button id="save_button" type="button" name="_action_href_${page}|${page}|1" class="btn btn-default   hrefElem  mdl-button mdl-js-button mdl-button--fab mdl-button--colored" 
+                                      style="text-align:left; margin: 10;" submitOnChange>
+                        <i class="material-icons">save</i>
+                        <span style="text-align:left;white-space:pre-wrap"></span>
+                </button>
+                </div>
+                """
+    return (html.replace('\t', '').replace('\n', '').replace('  ', ''));
 }
 
 /********************************************************************************************************************************
@@ -735,6 +804,11 @@ def updated() {
         }
     }
     
+    
+}
+
+def processCallBack(response, data) {
+    log.debug("Got Data");
 }
 
 def initialize() {
@@ -906,17 +980,12 @@ def getWeatherData(){
         "color_icons": color_icons,
         "openweather_refresh_rate": openweather_refresh_rate,
         "measurements": [],
-        "tiles" : atomicState.tile_settings
+        "tiles" : atomicState.tile_settings,
+        "api_code" : "${state.endpointSecret}",
+        "url" : "${state.localEndpointURL}",      
         ];
     
-  atomicState.tile_settings.eachWithIndex{measurement, index->
-        outUnits = settings["${measurement.var}_units"] ? settings["${measurement.var}_units"] : "none";
-        decimals = measurement.decimal == "yes" ? settings["${measurement.var}_decimal"] : "none";
-       
-           
-       options.tiles[index].display_unit = getAbbrev(settings["${measurement.var}_units"]);
-    }
-   
+     
     return options;
 }
 def getMapData(map, loc){
@@ -943,10 +1012,8 @@ def applyDecimals(tile, val){
     value = val.toString();
     if (value.isNumber()){
         num_decimals = tile.decimals
-        if (num_decimals) {
-            value = sprintf("%.${num_decimals}f", value.toFloat());
-            return value;
-        } else return val;
+        value = sprintf("%.${num_decimals}f", value.toFloat());
+        return value;
     }
     else return val;
 }
@@ -1285,18 +1352,7 @@ def buildWeatherData(){
     def selections = settings["tile_settings"];
     
     //Update the Tile Locations/Colors/Etc
-    if (tile_settings_HTML){
-         try{
-             def jsonSlurper = new JsonSlurper()
-             text = jsonSlurper.parseText(tile_settings_HTML);
-             if (text) {
-                 atomicState.tile_settings = text;
-             }
-         } catch (e){
-             log.debug("Bad Data from updateDataLocation: "+e);
-        }
-    }
-    
+        
     data = parent.getOpenWeatherData();
     data = parseJson(data);
     
@@ -1796,7 +1852,7 @@ def defineSelectBox(Map map){
     
      <div id=${var}_main class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" ${visible}>
             <select class="mdl-textfield__input" id="${var}" name="${var}" style="line-height: 5vh !important" onchange="${function}(this.value)">
-            <option></option>
+            <option value="blank"></option>
     """
     list.each{key, item->
         html+="""<option value="${key}">${item.name}</option>"""
@@ -1865,7 +1921,7 @@ def defineNewTileDialog(){
                            <div class = "border-container">
                                  <div id="menu_items" class="flex-container">
                                      <div class="flex-item" style="max-width:50%; flex-basis: 50%" tabindex="-1">"""
-                           html+= defineSelectBox(title: "Title Span", var: "new_tile_span", list: [current: [name: "Current"], daily: [name: "Daily"], hourly: [name: "Hourly"]], function: "showTileType"); 
+                           html+= defineSelectBox(title: "Title Span", var: "new_tile_span", list: [current: [name: "Current"], daily: [name: "Daily"], hourly: [name: "Hourly"]], function: "selectTileSpan"); 
                                      
                            html += """
                                     </div>
@@ -1884,8 +1940,8 @@ def defineNewTileDialog(){
                            html += """
                                  <div id="menu_items" class="flex-container">
                                      <div class="flex-item" style="max-width:75%; flex-basis: 90%" tabindex="-1">"""
-                           html+= defineSelectBox(title: "Days to Display", var: "daily_time", list: daily_list,   visible: false, function: "selectTileType"); 
-                           html+= defineSelectBox(title: "Hours to Display", var: "hourly_time", list: hourly_list,  visible: false, function: "selectTileType"); 
+                           html+= defineSelectBox(title: "Days to Display", var: "daily_time", list: daily_list,   visible: false, function: "selectTileTime"); 
+                           html+= defineSelectBox(title: "Hours to Display", var: "hourly_time", list: hourly_list,  visible: false, function: "selectTileTime"); 
                            html += """
                                     </div>
                                 </div>
@@ -2265,9 +2321,9 @@ def defineUpdateDataHTML(var){
    } 
 
    html = """
-                <input type="text" id="settings${var}" name="settings[${var}]" value="${settings[var]}" style="display: none;" />
+                <input type="text" id="settings${var}" name="settings[${var}]" value="${settings[var]}" style="display: none;" >
                 <div class="form-group">
-                   <input type="hidden" name="${var}.type" value="text">
+                   <input type="hidden" name="${var}.type" value="text" submitOnChange>
                    <input type="hidden" name="${var}.multiple" value="false">
                 </div>
                 
@@ -2342,4 +2398,14 @@ def getData() {
 def getOptions() {
     render(contentType: "text/json", data: JsonOutput.toJson(getWeatherData()));
 }
+
+def updateSettings() {
+    
+    atomicState.tile_settings = request.JSON;
+    //atomicState.temp_tile_settings = request.JSON;
+
+   
+    render(contentType: "application/json", data: """{"status":"success"}""");
+}
+
 
