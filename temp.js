@@ -1578,8 +1578,31 @@ function setupNewTileMenu(){
 function setSpacingIcon(space, menu){
 
     let icon = "arrow-collapse-horizontal";
-    if (space == " ") icon = "keyboard-space";
-    if (space == "  ") icon = "arrow-expand-horizontal";
+    document.getElementById(menu+"_value").textContent = "no space";
+    if (space == " ") {
+        icon = "keyboard-space";
+        document.getElementById(menu+"_value").textContent = "single space";
+    }
+    if (space == "  "){
+        icon = "arrow-expand-horizontal";
+        document.getElementById(menu+"_value").textContent = "double space";
+    }
+
+    replaceIcons(menu+"_button", icon);
+}
+
+function setDecimalIcon(decimal, menu){
+
+    let icon = "hexadecimal";
+    document.getElementById(menu+"_value").textContent = "no decimal";
+    if (decimal == 1) {
+        icon = "surround-sound-2-0";
+        document.getElementById(menu+"_value").textContent = "one decimal";
+    }
+    if (decimal == 2) {
+        icon = "decimal";
+        document.getElementById(menu+"_value").textContent = "two decimals";
+    }
 
     replaceIcons(menu+"_button", icon);
 }
@@ -1645,6 +1668,10 @@ function setOptions(tile) {
     setSlider("text", "%", obj.font_opacity);
     setSlider("background", "%", obj.background_opacity);
 
+    //Set the decimal places 
+    decimals = obj.decimals;
+    setDecimalIcon(decimals, "decimal_places");
+
     //Set up the new tile menu by "not showing" the already available tiles
     setupNewTileMenu();
 
@@ -1661,12 +1688,21 @@ function closeWindow() {
 
 function setSpacing(item_name, spacing){
     text = document.getElementById(item_name);
+    console.log('"'+text.textContent+'"'+spacing);
     switch (spacing.toLowerCase()){
         case "no space": text.textContent = ""; return "";
         case "single space": text.textContent = " "; return " ";
         case "double space": text.textContent = "  "; return "  ";
     }
     return "";
+
+}
+function getDecimals(text){
+    switch (text.toLowerCase()){
+        case "no decimal": return 0;
+        case "one decimal": return 1;
+        case "two decimals": return 2;
+    }
 
 }
 
@@ -1702,8 +1738,11 @@ function saveWindow() {
     let icon_spacing = document.getElementById("icon_spacing_value").textContent;
     icon_spacing = setSpacing(focusTile+"_icon", icon_spacing);
     
-    let units_spacing = document.getElementById("units_spacing_value").textContent;
-    unit_spacing = setSpacing(focusTile+"_unit_space", units_spacing);
+    let unit_spacing = document.getElementById("units_spacing_value").textContent;
+    unit_spacing = setSpacing(focusTile+"_unit_space", unit_spacing);
+
+    let decimals = getDecimals(document.getElementById("decimal_places_value").textContent);
+    console.log("Decimals: "+decimals);
 
     obj = getTile(focusTile);
     if (obj.value==undefined) {
@@ -1720,9 +1759,12 @@ function saveWindow() {
     obj.icon = icon;
     obj.icon_space = icon_spacing;
     obj.unit_space = unit_spacing;
+    obj.decimals = decimals;
 
     setText(null, focusTile);
     updateGroovy();
+    setTimeout(() => { getWeatherData() } , 5000);
+
 }
 
 function saveAllWindow() {
@@ -1848,8 +1890,6 @@ function addNewTile(var_name) {
     setText( null, var_name );
     updateGroovy();
     getWeatherData();
-    updateGroovy();
-
 }
 
 function createNewTile(item){
@@ -1909,6 +1949,17 @@ function updateGroovy() {
     let data =  JSON.stringify(options.tiles);
     let el = jQuery("#settingstile_settings_HTML", parent.document);
     el.attr('value', data);
+    //jsonSubmit (this, data, false);
+
+    $.ajax({
+        type: 'POST',
+        url: options.url+`/updateSettings/?access_token=`+options.api_code,
+        data: data,
+        contentType: 'application/json'
+    });
+
+   // $.post(`http://192.168.1.27/apps/api/4571/updateSettings/?access_token=9e773bb7-a089-41fe-b454-2743d1c4a7a2`, 
+   //         options.tiles, () => console.log('Succeess!'), 'json');    
 }
 
 function getWeatherData() {
@@ -1944,18 +1995,26 @@ function closeAddTileWindow(){
 function addNewTileClose(){
 
     newTileDialog.close();
+    console.log(selected_new_tile_span+" "+selected_new_tile_type+" "+selected_new_tile_time);
 }
 
-function showTileType(tileType){
-    console.log(tileType);
+var selected_new_tile_span;
+var selected_new_tile_type;
+var selected_new_tile_time;
 
-    switch (tileType){
+
+function selectTileSpan(tileSpan){
+    selected_new_tile_span = tileSpan;
+
+    switch (tileSpan){
         case "daily" :
             $("#current_nt_main").css("display", "none");
             $("#hourly_nt_main").css("display", "none");
             $("#daily_nt_main").css("display", "flex");
             $("#daily_time_main").css("display", "flex");
             $("#hourly_time_main").css("display", "none");
+            $("#daily_nt").val("blank");
+            $("#daily_time").val("blank");
         break;
         case "current" :
             $("#daily_nt_main").css("display", "none");
@@ -1963,6 +2022,7 @@ function showTileType(tileType){
             $("#current_nt_main").css("display", "flex");
             $("#daily_time_main").css("display", "none");
             $("#hourly_time_main").css("display", "none");
+            $("#current_nt").val("blank");
         break;
         case "hourly" :
             $("#daily_nt_main").css("display", "none");
@@ -1970,7 +2030,16 @@ function showTileType(tileType){
             $("#hourly_nt_main").css("display", "flex");
             $("#daily_time_main").css("display", "none");
             $("#hourly_time_main").css("display", "flex");
+            $("#hourly_nt").val("blank");
+            $("#hourly_time").val("blank");
         break;
     }
+}
 
+function selectTileType(tileType){
+    selected_new_tile_type = tileType;
+}
+
+function selectTileTime(tileTime){
+    selected_new_tile_time = tileTime;
 }
