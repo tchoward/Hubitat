@@ -158,9 +158,6 @@ def tileSetupPage(){
                                                            max: 100, 
                                                            units: "%",
                                                            submit_on_change: false);
-            
-            
-            
                        
             container << parent.hubiForm_switch     (this, title: "Color Icons?", name: "color_icons", default: false);
                         
@@ -315,22 +312,23 @@ def mainPage() {
     def unitTrend =      [["trend_numeric": "Numeric (↑ < 0, → = 0, ↓ > 0)"], ["trend_text": "Text (↑ rising, → steady, ↓ falling)"]];
     def unitPercent =    [["percent_numeric": "Numeric (0 to 100)"], ["percent_decimal": "Decimal (0.0 to 1.0)"]];
     def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
-
+    def unitUVI=         [["uvi" : "UV Index"]];
+    
     atomicState.tile_dimensions = [rows: 14, columns: 26];
       
     if (!atomicState.tile_settings){
         
-        log.debug("Reload");
         
-        atomicState.unit_type = [ temperature:          [name: "Temperature",         enum: unitTemp,     out:  "fahrenheit"],
-                                  percent:              [name: "Percentage",          enum: unitPercent,  out:  "percent_numeric"],
-                                  weather_icon:         [name: "Weather Icons",       enum: "none",       out:  "none"],
-                                  weather_description:  [name: "Weather Description", enum: "none",       out:  "none"],
-                                  pressure:             [name: "Pressure",            enum: unitPressure, out:  "inches_mercury"],
-                                  velocity:             [name: "Velocity",            enum: unitWind,     out:  "miles_per_hour"], 
-                                  time:                 [name: "Time",                enum: unitTime,     out:  "time_twelve"],
-                                  depth:                [name: "Depth",               enum: unitDepth,    out:  "inches"],
-                                  direction:            [name: "Direction",           enum: unitDirection,out:  "cardinal"],
+        atomicState.unit_type = [ temperature:          [name: "Temperature",         enum: unitTemp,      out:  "fahrenheit"],
+                                  percent:              [name: "Percentage",          enum: unitPercent,   out:  "percent_numeric"],
+                                  weather_icon:         [name: "Weather Icons",       enum: "none",        out:  "none"],
+                                  weather_description:  [name: "Weather Description", enum: "none",        out:  "none"],
+                                  pressure:             [name: "Pressure",            enum: unitPressure,  out:  "inches_mercury"],
+                                  velocity:             [name: "Velocity",            enum: unitWind,      out:  "miles_per_hour"], 
+                                  time:                 [name: "Time",                enum: unitTime,      out:  "time_twelve"],
+                                  depth:                [name: "Depth",               enum: unitDepth,     out:  "inches"],
+                                  direction:            [name: "Direction",           enum: unitDirection, out:  "cardinal"],
+                                  uvi:                  [name: "UV Index",            enum: unitUVI,       out:  "uvi"],
                                  ];
                                  
                                   
@@ -368,7 +366,7 @@ def mainPage() {
                                  
                                  wind_speed:            [name: "Wind Speed",             type: "velocity",             parse_func: "formatNumericData",   ow: "wind_speed",           in_units: "meters_per_second",    current: "yes", hourly: "yes", daily: "yes"],
                                  wind_gust:             [name: "Wind Gust",              type: "velocity",             parse_func: "formatNumericData",   ow: "wind_gust",            in_units: "meters_per_second",    current: "yes", hourly: "yes", daily: "yes"],
-                                 wind_direction:        [name: "Wind Direction",         type: "direction",            parse_func: "formatNumericData",   ow: "wind_direction",       in_units: "degrees",              current: "yes", hourly: "yes", daily: "yes"],
+                                 wind_direction:        [name: "Wind Direction",         type: "direction",            parse_func: "formatNumericData",   ow: "wind_deg",             in_units: "degrees",              current: "yes", hourly: "yes", daily: "yes"],
                                  
                                  rain_past_hour:        [name: "Rain past Hour",         type: "depth",                parse_func: "formatNumericData",   ow: "rain.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no"],
                                  snow_past_hour:        [name: "Snow past Hour",         type: "depth",                parse_func: "formatNumericData",   ow: "snow.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no"],
@@ -625,6 +623,16 @@ def mainPage() {
                               
         ];
         
+    } else {
+
+        //Update the Output Types
+        temp = atomicState.unit_type;
+        temp.each{key, item->
+            if (settings["${key}_units"]){
+                temp."${key}".out = settings["${key}_units"];
+            }
+        }
+        atomicState.unit_type = temp;         
     }
 
     dynamicPage(name: "mainPage") {        
@@ -691,7 +699,6 @@ def mainPage() {
 }
 
 def verifyDeviceCallback(response, data) {
-     log.debug("Got Data");   
 }
 
 def getPreviewWindow(var, page){
@@ -808,7 +815,6 @@ def updated() {
 }
 
 def processCallBack(response, data) {
-    log.debug("Got Data");
 }
 
 def initialize() {
@@ -975,15 +981,19 @@ def getIconList(){
 def getWeatherData(){  
     
     def options = [
-        "tile_units": tile_units,
-        "display_day": day_num,
-        "color_icons": color_icons,
+        "tile_units": atomicState.unit_type,
         "openweather_refresh_rate": openweather_refresh_rate,
-        "measurements": [],
-        "tiles" : atomicState.tile_settings,
-        "api_code" : "${state.endpointSecret}",
-        "url" : "${state.localEndpointURL}",      
+        "tiles" :     atomicState.tile_settings,
+        "tile_type" : atomicState.tile_type,
+        "api_code" :  "${state.endpointSecret}",
+        "url" :       "${state.localEndpointURL}",      
         ];
+    
+    options.out_units = [:];
+    
+    atomicState.unit_type.each {key, measurement->
+        options.out_units << [ "${key}" : settings["${key}_units"]];
+    }
     
      
     return options;
@@ -1044,7 +1054,7 @@ def applyConversion(tile, val){
         out_units = atomicState.unit_type."${tile_type.type}".out;
         in_units = tile_type.in_units;
     } catch (e){
-         log.debug("Unable to find units:"+tile);    
+         log.debug("Unable to find units:: Input units = "+in_units+"  Output units = "+out_units);    
     }
       
     if (in_units != out_units)
@@ -1349,15 +1359,12 @@ def formatDewPoint(tile, val) {
 def buildWeatherData(){
     
     def val; 
-    def selections = settings["tile_settings"];
-    
-    //Update the Tile Locations/Colors/Etc
+    def selections = settings["tile_settings"];                    
         
     data = parent.getOpenWeatherData();
     data = parseJson(data);
     
     temp = atomicState.tile_settings;
-    
     temp.eachWithIndex{tile, index-> 
        try {
            period = tile.period;
@@ -1367,7 +1374,6 @@ def buildWeatherData(){
        } catch (e){
              log.debug(tile.name+": Unable to get data: "+period+", "+measurement);    
        } 
-        
         parse_func = atomicState.tile_type."${tile.type}".parse_func;
         try{
             if (parse_func!="none"){
@@ -1426,11 +1432,11 @@ def getTileHTML(item){
         
         //Units
         try{
-            tile_type = atomicState.tile_type."${item.type}";
-            out_units = atomicState.unit_type."${tile_type.type}".out;
+            tile_type = atomicState.tile_type."${item.type}".type;
+            out_units = atomicState.unit_type."${tile_type}".out;
+            log.debug("Tile Type = "+tile_type+" Out_units: "+out_units);
             units = getAbbrev(out_units);
         } catch (e){
-            log.debug(item.title+": Unable to get output units -- "+tile_type+" :: "+out_units);
             units = "";
         }
         
