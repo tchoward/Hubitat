@@ -313,11 +313,17 @@ def mainPage() {
     def unitPercent =    [["percent_numeric": "Numeric (0 to 100)"], ["percent_decimal": "Decimal (0.0 to 1.0)"]];
     def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
     def unitUVI=         [["uvi" : "UV Index"]];
+    def unitDistance=    [["miles": "Miles"]];
     
     atomicState.tile_dimensions = [rows: 14, columns: 26];
       
-    if (!atomicState.tile_settings){
-        
+    //if (!atomicState.tile_settings){
+    if (1) {
+        atomicState.span_type = [ current: [title: "Current Measurements", num_time: 0, time_units:  ""],  
+                                  daily:   [title: "Daily Forecast", num_time: 7, time_units:  "day"],
+                                  hourly:  [title: "Hourly Forecast", num_time: 48, time_units: "hour"],
+                                  blank:   [title: "Blank Tile", num_time: 0, time_units:  ""]
+                                ];
         
         atomicState.unit_type = [ temperature:          [name: "Temperature",         enum: unitTemp,      out:  "fahrenheit"],
                                   percent:              [name: "Percentage",          enum: unitPercent,   out:  "percent_numeric"],
@@ -329,6 +335,7 @@ def mainPage() {
                                   depth:                [name: "Depth",               enum: unitDepth,     out:  "inches"],
                                   direction:            [name: "Direction",           enum: unitDirection, out:  "cardinal"],
                                   uvi:                  [name: "UV Index",            enum: unitUVI,       out:  "uvi"],
+                                  visibility:           [name: "Visibility",          enum: unitDistance,  out:  "visibility"],
                                  ];
                                  
                                   
@@ -372,12 +379,12 @@ def mainPage() {
                                  snow_past_hour:        [name: "Snow past Hour",         type: "depth",                parse_func: "formatNumericData",   ow: "snow.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no"],
                                  rain:                  [name: "Rain",                   type: "depth",                parse_func: "formatNumericData",   ow: "rain",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes"],
                                  snow:                  [name: "Snow",                   type: "depth",                parse_func: "formatNumericData",   ow: "snow",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes"],
-                                 chance_precipitation:  [name: "Chance of Precipitation",type: "percent",              parse_func: "formatNumericData",   ow: "pop",                  in_units: "percent_numeric",      current: "yes", hourly: "yes", daily: "yes"],
+                                 chance_precipitation:  [name: "Chance of Precipitation",type: "percent",              parse_func: "formatNumericData",   ow: "pop",                  in_units: "percent_decimal",      current: "yes", hourly: "yes", daily: "yes"],
                                  
                                  sunrise:               [name: "Sunrise",                type: "time",                 parse_func: "formatNumericData",   ow: "sunrise",              in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes"],
                                  sunset:                [name: "Sunset",                 type: "time",                 parse_func: "formatNumericData",   ow: "sunset",               in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes"],
                             
-                                 blank:                 [name: "Blank Tile",             type: "blank",                parse_func: "none",                ow: "none",                 in_units: "none",                 current: "yes", hourly: "yes", daily: "yes"]
+                                 blank:                 [name: "Blank Tile",             type: "blank",                parse_func: "none",                ow: "none",                 in_units: "none",                 current: "no", hourly: "no", daily: "no"]
         ];
     
         atomicState.tile_settings = [[title: 'Forecast Weather Icon',          var: "weather_icon",  type: "weather_icon", period:"current", value: "",            
@@ -623,6 +630,29 @@ def mainPage() {
                               
         ];
         
+        typeList =  new TreeMap([:]);
+        typeList.main_list = new TreeMap([:]);
+        atomicState.span_type.each{span_key, span->
+            typeList.main_list.put("${span_key}", [name: span_key.capitalize()]);
+            typeList."${span_key}" =  new TreeMap([:]);
+            typeList."${span_key}".measurement_list = new TreeMap([:]);
+            atomicState.tile_type.each {key, item-> 
+                if (item."${span_key}" == "yes") 
+                    typeList."${span_key}".measurement_list << ["${key}": [name: item.name]];
+            }
+            if (span.num_time > 0) {
+                typeList."${span_key}".time_list = new TreeMap([:]);
+                typeList."${span_key}".title = "${span.time_units.capitalize()}s to Display";
+                for (i=1; i<span.num_time; i++){
+                    if (i==1) typeList."${span_key}".time_list << ["01" : [name: " $i ${span.time_units} from now"]];
+                    else if (i<10) typeList."${span_key}".time_list << ["0$i" : [name: " $i ${span.time_units}s from now"]];
+                    else typeList."${span_key}".time_list << ["$i" : [name: " $i ${span.time_units}s from now"]];
+                }
+            } 
+        }
+        //atomicState.newTileDialog = "";
+        atomicState.newTileDialog = typeList.sort();
+               
     } else {
 
         //Update the Output Types
@@ -985,6 +1015,7 @@ def getWeatherData(){
         "openweather_refresh_rate": openweather_refresh_rate,
         "tiles" :     atomicState.tile_settings,
         "tile_type" : atomicState.tile_type,
+        "new_tile_dialog" : atomicState.newTileDialog,
         "api_code" :  "${state.endpointSecret}",
         "url" :       "${state.localEndpointURL}",      
         ];
@@ -1054,7 +1085,8 @@ def applyConversion(tile, val){
         out_units = atomicState.unit_type."${tile_type.type}".out;
         in_units = tile_type.in_units;
     } catch (e){
-         log.debug("Unable to find units:: Input units = "+in_units+"  Output units = "+out_units);    
+        log.debug("Unable to find units for ${tile.title}:: Input units = "+in_units+"  Output units = "+out_units);
+         log.debug(e);
     }
       
     if (in_units != out_units)
@@ -1338,6 +1370,10 @@ def formatConditionText(tile, val){
 
 def formatTitle(tile, val){
     return["value", ""];   
+}
+
+def formatPressure(tile, val){
+    return ["value", "Pressure Trend"];    
 }
 
 def formatDewPoint(tile, val) {
@@ -1874,33 +1910,8 @@ def defineSelectBox(Map map){
 }
 
 def defineNewTileDialog(){
-    typeList = [:];
-    typeList["daily"] = new TreeMap([:]);
-    typeList["hourly"] = new TreeMap([:]);
-    typeList["current"] = new TreeMap([:]);
-    atomicState.tile_type.each {key, item->  
-        if (item.daily=="yes") typeList["daily"] << ["${key}": [name: item.name]];
-        if (item.current == "yes") typeList["current"] << ["${key}": [name: item.name]];  
-        if (item.hourly == "yes") typeList["hourly"] << ["${key}": [name: item.name]];  
-    }
     
-    hourly_list = new TreeMap([:]);
-    for (i=1; i<48; i++){
-        if (i==1) hourly_list << ["01" : [name: " $i Hour from now "]];
-        if (i<10) hourly_list << ["0$i" : [name: " $i Hours from now "]];
-        else hourly_list << ["$i" : [name: " $i Hours from now "]]; 
-    }
-    
-    daily_list = new TreeMap([:]);
-    for (i=0; i<7; i++){
-        if (i==0) daily_list << ["0" : [name: "Today"]];
-        else if (i==1) daily_list << ["1" : [name: "Tommorow"]];
-        else daily_list << ["$i" : [name: "$i Days from Today"]];
-    }
-    
-    
-    
-    
+    typeList = atomicState.newTileDialog;
     
     html = "";
     html += """<dialog id="addTileDialog" class="mdl-dialog mdl-shadow--12dp" tabindex="-1" style = "background-color: rgba(255, 255, 255, 0.90); border-radius: 2vh; height: 95vh">
@@ -1927,7 +1938,8 @@ def defineNewTileDialog(){
                            <div class = "border-container">
                                  <div id="menu_items" class="flex-container">
                                      <div class="flex-item" style="max-width:50%; flex-basis: 50%" tabindex="-1">"""
-                           html+= defineSelectBox(title: "Title Span", var: "new_tile_span", list: [current: [name: "Current"], daily: [name: "Daily"], hourly: [name: "Hourly"]], function: "selectTileSpan"); 
+                           list = new TreeMap(typeList.main_list);
+                           html+= defineSelectBox(title: "Title Span", var: "new_tile_span", list: list, function: "selectTileSpan"); 
                                      
                            html += """
                                     </div>
@@ -1936,9 +1948,14 @@ def defineNewTileDialog(){
                             html += """
                                  <div id="menu_items" class="flex-container">
                                      <div class="flex-item" style="max-width:75%; flex-basis: 75%" tabindex="-1">"""
-                           html+= defineSelectBox(title: "Current Measurement", var: "current_nt", list: typeList["current"], visible: false, function: "selectTileType"); 
+                           atomicState.span_type.each{span_key, span->
+                                list = new TreeMap(typeList."${span_key}".measurement_list);
+                                html+= defineSelectBox(title: span.title, var: span_key+"_measurement", list: list, visible: false, function: "selectTileType");
+                           }
+                           /*html+= defineSelectBox(title: "Current Measurement", var: "current_nt", list: typeList["current"], visible: false, function: "selectTileType"); 
                            html+= defineSelectBox(title: "Daily Measurement", var: "daily_nt", list: typeList["daily"],   visible: false, function: "selectTileType"); 
-                           html+= defineSelectBox(title: "Hourly Measurement", var: "hourly_nt", list: typeList["hourly"],  visible: false, function: "selectTileType"); 
+                           html+= defineSelectBox(title: "Hourly Measurement", var: "hourly_nt", list: typeList["hourly"],  visible: false, function: "selectTileType");
+                            */
                            html += """
                                     </div>
                                 </div>
@@ -1946,8 +1963,16 @@ def defineNewTileDialog(){
                            html += """
                                  <div id="menu_items" class="flex-container">
                                      <div class="flex-item" style="max-width:75%; flex-basis: 90%" tabindex="-1">"""
+                           atomicState.span_type.each{span_key, span->
+                               if (typeList."${span_key}".title){
+                                    list = new TreeMap(typeList."${span_key}".time_list);
+                                    html+= defineSelectBox(title: typeList."${span_key}".title, var: span_key+"_time", list: list, visible: false, function: "selectTileTime");
+                               }
+                           }
+                           /*    
                            html+= defineSelectBox(title: "Days to Display", var: "daily_time", list: daily_list,   visible: false, function: "selectTileTime"); 
                            html+= defineSelectBox(title: "Hours to Display", var: "hourly_time", list: hourly_list,  visible: false, function: "selectTileTime"); 
+                           */
                            html += """
                                     </div>
                                 </div>
