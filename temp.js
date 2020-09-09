@@ -1101,6 +1101,7 @@ async function initialize() {
 
 function getAbbrev(unit){
     switch (unit){
+        case "none": return "";
         case "fahrenheit": return "&deg;";
         case "celsius": return "&deg;";
         case "kelvin": return "K";
@@ -1121,7 +1122,7 @@ function getAbbrev(unit){
         case "hectopascal": return "hPa";
         case "kilometers_per_hour" : return "km/h";     
     }
-    return "unknown";
+    return "";
 }
 
 
@@ -1714,7 +1715,6 @@ function closeWindow() {
 
 function setSpacing(item_name, spacing){
     text = document.getElementById(item_name);
-    console.log('"'+text.textContent+'"'+spacing);
     switch (spacing.toLowerCase()){
         case "no space": text.textContent = ""; return "";
         case "single space": text.textContent = " "; return " ";
@@ -1768,7 +1768,6 @@ function saveWindow() {
     unit_spacing = setSpacing(focusTile+"_unit_space", unit_spacing);
 
     let decimals = getDecimals(document.getElementById("decimal_places_value").textContent);
-    console.log("Decimals: "+decimals);
 
     obj = getTile(focusTile);
     if (obj.value==undefined) {
@@ -1885,7 +1884,6 @@ function addNewTile(var_name, tile_type, weather_code, span, time) {
     
     length = options.tiles.length;
     let type = options.tile_type[tile_type];
-    console.log
 
     if (type.type == "blank") title = "Blank Tile";
     else {
@@ -1899,9 +1897,15 @@ function addNewTile(var_name, tile_type, weather_code, span, time) {
         }
     }
      
-
-    options.tiles.push( {title: title,  var: var_name, type: tile_type,  period: weather_code,             
-                        icon: "none", icon_loc: "left",  icon_space: "",  
+    console.log("Adding Tile "+tile_type)
+    let icon_var = "none";
+    let value_var= "XXX"
+    if (tile_type == "weather_icon"){
+        icon_var = "help-circle-outline"
+        value_var = "";
+    }
+    options.tiles.push( {title: title,  var: var_name, type: tile_type,  period: weather_code,  value: value_var,           
+                        icon: icon_var, icon_loc: "left",  icon_space: "",  
                         h: 4,  w: 8, baseline_row: 1,  baseline_column:  1, 
                         alignment: "center", text: "",
                         lpad: 0, rpad: 0,  decimals: 1, 
@@ -1954,14 +1958,15 @@ function createNewTile(item, units){
         
     //Main Content
     html += `<span id="${var_}" style="color: ${item.font_color};">${item.value}</span>`;
-        
+    
+    //Unit Spacing
+    html += `<span id="${var_}_unit_space">${item.unit_space}</span>`;
+
     //Units
-    console.log(units);
     let out_units = getAbbrev(units);
     html += `<span id="${var_}_units" style="color: ${item.font_color};">${out_units}</span>`;  
 
-    //Unit Spacing
-    html += `<span id="${var_}_unit_space">${item.unit_space}</span>`;
+    
 
     //Right Icon
     if (item.icon_loc == "right"){
@@ -1978,10 +1983,18 @@ function addNewTileClose(){
 
     newTileDialog.close();
     console.log(selected_new_tile_span+" "+selected_new_tile_type+" "+selected_new_tile_time);
-    num_elements = options.tiles.length;
-    let var_name = selected_new_tile_type+"_"+num_elements;
-    let type = selected_new_tile_type;
-    let period = selected_new_tile_time ? selected_new_tile_span+"."+selected_new_tile_time : selected_new_tile_span;
+    let num_elements = options.tiles.length;
+    let var_name = "";
+
+    if (selected_new_tile_span=="blank"){
+        var_name = "blank"+num_elements;
+        type = "blank";
+        period = 0;
+    } else {
+        var_name = selected_new_tile_type+"_"+num_elements;
+        type = selected_new_tile_type;
+        period = selected_new_tile_time ? selected_new_tile_span+"."+selected_new_tile_time : selected_new_tile_span;
+    } 
     
     addNewTile(var_name, type, period, selected_new_tile_span, selected_new_tile_time);
 
@@ -2011,6 +2024,8 @@ function getWeatherData() {
             if (obj!=undefined){
                 obj.value = tile.value;
                 obj.icon = tile.icon; 
+                
+                replaceIcons(tile.var+"_icon", obj.icon);
                 setText(tile.value, tile.var);   
             }
 
@@ -2022,17 +2037,13 @@ function getWeatherData() {
 
 function newTile(){
     dialog.close();
-
     newTileDialog.showModal();
-
 }
 
+//Just close the window with no action
 function closeAddTileWindow(){
-
     newTileDialog.close();
-
 }
-
 
 
 var selected_new_tile_span;
@@ -2043,35 +2054,20 @@ var selected_new_tile_time;
 function selectTileSpan(tileSpan){
     selected_new_tile_span = tileSpan;
 
-    switch (tileSpan){
-        case "daily" :
-            $("#current_nt_main").css("display", "none");
-            $("#hourly_nt_main").css("display", "none");
-            $("#daily_nt_main").css("display", "flex");
-            $("#daily_time_main").css("display", "flex");
-            $("#hourly_time_main").css("display", "none");
-            $("#daily_nt").val("blank");
-            $("#daily_time").val("blank");
-        break;
-        case "current" :
-            $("#daily_nt_main").css("display", "none");
-            $("#hourly_nt_main").css("display", "none");
-            $("#current_nt_main").css("display", "flex");
-            $("#daily_time_main").css("display", "none");
-            $("#hourly_time_main").css("display", "none");
-            $("#current_nt").val("blank");
-            selected_new_tile_time = undefined;
-        break;
-        case "hourly" :
-            $("#daily_nt_main").css("display", "none");
-            $("#current_nt_main").css("display", "none");
-            $("#hourly_nt_main").css("display", "flex");
-            $("#daily_time_main").css("display", "none");
-            $("#hourly_time_main").css("display", "flex");
-            $("#hourly_nt").val("blank");
-            $("#hourly_time").val("blank");
-        break;
-    }
+    diag = options.new_tile_dialog;
+    Object.entries(diag).forEach(([key, value]) => {
+        css_text = "none"
+        if (key == tileSpan){ 
+            css_text = "flex";
+            $("#"+key+"_measurement").val("blank");
+            $("#"+key+"time").val("blank");
+        }
+        $("#"+key+"_measurement_main").css("display", css_text);
+        $("#"+key+"_time_main").css("display", css_text);
+    })
+    selected_new_tile_type = undefined;
+    selected_new_tile_time = undefined;
+
 }
 
 function selectTileType(tileType){
