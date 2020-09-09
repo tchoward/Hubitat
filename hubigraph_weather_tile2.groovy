@@ -314,11 +314,12 @@ def mainPage() {
     def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
     def unitUVI=         [["uvi" : "UV Index"]];
     def unitDistance=    [["miles": "Miles"]];
+    def unitBlank=       [["none": "None"]];
     
     atomicState.tile_dimensions = [rows: 14, columns: 26];
       
-    //if (!atomicState.tile_settings){
-    if (1) {
+    if (!atomicState.tile_settings){
+    
         atomicState.span_type = [ current: [title: "Current Measurements", num_time: 0, time_units:  ""],  
                                   daily:   [title: "Daily Forecast", num_time: 7, time_units:  "day"],
                                   hourly:  [title: "Hourly Forecast", num_time: 48, time_units: "hour"],
@@ -336,6 +337,7 @@ def mainPage() {
                                   direction:            [name: "Direction",           enum: unitDirection, out:  "cardinal"],
                                   uvi:                  [name: "UV Index",            enum: unitUVI,       out:  "uvi"],
                                   visibility:           [name: "Visibility",          enum: unitDistance,  out:  "visibility"],
+                                  blank:                [name: "Blank Tile",          enum: unitBlank,     out:  "none"],
                                  ];
                                  
                                   
@@ -881,6 +883,7 @@ private cleanupData(data){
 
 private getAbbrev(unit){
     switch (unit){
+        case "none": return "";
         case "fahrenheit": return "&deg;";
         case "celsius": return "&deg;";
         case "kelvin": return "K";
@@ -901,7 +904,7 @@ private getAbbrev(unit){
         case "hectopascal": return "hPa";
         case "kilometers_per_hour" : return "km/h";     
     }
-    return "unknown";
+    return "";
 }
 
 private getUnits(unit, value){
@@ -1089,7 +1092,7 @@ def applyConversion(tile, val){
          log.debug(e);
     }
       
-    if (in_units != out_units)
+    if (in_units != out_units && out_units != "none")
     switch (in_units) {
             //Temperature
             case "celsius":
@@ -1470,7 +1473,6 @@ def getTileHTML(item){
         try{
             tile_type = atomicState.tile_type."${item.type}".type;
             out_units = atomicState.unit_type."${tile_type}".out;
-            log.debug("Tile Type = "+tile_type+" Out_units: "+out_units);
             units = getAbbrev(out_units);
         } catch (e){
             units = "";
@@ -1950,12 +1952,10 @@ def defineNewTileDialog(){
                                      <div class="flex-item" style="max-width:75%; flex-basis: 75%" tabindex="-1">"""
                            atomicState.span_type.each{span_key, span->
                                 list = new TreeMap(typeList."${span_key}".measurement_list);
-                                html+= defineSelectBox(title: span.title, var: span_key+"_measurement", list: list, visible: false, function: "selectTileType");
+                                if (list!=[:])
+                                    html+= defineSelectBox(title: span.title, var: span_key+"_measurement", list: list, visible: false, function: "selectTileType");
                            }
-                           /*html+= defineSelectBox(title: "Current Measurement", var: "current_nt", list: typeList["current"], visible: false, function: "selectTileType"); 
-                           html+= defineSelectBox(title: "Daily Measurement", var: "daily_nt", list: typeList["daily"],   visible: false, function: "selectTileType"); 
-                           html+= defineSelectBox(title: "Hourly Measurement", var: "hourly_nt", list: typeList["hourly"],  visible: false, function: "selectTileType");
-                            */
+                           
                            html += """
                                     </div>
                                 </div>
