@@ -315,9 +315,10 @@ def mainPage() {
     def unitUVI=         [["uvi" : "UV Index"]];
     def unitDistance=    [["miles": "Miles"]];
     def unitBlank=       [["none": "None"]];
+    def unitDayofWeek=   [["short": "Short (Thu)"], ["long": "Long (Thursday)"]];
     
     atomicState.tile_dimensions = [rows: 14, columns: 26];
-      
+         
     if (!atomicState.tile_settings){
     
         atomicState.span_type = [ current: [title: "Current Measurements", num_time: 0, time_units:  ""],  
@@ -338,6 +339,7 @@ def mainPage() {
                                   uvi:                  [name: "UV Index",            enum: unitUVI,       out:  "uvi"],
                                   visibility:           [name: "Visibility",          enum: unitDistance,  out:  "visibility"],
                                   blank:                [name: "Blank Tile",          enum: unitBlank,     out:  "none"],
+                                  day:                  [name: "Day of Week",         enum: unitDayofWeek, out:  "short"],
                                  ];
                                  
                                   
@@ -385,7 +387,12 @@ def mainPage() {
                                  
                                  sunrise:               [name: "Sunrise",                type: "time",                 parse_func: "formatNumericData",   ow: "sunrise",              in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes"],
                                  sunset:                [name: "Sunset",                 type: "time",                 parse_func: "formatNumericData",   ow: "sunset",               in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes"],
-                            
+                    
+                                 hour:                  [name: "Hour",                   type: "time",                 parse_func: "formatHourData",      ow: "dt",                   in_units: "time_seconds",         current: "no", hourly: "yes", daily: "no"],
+                                 day:                   [name: "Day",                    type: "day",                  parse_func: "formatDayData",       ow: "dt",                   in_units: "time_seconds",         current: "no", hourly: "yes", daily: "yes"],
+
+            
+            
                                  blank:                 [name: "Blank Tile",             type: "blank",                parse_func: "none",                ow: "none",                 in_units: "none",                 current: "no", hourly: "no", daily: "no"]
         ];
     
@@ -645,10 +652,18 @@ def mainPage() {
             if (span.num_time > 0) {
                 typeList."${span_key}".time_list = new TreeMap([:]);
                 typeList."${span_key}".title = "${span.time_units.capitalize()}s to Display";
-                for (i=1; i<span.num_time; i++){
-                    if (i==1) typeList."${span_key}".time_list << ["01" : [name: " $i ${span.time_units} from now"]];
-                    else if (i<10) typeList."${span_key}".time_list << ["0$i" : [name: " $i ${span.time_units}s from now"]];
-                    else typeList."${span_key}".time_list << ["$i" : [name: " $i ${span.time_units}s from now"]];
+                for (i=0; i<span.num_time; i++){
+                    if (i==0) {
+                        if (span.time_units == "day")
+                            typeList."${span_key}".time_list << ["00" : [name: " Today"]];
+                    } else if (span.time_units == "day" && i==1)
+                        typeList."${span_key}".time_list << ["01" : [name: " Tomorrow"]];       
+                    else if (i==1) 
+                        typeList."${span_key}".time_list << ["01" : [name: " $i ${span.time_units} from now"]];
+                    else if (i<10) 
+                        typeList."${span_key}".time_list << ["0$i" : [name: " $i ${span.time_units}s from now"]];
+                    else 
+                        typeList."${span_key}".time_list << ["$i" : [name: " $i ${span.time_units}s from now"]];
                 }
             } 
         }
@@ -1362,10 +1377,38 @@ def translateCondition(tile, condition) {
 def formatNumericData(tile, val){
     if (val == null)
         val = 0;
-    
     return ["value",  applyDecimals(tile, applyConversion(tile, val))];   
-
 }
+
+def formatHourData(tile, val){
+     def location = getLocation();
+    
+     val_micro = val*1000L;
+     Date date = new Date (val_micro);
+    
+    switch (settings["time_units"]){
+        case "time_seconds" :        return ["value",  val];
+        case "time_milliseconds" :   return ["value", val_micro];
+        case "time_twelve" :         return ["value",  date.format('h:mm a', location.timeZone)];
+        case "time_two_four" :       return ["value",  date.format('HH:mm', location.timeZone)];
+    }
+    return ["value",  "XXXX"]; 
+}
+
+def formatDayData(tile, val){
+    def location = getLocation();
+    val_micro = val*1000L;
+    Date date = new Date (val_micro);
+          
+    if (settings["day_units"] == "short") day = date.format('E', location.timeZone);
+    else day = date.format('EEEE', location.timeZone);
+           
+   
+     
+    return ["value",  day]; 
+}
+
+
 
 def formatConditionText(tile, val){
     return ["value", val.split(" ").collect{it.capitalize()}.join(" ")];
@@ -1422,7 +1465,7 @@ def buildWeatherData(){
                 tile.value = "";
             }
         } catch (error){
-             log.debug(tile.name+": Unable to find parse function: $parse_func" + e);   
+             log.debug(tile.name+": Unable to find parse function: $parse_func " + e);   
         }
     }
     atomicState.tile_settings = temp;
@@ -2194,48 +2237,6 @@ def getTileListItem(Map map){
     
     html += """</ul>"""
     return html;
-}
-
-
-def addTileMenu(Map map){
-    
-    
-     var = map.var_name;
-     default_val = map.default_value;
-     default_icon = map.default_icon;
-     item_list = map.list;
-     tooltip = map.tooltip ? map.tooltip : "";
-     function_name = map.function_name;
-    
-    current_condition_list = [
-                               [name: "Temperature"], 
-                               [name:"Real Feel"], 
-                               [name: "Humidity"], 
-                               [name:  "Dew Point"], 
-                               [name: "Wind Speed"]
-                            ];
-     forecast_list =          [[name: "High Temperature"], [name: "Low Temperature"], [name:"Real Feel"], [name: "Humidity"], [name:  "Dew Point"], [name: "Wind Speed"], [name:  "Wind Gust"]]; 
-     daily_list =             [[name: "Today",     list: forecast_list], 
-                               [name: "Tommorrow", list: forecast_list], 
-                               [name: "2 Days",    list: forecast_list], 
-                               [name: "3 Days",    list: forecast_list], 
-                               [name: "4 Days",    list: forecast_list], 
-                               [name: "5 Days",    list: forecast_list]];
-                                                                                                                 
-    testList = [name: "Main", icon: default_icon, list:[[name: "Current",         list: current_condition_list], 
-                                                        [name: "Daily Forecast",  list: daily_list],
-                                                        [name: "Blank Tile"]],
-                                   
-               ];
-    
-    def html = """ <div> """
-        
-        html += getTileListItem(var: var, title: testList.name,  list: testList.list, parent: "", function: function_name, selections: []);
-    
-        html += """</div>"""
-       
-    return html;    
-                
 }
 
 def defineHTML_Tile(){
