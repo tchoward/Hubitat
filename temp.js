@@ -1982,9 +1982,22 @@ function createNewTile(item, units){
 function addNewTileClose(){
 
     newTileDialog.close();
-    console.log(selected_new_tile_span+" "+selected_new_tile_type+" "+selected_new_tile_time);
+
     let num_elements = options.tiles.length;
     let var_name = "";
+
+    console.log(selected_new_tile_span+" "+selected_new_tile_type+" "+selected_new_tile_time);
+
+    //Error Checking
+    diag = options.new_tile_dialog;
+    type = selected_new_tile_type;
+    if ((selected_new_tile_span != "blank") &&
+        ((selected_new_tile_span == undefined) || 
+         (selected_new_tile_type == undefined) ||
+         (selected_new_tile_span != "current" && selected_new_tile_time == undefined))){
+        window.alert("Missing Required Fields, Exitting...")
+        return;
+    }
 
     if (selected_new_tile_span=="blank"){
         var_name = "blank"+num_elements;
