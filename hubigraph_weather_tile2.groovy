@@ -205,79 +205,92 @@ def deviceSelectionPage() {
     
     
     dynamicPage(name: "deviceSelectionPage") {
-         parent.hubiForm_section(this,"Override OpenWeather", 1){
+         parent.hubiForm_section(this,"Device Selection", 1){
              container = [];
-             container << parent.hubiForm_switch(this, title: "Override OpenWeatherMap values with PWS?", name: "override_openweather", default: false, submit_on_change: true);
+             container << parent.hubiForm_switch(this, title: "Make Hubitat Devices Available?", name: "override_openweather", default: false, submit_on_change: true);
              parent.hubiForm_container(this, container, 1);
          }
 
          if (override_openweather == true){
              parent.hubiForm_section(this,"Sensor Selection", 1){ 
                  container = [];
-
-                 input ("sensors", "capability.*", title: "Select Sensors/PWS", multiple: true, required: false, submitOnChange: true);
                  parent.hubiForm_container(this, container, 1); 
+                 input ("sensors", "capability.*", title: "Select Sensors", multiple: true, required: false, submitOnChange: true);   
              }
-             
-            if (sensors){
-                final_attrs = [];
-                final_attrs << ["openweather" : "Open Weather Map"];
-
-                sensors.each{sensor->
-                    attributes_ = sensor.getSupportedAttributes();                    
+         }
+        if (sensors){
+            final_attrs = [];
+            sensor_list = [:];
+            sensors.each{sensor->
+                attributes_ = sensor.getSupportedAttributes();    
+                sensor_list."${sensor.id}" = [:];
                     attributes_.each{ attribute_->
                         name = attribute_.getName();
                         if (sensor.currentState(name)){
-                            final_attrs << ["${sensor.id}_${name}" : "${sensor.displayName} (${name}) ::: [${sensor.currentState(name).getValue()} ${sensor.currentState(name).getUnit() ? sensor.currentState(name).getUnit() : ""} ]"];
+                            units = sensor.currentState(name).getUnit();
+                            value = sensor.currentState(name).getValue();
+                            sensor_list."${sensor.id}"."${name}" = [ sensor_name: "${sensor.displayName}", value: value, unit: units, supported_unit: getUnits(units, value)];
+                            final_attrs << ["${sensor.id}.${name}" : "${sensor.displayName} (${name}) ::: [${sensor.currentState(name).getValue()} ${sensor.currentState(name).getUnit() ? sensor.currentState(name).getUnit() : ""} ]"]; 
                         }
                     }
-                    final_attrs = final_attrs.unique(false);
-                }
-                  
-                parent.hubiForm_section(this,"Override Values - Select Attribute Units", 1){ 
-                    atomicState.tile_settings.each{feature->
-                        container = [];
-                       
-                        if (feature.can_be_overriden == "yes"){
-                            container <<  parent.hubiForm_sub_section(this, feature.title); 
-                            parent.hubiForm_container(this, container, 1);
-                            
-                            container = [];
-                            input( type: "enum", name: "${feature.var}_override", title: feature.title, required: false, multiple: false, options: final_attrs, defaultValue: "openweather", submitOnChange: true)
-                              
-                            if (settings["${feature.var}_override"]!=null && settings["${feature.var}_override"] != "openweather" && feature.unit != "none") {
-                                attribute = parseAttribute(settings["${feature.var}_override"]);
-                                sensor = parseSensor(settings["${feature.var}_override"]);
-                                unit = sensor.currentState(attribute).getUnit();
-                                value = sensor.currentState(attribute).getValue();    
-                                if (unit==null) unit = "blank";
-                                detectedUnits = getUnits(unit, value);
-                            
-                                validUnits = feature.unit.any{ detectedUnits.var in it };
-                                    
-                                if (detectedUnits.name != "unknown" && validUnits){
-                                    container <<  parent.hubiForm_text(this, "Detected units = "+detectedUnits.name);
-                                    app.updateSetting("${feature.var}_units", detectedUnits.var);
-                                    parent.hubiForm_container(this, container, 1);
-                                } else {
-                                    if (detectedUnits.name == "unknown"){
-                                        container <<  parent.hubiForm_text(this, "Unknown Units, Please update Below");
-                                    } else {
-                                        container <<  parent.hubiForm_text(this, "<span style='color:red'>Error: Units detected = ${detectedUnits.name}</span><br><small>Please choose a different device above, or override the units below</small>");
-                                    }
-                                    parent.hubiForm_container(this, container, 1);
-                                    input( type: "enum", name: "${feature.var}_units", title: "Override "+feature.title+" Units", required: false, multiple: false, options: feature.unit, defaultValue: feature.unit, submitOnChange: false)
-                                } 
-                                
-                            } else if (settings["${feature.var}_units"]!=null && settings["${feature.var}_override"] != "openweather"){
-                                app.updateSetting("${feature.var}_units", null);
-                            }
-                        }
-                    }
-                }  //parent   
-            }  //if sensor
+            }
+            final_attrs = final_attrs.unique(false);
             
+            measurement_list = [:];
+            atomicState.unit_type.each{key, type->
+                measurement_list."${key}" = [:];
+                if (type.out != "none"){
+                    parent.hubiForm_section(this, type.name, 1){ 
+                       container = [];
+                       input( type: "enum", name: "${key}_devices", title: type.name, required: false, multiple: true, options: final_attrs, defaultValue: "", submitOnChange: true)
+                       if (settings["${key}_devices"]){
+                            settings["${key}_devices"].each{ attr->
+                                sensor_id = "${attr}".tokenize('.')[0];
+                                if (!measurement_list."${key}"."${sensor_id}")
+                                    measurement_list."${key}"."${sensor_id}" = [:];
+                                
+                                attr = "${attr}".tokenize('.')[1];
+                                sensor_name = sensor_list."${sensor_id}"."${attr}".sensor_name;
+                                
+                                if (atomicState.unit_type."${key}".enum == "none"){
+                                    container << parent.hubiForm_text(this, "<b>"+sensor_name+" :: "+attr+"</b>");
+                                    measurement_list."${key}"."${sensor_id}"."${attr}" = [sensor_name: sensor_list."${sensor_id}"."${attr}".sensor_name,
+                                                                                          in_units: "none"
+                                                                                         ];
+                          
+                                } else if (sensor_list."${sensor_id}"."${attr}".supported_unit.var == key) {
+                                    units = sensor_list."${sensor_id}"."${attr}".supported_unit.name;
+                                    container << parent.hubiForm_text(this, "<b>"+sensor_name+" :: "+attr+"</b></br>"+'&#9;'+" Units = "+units); 
+                                    measurement_list."${key}"."${sensor_id}"."${attr}" = [sensor_name: sensor_list."${sensor_id}"."${attr}".sensor_name,
+                                                                                          in_units: sensor_list."${sensor_id}"."${attr}".supported_unit.units
+                                                                                         ];
+                                } else { 
+                                    parent.hubiForm_container(this, container, 1);
+                                    unit = sensor_list."${sensor_id}"."${attr}".unit;
+                                    list = atomicState.unit_type."${key}".enum;
+                                    if (list != "none")
+                                        input( type: "enum", name: "${key}.${sensor_id}.${attr}", 
+                                                             title: "<b>"+sensor_name+" :: "+attr+"</b><br>Valid units not detected ("+unit+'); Expected <b>"'+key+'"</b> type<br><small>Please select measurement units below</small>',
+                                                             required: false, multiple: false, 
+                                                             options: list, 
+                                                             defaultValue: "", submitOnChange: false);
+                                    
+                                        measurement_list."${key}"."${sensor_id}"."${attr}" = [sensor_name: sensor_list."${sensor_id}"."${attr}".sensor_name,
+                                                                                              in_units: settings["${key}.${sensor_id}.${attr}"]
+                                                                                             ];
+                                    
+                                    container = [];
+                                }
+                            }      
+                        }
+                       parent.hubiForm_container(this, container, 1);
+                      
+                    }
+                }
+                
+            }
         }
+        atomicState.device_list = measurement_list;
     }      
 }
 
@@ -316,84 +329,84 @@ def mainPage() {
     def unitDistance=    [["miles": "Miles"]];
     def unitBlank=       [["none": "None"]];
     def unitDayofWeek=   [["short": "Short (Thu)"], ["long": "Long (Thursday)"]];
+    def unitText=        [["plain": "Unformatted"], ["title": "Title Format"], ["lowercase": "Lowercase"], ["uppercase" : "Uppercase"]];
+    def unitIcon=        [["icon": "Default Icon"]];
     
     atomicState.tile_dimensions = [rows: 14, columns: 26];
          
     if (!atomicState.tile_settings){
-    
+  
         atomicState.span_type = [ current: [title: "Current Measurements", num_time: 0, time_units:  ""],  
                                   daily:   [title: "Daily Forecast", num_time: 7, time_units:  "day"],
                                   hourly:  [title: "Hourly Forecast", num_time: 48, time_units: "hour"],
-                                  blank:   [title: "Blank Tile", num_time: 0, time_units:  ""]
+                                  blank:   [title: "Blank Tile", num_time: 0, time_units:  ""],
+                                  sensor:  [title: "Device Measurement", num_time: 0, time_units: ""],
                                 ];
         
-        atomicState.unit_type = [ temperature:          [name: "Temperature",         enum: unitTemp,      out:  "fahrenheit"],
-                                  percent:              [name: "Percentage",          enum: unitPercent,   out:  "percent_numeric"],
-                                  weather_icon:         [name: "Weather Icons",       enum: "none",        out:  "none"],
-                                  weather_description:  [name: "Weather Description", enum: "none",        out:  "none"],
-                                  pressure:             [name: "Pressure",            enum: unitPressure,  out:  "inches_mercury"],
-                                  velocity:             [name: "Velocity",            enum: unitWind,      out:  "miles_per_hour"], 
-                                  time:                 [name: "Time",                enum: unitTime,      out:  "time_twelve"],
-                                  depth:                [name: "Depth",               enum: unitDepth,     out:  "inches"],
-                                  direction:            [name: "Direction",           enum: unitDirection, out:  "cardinal"],
-                                  uvi:                  [name: "UV Index",            enum: unitUVI,       out:  "uvi"],
-                                  visibility:           [name: "Visibility",          enum: unitDistance,  out:  "visibility"],
-                                  blank:                [name: "Blank Tile",          enum: unitBlank,     out:  "none"],
-                                  day:                  [name: "Day of Week",         enum: unitDayofWeek, out:  "short"],
+        atomicState.unit_type = [ 
+                                  temperature:          [name: "Temperature",         enum: unitTemp,      out:  "fahrenheit",      parse_func: "formatNumericData"],
+                                  percent:              [name: "Percentage",          enum: unitPercent,   out:  "percent_numeric", parse_func: "formatNumericData"],
+                                  icon:                 [name: "Weather Icons",       enum: unitIcon,      out:  "none",            parse_func: "translateCondition"],
+                                  pressure:             [name: "Pressure",            enum: unitPressure,  out:  "inches_mercury",  parse_func: "formatNumericData"],
+                                  velocity:             [name: "Velocity",            enum: unitWind,      out:  "miles_per_hour",  parse_func: "formatNumericData"], 
+                                  time:                 [name: "Time",                enum: unitTime,      out:  "time_twelve",     parse_func: "formatNumericData"],
+                                  depth:                [name: "Depth",               enum: unitDepth,     out:  "inches",          parse_func: "formatNumericData"],
+                                  direction:            [name: "Direction",           enum: unitDirection, out:  "cardinal",        parse_func: "formatNumericData"],
+                                  uvi:                  [name: "UV Index",            enum: unitUVI,       out:  "uvi",             parse_func: "formatNumericData"],
+                                  visibility:           [name: "Visibility",          enum: unitDistance,  out:  "visibility",      parse_func: "formatNumericData"],
+                                  blank:                [name: "Blank Tile",          enum: unitBlank,     out:  "none",            parse_func: "none"],
+                                  day:                  [name: "Day of Week",         enum: unitDayofWeek, out:  "short",           parse_func: "formatNumericData"],
+                                  text:                 [name: "Text Description",    enum: unitText,      out:  "plain",           parse_func: "formatTextData"],
                                  ];
                                  
                                   
                                  
         
         atomicState.tile_type = [
-                                 weather_icon:          [name: "Weather Icon",          type: "weather_icon",         parse_func: "translateCondition",  ow: "weather.0.description", in_units: "none",                current: "yes", hourly: "yes", daily: "yes"],
-                                 weather_description:   [name: "Weather Description",   type: "weather_description",  parse_func: "formatConditionText", ow: "weather.0.description", in_units: "none",                current: "yes", hourly: "yes", daily: "yes"],
+                                 weather_icon:          [name: "Weather Icon",          type: "icon",                 ow: "weather.0.description", in_units: "none",                 current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 weather_description:   [name: "Weather Description",   type: "text",                 ow: "weather.0.description", in_units: "none",                 current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
                                  
-                                 feels_like:            [name: "Feels Like",            type: "temperature",          parse_func: "formatNumericData",   ow: "feels_like",            in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "no" ],
-                                 feels_like_morning:    [name: "Morning Feels Like",    type: "temperature",          parse_func: "formatNumericData",   ow: "feels_like.morn",       in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes"],
-                                 feels_like_day:        [name: "Day Feels Like",        type: "temperature",          parse_func: "formatNumericData",   ow: "feels_like.day",        in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes"],
-                                 feels_like_evening:    [name: "Evening Feels Like",    type: "temperature",          parse_func: "formatNumericData",   ow: "feels_like.eve",        in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes"],                          
-                                 feels_like_night:      [name: "Night Feels Like",      type: "temperature",          parse_func: "formatNumericData",   ow: "feels_like.night",      in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes"],
+                                 feels_like:            [name: "Feels Like",            type: "temperature",          ow: "feels_like",            in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "no" , sensor: "no"],
+                                 feels_like_morning:    [name: "Morning Feels Like",    type: "temperature",          ow: "feels_like.morn",       in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                 feels_like_day:        [name: "Day Feels Like",        type: "temperature",          ow: "feels_like.day",        in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                 feels_like_evening:    [name: "Evening Feels Like",    type: "temperature",          ow: "feels_like.eve",        in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],                          
+                                 feels_like_night:      [name: "Night Feels Like",      type: "temperature",          ow: "feels_like.night",      in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
                                 
-                                 temperature:           [name: "Temperature",            type: "temperature",          parse_func: "formatNumericData",   ow: "temp",                 in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "no"],
-                                 temperature_max:       [name: "Maximum Temperature",    type: "temperature",          parse_func: "formatNumericData",   ow: "temp.max",             in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes"],
-                                 temperature_min:       [name: "Minimum Temperature",    type: "temperature",          parse_func: "formatNumericData",   ow: "temp.min",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes"],
-                                 temperature_morning:   [name: "Morning Temperature",    type: "temperature",          parse_func: "formatNumericData",   ow: "temp.morn",            in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes"],
-                                 temperature_day:       [name: "Day Temperature",        type: "temperature",          parse_func: "formatNumericData",   ow: "temp.day",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes"],
-                                 temperature_evening:   [name: "Evening Temperature",    type: "temperature",          parse_func: "formatNumericData",   ow: "temp.eve",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes"],                          
-                                 temperature_night:     [name: "Night Temperature",      type: "temperature",          parse_func: "formatNumericData",   ow: "temp.night",           in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes"],
+                                 temperature:           [name: "Temperature",            type: "temperature",         ow: "temp",                 in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "no", sensor: "no"],
+                                 temperature_max:       [name: "Maximum Temperature",    type: "temperature",         ow: "temp.max",             in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                 temperature_min:       [name: "Minimum Temperature",    type: "temperature",         ow: "temp.min",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
+                                 temperature_morning:   [name: "Morning Temperature",    type: "temperature",         ow: "temp.morn",            in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
+                                 temperature_day:       [name: "Day Temperature",        type: "temperature",         ow: "temp.day",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
+                                 temperature_evening:   [name: "Evening Temperature",    type: "temperature",         ow: "temp.eve",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],                          
+                                 temperature_night:     [name: "Night Temperature",      type: "temperature",         ow: "temp.night",           in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
                                  
-                                 humidity:              [name: "Humidity",               type: "percent",              parse_func: "formatNumericData",   ow: "humidity",             in_units: "percent_numeric",      current: "yes", hourly: "yes", daily: "yes"],
+                                 humidity:              [name: "Humidity",               type: "percent",             ow: "humidity",             in_units: "percent_numeric",      current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
 
-                                 dew_point:             [name: "Dew Point",              type: "temperature",          parse_func: "formatNumericData",   ow: "dew_point",            in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "yes"],
-                                 dew_point_description: [name: "Dew Point Description",  type: "weather_description",  parse_func: "formatDewPoint",      ow: "dew_point",            in_units: "none",                 current: "no",  hourly: "no",  daily: "no" ],
+                                 dew_point:             [name: "Dew Point",              type: "temperature",         ow: "dew_point",            in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
                                  
-                                 pressure:              [name: "Pressure",               type: "pressure",             parse_func: "formatNumericData",   ow: "pressure",             in_units: "millibars",            current: "yes", hourly: "yes", daily: "yes"],
-                                 pressure_trend:        [name: "Pressure Trend",         type: "pressure",             parse_func: "formatPressure",      ow: "pressure",             in_units: "millibars",            current: "yes", hourly: "yes", daily: "yes"],
+                                 pressure:              [name: "Pressure",               type: "pressure",            ow: "pressure",             in_units: "millibars",            current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
      
-                                 uv_index:              [name: "UV Index",               type: "uvi",                  parse_func: "formatNumericData",   ow: "uvi",                  in_units: "uvi",                  current: "yes", hourly: "no", daily: "yes"],
-                                 cloud_coverage:        [name: "Cloud Coverage",         type: "percent",              parse_func: "formatNumericData",   ow: "clouds",               in_units: "percent_numeric",      current: "yes", hourly: "no", daily: "yes"],
-                                 visibility:            [name: "Visibility",             type: "distance",             parse_func: "formatNumericData",   ow: "visibility",           in_units: "miles",                current: "yes", hourly: "no", daily: "yes"],
+                                 uv_index:              [name: "UV Index",               type: "uvi",                 ow: "uvi",                  in_units: "uvi",                  current: "yes", hourly: "no", daily: "yes", sensor: "no"],
+                                 cloud_coverage:        [name: "Cloud Coverage",         type: "percent",             ow: "clouds",               in_units: "percent_numeric",      current: "yes", hourly: "no", daily: "yes", sensor: "no"],
+                                 visibility:            [name: "Visibility",             type: "distance",            ow: "visibility",           in_units: "miles",                current: "yes", hourly: "no", daily: "yes", sensor: "no"],
                                  
-                                 wind_speed:            [name: "Wind Speed",             type: "velocity",             parse_func: "formatNumericData",   ow: "wind_speed",           in_units: "meters_per_second",    current: "yes", hourly: "yes", daily: "yes"],
-                                 wind_gust:             [name: "Wind Gust",              type: "velocity",             parse_func: "formatNumericData",   ow: "wind_gust",            in_units: "meters_per_second",    current: "yes", hourly: "yes", daily: "yes"],
-                                 wind_direction:        [name: "Wind Direction",         type: "direction",            parse_func: "formatNumericData",   ow: "wind_deg",             in_units: "degrees",              current: "yes", hourly: "yes", daily: "yes"],
+                                 wind_speed:            [name: "Wind Speed",             type: "velocity",            ow: "wind_speed",           in_units: "meters_per_second",    current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 wind_gust:             [name: "Wind Gust",              type: "velocity",            ow: "wind_gust",            in_units: "meters_per_second",    current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 wind_direction:        [name: "Wind Direction",         type: "direction",           ow: "wind_deg",             in_units: "degrees",              current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
                                  
-                                 rain_past_hour:        [name: "Rain past Hour",         type: "depth",                parse_func: "formatNumericData",   ow: "rain.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no"],
-                                 snow_past_hour:        [name: "Snow past Hour",         type: "depth",                parse_func: "formatNumericData",   ow: "snow.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no"],
-                                 rain:                  [name: "Rain",                   type: "depth",                parse_func: "formatNumericData",   ow: "rain",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes"],
-                                 snow:                  [name: "Snow",                   type: "depth",                parse_func: "formatNumericData",   ow: "snow",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes"],
-                                 chance_precipitation:  [name: "Chance of Precipitation",type: "percent",              parse_func: "formatNumericData",   ow: "pop",                  in_units: "percent_decimal",      current: "yes", hourly: "yes", daily: "yes"],
+                                 rain_past_hour:        [name: "Rain past Hour",         type: "depth",               ow: "rain.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no", sensor: "no"],
+                                 snow_past_hour:        [name: "Snow past Hour",         type: "depth",               ow: "snow.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no", sensor: "no"],
+                                 rain:                  [name: "Rain",                   type: "depth",               ow: "rain",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                 snow:                  [name: "Snow",                   type: "depth",               ow: "snow",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                 chance_precipitation:  [name: "Chance of Precipitation",type: "percent",             ow: "pop",                  in_units: "percent_decimal",      current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
                                  
-                                 sunrise:               [name: "Sunrise",                type: "time",                 parse_func: "formatNumericData",   ow: "sunrise",              in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes"],
-                                 sunset:                [name: "Sunset",                 type: "time",                 parse_func: "formatNumericData",   ow: "sunset",               in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes"],
+                                 sunrise:               [name: "Sunrise",                type: "time",                ow: "sunrise",              in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 sunset:                [name: "Sunset",                 type: "time",                ow: "sunset",               in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
                     
-                                 hour:                  [name: "Hour",                   type: "time",                 parse_func: "formatHourData",      ow: "dt",                   in_units: "time_seconds",         current: "no", hourly: "yes", daily: "no"],
-                                 day:                   [name: "Day",                    type: "day",                  parse_func: "formatDayData",       ow: "dt",                   in_units: "time_seconds",         current: "no", hourly: "yes", daily: "yes"],
-
-            
-            
-                                 blank:                 [name: "Blank Tile",             type: "blank",                parse_func: "none",                ow: "none",                 in_units: "none",                 current: "no", hourly: "no", daily: "no"]
+                                 hour:                  [name: "Hour",                   type: "time",                ow: "dt",                   in_units: "time_seconds",         current: "no", hourly: "yes", daily: "no", sensor: "no"],
+                                 day:                   [name: "Day",                    type: "day",                 ow: "dt",                   in_units: "time_seconds",         current: "no", hourly: "yes", daily: "yes", sensor: "no"],
+      
+                                 blank:                 [name: "Blank Tile",             type: "blank",               ow: "none",                 in_units: "none",                 current: "no", hourly: "no", daily: "no", sensor: "no"]
         ];
     
         atomicState.tile_settings = [[title: 'Forecast Weather Icon',          var: "weather_icon",  type: "weather_icon", period:"current", value: "",            
@@ -405,8 +418,8 @@ def mainPage() {
                                                                                font: 40, font_weight: "100", 
                                                                                font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                                font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
-                                  ],
-                                  [title: 'Current Weather',            var: "description", type: "weather_description", period:"current", value: 0,                
+                                      ],
+                                      [title: 'Current Weather',            var: "description", type: "weather_description", period:"current", value: 0,                
                                                                         icon: "none", icon_loc: "none",  icon_space: "",  
                                                                         h: 4,  w: 12, baseline_row: 7,  baseline_column:  13, 
                                                                         alignment: "center", text: "",  decimals: 1, 
@@ -415,8 +428,8 @@ def mainPage() {
                                                                         font: 20, font_weight: "400", 
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
-                                  ],
-                                  [title: 'Current Temperature',        var: "current_temperature", type: "temperature", period:"current",     
+                                      ],
+                                      [title: 'Current Temperature',        var: "current_temperature", type: "temperature", period:"current",     
                                                                         icon: "none", icon_loc: "left",  icon_space: "",  
                                                                         h: 4,  w: 12, baseline_row: 1,  baseline_column:  1, 
                                                                         alignment: "center", text: "",  decimals: 1, 
@@ -425,8 +438,8 @@ def mainPage() {
                                                                         font: 20, font_weight: "900", 
                                                                         font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
-                              ], 
-                              [title: 'Feels Like',                     var: "feels_like", type: "feels_like", period:"current", 
+                                  ], 
+                                  [title: 'Feels Like',                     var: "feels_like", type: "feels_like", period:"current", 
                                                                         icon: "home-thermometer-outline", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 12, baseline_row: 5,  baseline_column:  1, 
                                                                         alignment: "center", text: "Feels Like: ",  decimals: 1, 
@@ -570,17 +583,7 @@ def mainPage() {
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ],
-                              [title: 'Pressure Trend',                var: "pressure_trend", type: "pressure_trend",  period:"current",                          
-                                                                        icon: "none", icon_loc: "none",  icon_space: "",  
-                                                                        h: 2,  w: 8, baseline_row: 15,  baseline_column:  17, 
-                                                                        alignment: "center", text: "",  decimals: 1, 
-                                                                        lpad: 0, rpad: 0, 
-                                                                        unit: "none",   decimal: "no", unit_space: "",
-                                                                        font: 4, font_weight: "400", 
-                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
-                              
-                              ],
+                             
                               [title: 'Humidity',                      var: "current_humidity", type: "humidity", period:"current",                              
                                                                         icon: "water-percent", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 4, baseline_row: 20,  baseline_column:  1, 
@@ -592,17 +595,7 @@ def mainPage() {
                                                                         font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                               
                               ], 
-                               [title: 'Dewpoint Description',          var: "dewpoint_description", type: "dew_point_description", period:"current",                       
-                                                                        icon: "none", icon_loc: "none",  icon_space: " ",  
-                                                                        h: 2,  w: 6, baseline_row: 20,  baseline_column:  5, 
-                                                                        alignment: "center", text: "",  decimals: 1, 
-                                                                        lpad: 0, rpad: 0, 
-                                                                        unit: "none",   decimal: "no",  unit_space: "",
-                                                                        font: 4, font_weight: "400", 
-                                                                        font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
-                                                                        font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
-                              
-                              ], 
+                               
                               [title: 'Current Dewpoint',             var: "current_dewpoint", type: "dew_point", period:"current",                          
                                                                         icon: "wave", icon_loc: "left",  icon_space: " ",  
                                                                         h: 2,  w: 4, baseline_row: 20,  baseline_column: 11, 
@@ -639,7 +632,44 @@ def mainPage() {
                               
         ];
         
-        typeList =  new TreeMap([:]);
+        
+               
+    } else {
+
+        
+        //Update the Output Types
+        temp = atomicState.unit_type;
+        temp.each{key, item->
+            if (settings["${key}_units"]){
+                temp."${key}".out = settings["${key}_units"];
+            }
+        }
+        atomicState.unit_type = temp;
+        
+        //reset to OpenWeather Data
+        temp = atomicState.tile_type;
+        atomicState.tile_type.each{key, item->
+            if (item.sensor == "no"){
+                temp << ["${key}": item];    
+            }
+        }
+        atomicState.tile_type = temp;
+    }
+    
+    temp = atomicState.tile_type;
+    count = 0;
+    atomicState.device_list.each{ type, var1->
+        if (vars != [:]){
+            var1.each {device, var2->
+                var2.each{attr, var3->
+                    temp."device_${device}_${attr}_${type}" = [name: "${var3.sensor_name} :: ${attr} (${type})", type: "${type}", ow: "device.${device}.${attr}", in_units: var3.in_units, current: "no", hourly: "no", daily: "no", sensor: "yes"];
+                }
+            }
+        }
+    }
+    atomicState.tile_type = temp;
+    
+    typeList =  new TreeMap([:]);
         typeList.main_list = new TreeMap([:]);
         atomicState.span_type.each{span_key, span->
             typeList.main_list.put("${span_key}", [name: span_key.capitalize()]);
@@ -669,18 +699,8 @@ def mainPage() {
         }
         //atomicState.newTileDialog = "";
         atomicState.newTileDialog = typeList.sort();
-               
-    } else {
-
-        //Update the Output Types
-        temp = atomicState.unit_type;
-        temp.each{key, item->
-            if (settings["${key}_units"]){
-                temp."${key}".out = settings["${key}_units"];
-            }
-        }
-        atomicState.unit_type = temp;         
-    }
+    
+    
 
     dynamicPage(name: "mainPage") {        
        
@@ -706,7 +726,7 @@ def mainPage() {
                 }                  
                 
                 if (openweather_refresh_rate){
-                     parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
+                     parent.hubiForm_section(this, "Configure Tile", 10, "settings"){                         
                          container = [];
                          container << getPreviewWindow("tile_settings_HTML", "mainPage");
                          parent.hubiForm_container(this, container, 0); 
@@ -756,13 +776,11 @@ def getPreviewWindow(var, page){
         requestContentType: "application/json",
     ]
     
-    asynchttpGet(verifyDeviceCallback, params);
-    
-    
+    asynchttpGet(verifyDeviceCallback, params); 
     
     if (!settings["$var"]){
        app.updateSetting("${var}", [value: "", type: "string"]);
-   } 
+    } 
 
    html = """
                 <style> 
@@ -793,11 +811,7 @@ def getPreviewWindow(var, page){
                             onload="(() => {
                          })()""></iframe>
                 </div>
-                <button id="save_button" type="button" name="_action_href_${page}|${page}|1" class="btn btn-default   hrefElem  mdl-button mdl-js-button mdl-button--fab mdl-button--colored" 
-                                      style="text-align:left; margin: 10;" submitOnChange>
-                        <i class="material-icons">save</i>
-                        <span style="text-align:left;white-space:pre-wrap"></span>
-                </button>
+                
                 </div>
                 """
     return (html.replace('\t', '').replace('\n', '').replace('  ', ''));
@@ -923,58 +937,56 @@ private getAbbrev(unit){
 }
 
 private getUnits(unit, value){
+    if (unit == null)  return [name: "unknown", var: "tbd", units: "none"];
     
-    switch (unit.toLowerCase()){
-        case "f":
-        case "°f":
-            return [name: "Farenheit (°F)", var: "fahrenheit"]; break;
-         case "c":
-        case "°c":
-            return [name: "Celsius (°C)", var: "celsius"]; break;
-        case "mph": 
-            return [name: "Miles per Hour (mph)", var: "miles_per_hour"]; break;
-        case "m/s":
-            return [name: "Meters per Second (m/s)", var: "meters_per_second"]; break;
-        case "in":
-        case '"':
-            return [name: 'Inches (")', var: "inches"]; break;
-        case "°":
-        case "deg":
-            return [name: "Degrees (°)", var: "degrees"]; break;
-        case "rad":
-            return [name: "Radians (°)", var: "radians"]; break;
-        case "inhg":
-            return [name: "Inches of Mercury (inHg)", var: "inches_mercury"]; break;
-        case "mmhg":
-            return [name: "Millimeters of Mecury mmHg)", var: "millimeters_mercury"]; break;
-        case "mbar":
-            return [name: "Millibars (mbar)", var: "millibars"]; break;
-        case "km/h":
-            return [name: "Kilometers per hour (km/h)", var: "kilometers_per_hour"]; break;
-        case "hPa":
-            return [name: "Hectopascal (hPa)", var: "hectopascal"]; break;
-        case "%":
-            value = Double.parseDouble(value);
-            if (value > 1.0 && value < 100.0) {
-                return [name: "Percent (0 to 100)", var: "percent_numeric"]; break;    
-            } else if (value >=0.0 && value < 1.0) {
-                return [name: "Percent (0.1 to 1.0)", var: "percent_decimal"]; break;  
-            } else {
-                return [name: "unknown", var: "tbd"];  break;  
-            }
+    try{
+        switch (unit.toLowerCase()){
+            case "f":
+            case "°f":
+                return [name: "Farenheit (°F)", var: "temperature", units: "fahrenheit"]; break;
+            case "c":
+            case "°c":
+                return [name: "Celsius (°C)", var: "temperature", units: "celcius"]; break;
+            case "mph": 
+                return [name: "Miles per Hour (mph)", var: "velocity", units: "miles_per_hour"]; break;
+            case "m/s":
+                return [name: "Meters per Second (m/s)", var: "velocity", units: "meters_per_second"]; break;
+            case "in":
+            case '"':
+                return [name: 'Inches (")', var: "depth", units: "inches"]; break;
+            case "mm":
+            case '"':
+                return [name: 'Millimeters (mm)', var: "depth", units: "millimeters"]; break;
+            case "°":
+            case "deg":
+                return [name: "Degrees (°)", var: "direction", units: "degrees"]; break;
+            case "rad":
+                return [name: "Radians (°)", var: "direction", units: "radians"]; break;
+            case "inhg":
+                return [name: "Inches of Mercury (inHg)", var: "pressure", units: "inches_mercury"]; break;
+            case "mmhg":
+                return [name: "Millimeters of Mecury mmHg)", var: "pressure", units: "millimeters_mercury"]; break;
+            case "mbar":
+                return [name: "Millibars (mbar)", var: "pressure", units: "millibars"]; break;
+            case "km/h":
+                return [name: "Kilometers per hour (km/h)", var: "velocity", units: "kilometers_per_hour"]; break;
+            case "hPa":
+                return [name: "Hectopascal (hPa)", var:"pressure", units: "hectopascal"]; break;
+            case "%":
+                value = Double.parseDouble(value);
+                if (value > 1.0 && value < 100.0) {
+                    return [name: "Percent (0 to 100)", var:"percent", units: "percent_numeric"];    
+                } else if (value >=0.0 && value < 1.0) {
+                    return [name: "Percent (0.1 to 1.0)", var: "percent", units: "percent_decimal"];  
+                }
+            break;
+            default: 
+                return [name: "unknown", var: "tbd", units: "none"];  break;  
+        } 
+    } catch (error) {
+            log.debug("Unable to find units: "+error);    
     }
     
-    switch (value.toLowerCase()){
-       case "falling":
-       case "rising" :
-       case "steady" :
-            return [name: "Text Status (Rising, Steady, Falling)", var: "trend_text"]; break;
-       case "n": case "nne": case "ne": case "ene": case "e": case "ese":
-       case "se": case "sse": case "s": case "ssw": case "sw":  case "wsw":
-       case "w":  case "wnw":  case "nw": case  "nnw":
-            return [name: "Cardinal Coordinates (N, S, E, W)", var: "cardinal"]; break;
-    }
-    return [name: "unknown", var: "tbd"];
 }
 
 def getIconList(){
@@ -1408,6 +1420,16 @@ def formatDayData(tile, val){
     return ["value",  day]; 
 }
 
+def formatTextData(tile, val){
+    
+    switch (settings["text_units"]){
+        case "plain":      return ["value", val];
+        case "lowercase":  return ["value", val.toLowerCase()];
+        case "uppercase":  return ["value", val.toUpperCase()];
+        case "title":      return ["value", val.split(" ").collect{it.capitalize()}.join(" ")];
+    }
+}
+
 
 
 def formatConditionText(tile, val){
@@ -1437,6 +1459,14 @@ def formatDewPoint(tile, val) {
 
 }
 
+def getSensorData(measurement){
+    log.debug(measurement);
+    device_id = measurement.tokenize('.')[1];
+    attribute = measurement.tokenize('.')[2];
+    
+    sensor = sensors.find { it.id == device_id };
+    return sensor.currentState(attribute).getValue();
+}
 
 def buildWeatherData(){
     
@@ -1451,12 +1481,17 @@ def buildWeatherData(){
        try {
            period = tile.period;
            measurement = atomicState.tile_type."${tile.type}".ow;
-           if (period != "none" && measurement != "none")
+           if (period == "sensor"){
+               val = getSensorData(measurement);        
+           } else if (period != "none" && measurement != "none") {
                val = getMapData(data, period+"."+measurement);
+           }
        } catch (e){
              log.debug(tile.name+": Unable to get data: "+period+", "+measurement);    
        } 
-        parse_func = atomicState.tile_type."${tile.type}".parse_func;
+        unit_type = atomicState.tile_type."${tile.type}".type;
+        parse_func = atomicState.unit_type."${unit_type}".parse_func;
+     
         try{
             if (parse_func!="none"){
                 returnVal = "${parse_func}"(tile, val);
