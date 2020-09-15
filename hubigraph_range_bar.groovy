@@ -355,7 +355,7 @@ def buildData() {
     def now = new Date();
     def then = new Date();
     
-    log.debug(graph_timespan);
+    //log.debug(graph_timespan);
     switch (graph_timespan){
         case "0": //"Live":
         break;
