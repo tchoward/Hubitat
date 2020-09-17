@@ -1,9 +1,9 @@
 {
   "packageName": "HubiGraphs",
   "author": "Thomas Howard",
-  "version": "3.49",
+  "version": "4.0",
   "minimumHEVersion": "0.0",
-  "dateReleased": "2020-08-18",
+  "dateReleased": "2020-09-17",
   "apps": [
     {
       "id": "8707a4e2-785d-4916-acd7-749a0ed10d7c",
@@ -92,7 +92,15 @@
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_radar_tile.groovy",
       "required": true,
       "oauth": true
-    }	  
+    },
+     {
+      "id": "e7e04f39-d3fe-4339-b4a7-9ca14f3c1bab",
+      "name": "Hubigraph Weather Tile 2",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_weather_tile2.groovy",
+      "required": true,
+      "oauth": true
+    }
   ],
   "drivers": [
     {
@@ -101,7 +109,14 @@
       "namespace": "tchoward",
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_tile.groovy",
       "required": true
-    }
+    },
+    {
+      "id": "cb57804c-48dc-4935-b0d3-ed698bb28bf9",
+      "name": "Hubigraph OpenWeather Device",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_openweather_driver.groovy",
+      "required": true
+    }  
   ],
   "files" : [
 		{
@@ -109,10 +124,20 @@
 			"name": "HubiGraph.js",
 			"location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/HubiGraph.js"
 		},
-    {
+    		{
 			"id":"a7af9806-4b0e-4032-a78e-a41e27e4d685",
 			"name": "WeatherTile.js",
 			"location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/WeatherTile.js"
+		},
+	  	{
+			"id":"ba8d5ae0-1fbd-430a-bae0-bb5c0bd17ebd",
+			"name": "WeatherTile2.js",
+			"location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/WeatherTile2.js"
+		},
+	  	{
+			"id":"f06ea400-fe7a-49ef-8c50-6418f0a78dc6",
+			"name": "WeatherTile2.css",
+			"location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/WeatherTile2.css"
 		}
     
 	]
