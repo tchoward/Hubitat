@@ -14,14 +14,34 @@ definition(
 //V 2.0 Support for Time Graphs
 //V 2.1 Support for Heatmaps
 //V 3.3 Radar Tiles
+//V 0.1 Beta - Weather Tiles 2
 
 preferences {
     // The parent app preferences are pretty simple: just use the app input for the child app.
-    page(name: "mainPage", title: "Graph Creator", install: true, uninstall: true,submitOnChange: true)
-    page(name: "clonePage", nextPage: "mainPage")
+    page(name: "mainPage", title: "Graph Creator", install: true, uninstall: true, submitOnChange: true)
+    page(name: "setupOpenWeather", title: "Setup Open Weather", nextPage: "mainPage")
 }
 
 def mainPage(){
+    
+    if (latitude && longitude && apikey) {
+        childDevice = getChildDevice("OPEN_WEATHER${app.id}");     
+        log.debug(childDevice);
+    
+         if (!childDevice) {
+            device_name="Open Weather Child Device";
+            log.debug("Creating Device $device_name");
+            childDevice = addChildDevice("tchoward", "OpenWeather Hubigraph Driver", "OPEN_WEATHER${app.id}", null,[completedSetup: true, label: device_name]) 
+            log.info "Successfully Created Child"    
+        }
+    
+        if (childDevice) {
+           childDevice.setupDevice(latitude: latitude, longitude: longitude, apiKey: apikey, pollInterval: open_weather_refresh_rate);
+           childDevice.pollData();
+        }
+    }
+    
+    
     dynamicPage(name: "mainPage"){
        section {
             app(name: "hubiGraphLine", appName: "Hubigraph Line Graph",    namespace: "tchoward", title: "Create New Line Graph (Deprecated)", multiple: true)
@@ -33,40 +53,42 @@ def mainPage(){
             app(name: "hubiHeatMap",   appName: "Hubigraph Heat Map",      namespace: "tchoward", title: "Create New Heat Map", multiple: true)
             app(name: "hubiWeather",   appName: "Hubigraph Weather Tile",  namespace: "tchoward", title: "Create New Weather Tile", multiple: true)
             app(name: "hubiForecast",  appName: "Hubigraph Forecast Tile", namespace: "tchoward", title: "Create New Forecast Tile", multiple: true)
-            //app(name: "hubiWeather2",   appName: "Hubigraph Weather Tile 2",  namespace: "tchoward", title: "Create New Weather Tile 2", multiple: true)
+            app(name: "hubiWeather2",   appName: "Hubigraph Weather Tile 2",  namespace: "tchoward", title: "Create New Weather Tile 2", multiple: true)
             app(name: "hubiRadar",      appName: "Hubigraph Radar Tile",      namespace: "tchoward", title: "Create New Radar Tile", multiple: true)
 
 
         }
-        /*
-         section {
-            href name: "clonePager", title: "Clone a Graph", description: "", page: "clonePage"    
+        section {
+            href name: "setupOpenWeather", title: "Setup Up Open Weather for Weather Tile", description: "", page: "setupOpenWeather"    
         } 
-        */
     }
 }
+def getOpenWeatherData(){
+    childDevice =  getChildDevice("OPEN_WEATHER${app.id}");
+    if (!childDevice){
+         log.debug("Error: No Child Found");
+         return null;
+    }
+    return(childDevice.currentState("current_weather").getStringValue());
+}
 
-def clonePage(){
-        apps = [:];
-        childApps.each {child ->
-            log.debug "child app: ${child.label} ${child.id}"
-            apps << ["${child.id}" : child.label];
+def setupOpenWeather(){
+    
+     def updateEnum = ['Manual Poll Only','1 Minute','5 Minutes', '10 Minutes', '15 Minutes', '30 Minutes', '1 Hour', '3 Hours'];
+    
+    
+    def location = getLocation();
+    
+    dynamicPage(name: "setupOpenWeather"){
+        
+        section{
+            input( type: "enum", name: "open_weather_refresh_rate", title: "<b>Select OpenWeather Update Rate</b>", multiple: false, required: false, options: updateEnum, defaultValue: "5 Minutes");
+            input( type: "text", name: "latitude", title:"<b>Latitude (Default = Hub Location)</b>", defaultValue: location.latitude);
+            input( type: "text", name: "longitude", title:"<b>Longitude (Default = Hub Location)</b>", defaultValue: location.longitude);
+            input( type: "text", name: "apikey", title: "<b>OpenWeather Key</b>", defaultValue:"", submitOnChange: true); 
         }
         
-        dynamicPage(name: "clonePage") {    
-            section{
-                input( type: "enum", name: "app_to_clone", title: "HubiGraph to Clone", required: false, multiple: false, options: apps, submitOnChange: true);
-                
-                if (app_to_clone){
-                    log.debug("Selected: "+app_to_clone);
-                    child_app = getChildAppById(app_to_clone.toInteger());
-                    if (child_app) {
-                        log.debug(child_app.id);
-                        log.debug(child_app.class.settings);
-                    }
-                }
-            }
-        }
+    }   
 }
 
 def makeCopy(child){
@@ -80,6 +102,11 @@ def installed() {
 
 def updated() {
     log.debug "Updated with settings: ${settings}"
+    
+    
+    
+   
+    
     unsubscribe()
     initialize()
 }
@@ -101,14 +128,20 @@ def initialize() {
 
 def hubiForm_container(child, containers, numPerRow=1){
     
+    if (numPerRow == 0){
+            style = """style="margin: 0 !important; padding: 0 !important;"""
+            numPerRow = 1
+    } else { 
+            style = "";
+    }
         child.call(){
                 def html_ = 
                         """
                         
-                        <div class = "mdl-grid" style="margin: 0; padding: 0;"> 
+                        <div class = "mdl-grid" style="margin: 0 !important; padding: 0 !important;"> 
                         """
                 containers.each{container->
-                        html_ += """<div class="mdl-cell mdl-cell--${12/numPerRow}-col-desktop mdl-cell--${8/numPerRow}-col-tablet mdl-cell--${4/numPerRow}-col-phone">"""
+                        html_ += """<div class="mdl-cell mdl-cell--${12/numPerRow}-col-desktop mdl-cell--${8/numPerRow}-col-tablet mdl-cell--${4/numPerRow}-col-phone" ${style}>"""
                         html_ += container;
                         html_ += """</div>"""
                 }
@@ -688,43 +721,30 @@ def hubiForm_color(child, title, varname, defaultColorValue, defaultTransparentV
 
 def hubiForm_graph_preview(child){
         child.call(){
-                if (!state.count_) state.count_ = 5;
+                if (!state.count_) state.count_ = 7;
                 
                 def html_ =
                          """
-                        <iframe id="preview" style="width: 100%; position: relative; z-index: 1; height: 100%; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}" data-fullscreen="false" onload="(() => {
-                                this.handel = -1;
-                                const thisFrame = this;
-                                const body = thisFrame.contentDocument.body;
-                                const start = () => {
-                                        if(thisFrame.dataset.fullscreen == 'false') {
-                                                thisFrame.style = 'position:fixed !important; z-index: 100; height: 100%; width: 100%; top: 60px; left: 0; overflow:visible;';
-                                                thisFrame.dataset.fullscreen = 'true';
-                                        } else {
-                                                thisFrame.style = 'position:relative; top: 0; z-index: 1; left: 0; overflow:hidden; opacity: 1.0;';
-                                                const box = jQuery('#preview').parent()[0].getBoundingClientRect();
-                                                const h = 100 * ${state.count_.floatValue()} + 30;
-                                                const w = box.width * 1.00;
-                                                jQuery('#preview').css('height', h);
-                                                jQuery('#preview').css('width', w);
-                                                thisFrame.dataset.fullscreen = 'false';
-                                        }
-                                }
-                                body.addEventListener('dblclick', start);
-                        })()""></iframe>
-                        <script>
-                                function resize() {
-                                        const box = jQuery('#preview').parent()[0].getBoundingClientRect();
-                                        const h = 100 * ${state.count_.floatValue()} + 30;
-                                        const w = box.width * 1.00;
-                                        jQuery('#preview').css('height', h);
-                                        jQuery('#preview').css('width', w);
-                                }
-                                resize();
-                                jQuery(window).on('resize', () => {
-                                        resize();
-                                });
-                        </script><small> *Double-click to Toggle Full-Screen </small>
+                        <style> 
+                            .iframe-container {
+                                  overflow: hidden;
+                                  width: 55vmin;
+                                  height: 65vmin;
+                                  position: relative;
+                            }
+
+                            .iframe-container iframe {
+                                   border: 0;
+                                   left: 0;
+                                   position: absolute;
+                                   top: 0;
+                            }
+                        </style>
+                        <div class="iframe-container">
+                        <iframe id="preview_frame" style="width: 100%; height: 100%; position: relative; z-index: 1; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAEq2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIiCiAgIGV4aWY6UGl4ZWxZRGltZW5zaW9uPSIyIgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMiIKICAgdGlmZjpJbWFnZUxlbmd0aD0iMiIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIgogICB4bXA6TW9kaWZ5RGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIKICAgeG1wOk1ldGFkYXRhRGF0ZT0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCI+CiAgIDx4bXBNTTpIaXN0b3J5PgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaQogICAgICBzdEV2dDphY3Rpb249InByb2R1Y2VkIgogICAgICBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZmZpbml0eSBQaG90byAxLjguMyIKICAgICAgc3RFdnQ6d2hlbj0iMjAyMC0wNi0wMlQxOTo0NzowNS0wNDowMCIvPgogICAgPC9yZGY6U2VxPgogICA8L3htcE1NOkhpc3Rvcnk+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgo8P3hwYWNrZXQgZW5kPSJyIj8+IC4TuwAAAYRpQ0NQc1JHQiBJRUM2MTk2Ni0yLjEAACiRdZE7SwNBFEaPiRrxQQQFLSyCRiuVGEG0sUjwBWqRRPDVbDYvIYnLboIEW8E2oCDa+Cr0F2grWAuCoghiZWGtaKOy3k2EBIkzzL2Hb+ZeZr4BWyippoxqD6TSGT0w4XPNLyy6HM/UYqONfroU1dBmguMh/h0fd1RZ+abP6vX/uYqjIRI1VKiqEx5VNT0jPCk8vZbRLN4WblUTSkT4VLhXlwsK31p6uMgvFseL/GWxHgr4wdYs7IqXcbiM1YSeEpaX404ls+rvfayXNEbTc0HJnbI6MAgwgQ8XU4zhZ4gBRiQO0YdXHBoQ7yrXewr1s6xKrSpRI4fOCnESZOgVNSvdo5JjokdlJslZ/v/11YgNeovdG31Q82Sab93g2ILvvGl+Hprm9xHYH+EiXapfPYDhd9HzJc29D84NOLssaeEdON+E9gdN0ZWCZJdli8Xg9QSaFqDlGuqXip797nN8D6F1+aor2N2DHjnvXP4Bhcln9Ef7rWMAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAXSURBVAiZY7hw4cL///8Z////f/HiRQBMEQrfQiLDpgAAAABJRU5ErkJggg=='); background-size: 25px; background-repeat: repeat; image-rendering: pixelated;" src="${state.localEndpointURL}graph/?access_token=${state.endpointSecret}" data-fullscreen="false" 
+                            onload="(() => {
+                         })()""></iframe>
+                        </div>
                 """
                 return (html_.replace('\t', '').replace('\n', '').replace('  ', ''));
         }
@@ -884,7 +904,7 @@ def hubiForm_list_reorder(child, var, var_color, solid_background="") {
 *********************************************************************************************************************************
 *********************************************************************************************************************************/
 
-def hubiTool_create_tile(child) {
+def hubiTool_create_tile(child, location="graph") {
 	child.call(){
 
                 log.info "Creating HubiGraph Child Device"
@@ -908,8 +928,8 @@ def hubiTool_create_tile(child) {
                         log.info "Label Updated to [${device_name}]"
                         
                         //Send the html automatically
-                        childDevice.setGraph("${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
-                        log.info "Sent setGraph: ${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
+                    childDevice.setGraph("${state.localEndpointURL}${location}/?access_token=${state.endpointSecret}");
+                    log.info "Sent setGraph: ${state.localEndpointURL}${location}/?access_token=${state.endpointSecret}"
                 }
         }
 }
