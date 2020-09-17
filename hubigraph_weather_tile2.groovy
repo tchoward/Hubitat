@@ -1603,9 +1603,7 @@ def defineHTML_Header(){
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/local/gridstack.css">
-    
-
+    <link rel="stylesheet" href="/local/f06ea400-fe7a-49ef-8c50-6418f0a78dc6-WeatherTile2.css">
     <script>
         const localURL =         "${state.localEndpointURL}";
         const secretEndpoint =   "${state.endpointSecret}";
@@ -1622,9 +1620,7 @@ def defineHTML_Header(){
     <script src="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.jQueryUI.js"></script>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js" integrity="sha512-0bEtK0USNd96MnO4XhH8jhv3nyRF0eK87pJke6pkYf3cM0uDIhNJy9ltuzqgypoIFXw3JSuiy04tVk4AjpZdZw==" crossorigin="anonymous"></script>
-    <script defer src="http://192.168.1.64:8080/a7af9806-4b0e-4032-a78e-a41e27e4d685-WeatherTile.js"></script>
-    <script src="/local/iconPicker.js"></script>
-
+    <script defer src="/local/ba8d5ae0-1fbd-430a-bae0-bb5c0bd17ebd-WeatherTile2.js"></script>
     """
     return html;
 }
