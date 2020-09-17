@@ -55,7 +55,7 @@ preferences {
     mappings {
         path("/graph/") {
             action: [
-                GET: "getTile"
+                GET: "getGraph"
             ]
         }
     
@@ -80,6 +80,12 @@ preferences {
         path("/updateSettings/") {
             action: [
                 POST: "updateSettings"
+            ]
+        }
+        
+         path("/tile/") {
+            action: [
+                GET: "getTile"
             ]
         }
     }
@@ -139,14 +145,9 @@ def tileSetupPage(){
         parent.hubiForm_section(this,"General Options", 1)
         {      
             input( type: "enum", name: "openweather_refresh_rate", title: "<b>Select OpenWeather Update Rate</b>", multiple: false, required: true, options: updateEnum, defaultValue: "300000");
-            if (override_openweather){
-                input( type: "enum", name: "pws_refresh_rate", title: "<b>Select PWS Update Rate</b>", multiple: false, required: true, options: updateEnum, defaultValue: "300000");        
-            }
-            container = [];
-            //container << parent.hubiForm_text_input (this, "<b>Open Weather Map Key</b>", "tile_key", "", "true");
             
-            //container << parent.hubiForm_text_input (this, "<b>Latitude (Default = Hub location)</b>", "latitude", location.latitude, false);
-            //container << parent.hubiForm_text_input (this, "<b>Longitude (Default = Hub location)</b>", "longitude", location.longitude, false);
+            container = [];
+            
             container << parent.hubiForm_color(this, "Background", 
                                                      "background", 
                                                      "#000000", 
@@ -419,10 +420,10 @@ def mainPage() {
                                                                                font_color: "#2c3e50", font_opacity: "100", background_color: "#18bc9c", background_opacity: "100", 
                                                                                font_auto_resize: "true", justification: "center", font_adjustment: 0, display: true,
                                       ],
-                                      [title: 'Current Weather',            var: "description", type: "weather_description", period:"current", value: 0,                
+                                      [title: 'Current Weather',        var: "description", type: "weather_description", period:"current", value: 0,                
                                                                         icon: "none", icon_loc: "none",  icon_space: "",  
                                                                         h: 4,  w: 12, baseline_row: 7,  baseline_column:  13, 
-                                                                        alignment: "center", text: "",  decimals: 1, 
+                                                                        alignment: "center", text: "",  decimals: 0, 
                                                                         lpad: 0, rpad: 0, 
                                                                         unit: "none",   decimal: "no",  unit_space: "",
                                                                         font: 20, font_weight: "400", 
@@ -700,8 +701,6 @@ def mainPage() {
         //atomicState.newTileDialog = "";
         atomicState.newTileDialog = typeList.sort();
     
-    
-
     dynamicPage(name: "mainPage") {        
        
             def container = [];
@@ -720,31 +719,27 @@ def mainPage() {
                 
                 parent.hubiForm_section(this, "Local Tile URL", 1, "link"){
                     container = [];
-                    container << parent.hubiForm_text(this, "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
+                    container << parent.hubiForm_text(this, "${state.localEndpointURL}tile/?access_token=${state.endpointSecret}");
                     
                     parent.hubiForm_container(this, container, 1); 
                 }                  
                 
-                if (openweather_refresh_rate){
-                     parent.hubiForm_section(this, "Configure Tile", 10, "settings"){                         
-                         container = [];
-                         container << getPreviewWindow("tile_settings_HTML", "mainPage");
-                         parent.hubiForm_container(this, container, 0); 
+                parent.hubiForm_section(this, "Configure Tile - Desktop Only", 10, "settings"){                         
+                    container = [];
+                    container << getPreviewWindow("tile_settings_HTML", "mainPage");
+                    parent.hubiForm_container(this, container, 0); 
                          
-                     } 
-            
-                    parent.hubiForm_section(this, "Hubigraph Tile Installation", 2, "apps"){
-                        container = [];
-                             
-                        container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
-                        
-                        if (install_device==true){ 
-                             container << parent.hubiForm_text_input(this, "Name for Tile Device", "device_name", "Forecast Tile", "false");
-                        }
-                        parent.hubiForm_container(this, container, 1); 
-                    }
                 } 
-             
+            
+                parent.hubiForm_section(this, "Hubigraph Tile Installation", 1, "apps"){
+                    container = [];
+                             
+                    container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
+                    if (install_device == true){
+                        container << parent.hubiForm_text_input(this, "Name for Tile Device", "device_name", "Forecast Tile", false);
+                    }
+                    parent.hubiForm_container(this, container, 1); 
+                }            
             
                if (state.endpoint){
                    parent.hubiForm_section(this, "Hubigraph Application", 1, "settings"){
@@ -757,7 +752,7 @@ def mainPage() {
                         container << parent.hubiForm_page_button(this, "Disable API", "disableAPIPage", "100%", "cancel");  
                        
                         parent.hubiForm_container(this, container, 1); 
-                    }
+                   }
                }
        
             } //else 
@@ -811,8 +806,6 @@ def getPreviewWindow(var, page){
                             onload="(() => {
                          })()""></iframe>
                 </div>
-                
-                </div>
                 """
     return (html.replace('\t', '').replace('\n', '').replace('  ', ''));
 }
@@ -857,10 +850,12 @@ private removeChildDevices(delete) {
 }
 
 def updated() {
+  
+    log.debug("Updating Name to ${app_name}");
     app.updateLabel(app_name);
     
     if (install_device == true){
-        parent.hubiTool_create_tile(this);
+        parent.hubiTool_create_tile(this, "tile");
     }
     
     if (lts){
@@ -1042,7 +1037,7 @@ def getWeatherData(){
     
     def options = [
         "tile_units": atomicState.unit_type,
-        "openweather_refresh_rate": openweather_refresh_rate,
+        "openweather_refresh_rate": openweather_refresh_rate ? openweather_refresh_rate : "300000",
         "tiles" :     atomicState.tile_settings,
         "tile_type" : atomicState.tile_type,
         "new_tile_dialog" : atomicState.newTileDialog,
@@ -1090,6 +1085,7 @@ def applyDecimals(tile, val){
 }
 
 def getWindDirection(direction) {
+    direction = Float.parseFloat(direction.toString());
     if (direction > 348.75 || direction < 11.25) return "N";
     if (direction >= 11.25 && direction < 33.75) return "NNE";
     if (direction >= 33.75 && direction < 56.25) return "NE";
@@ -1116,7 +1112,6 @@ def applyConversion(tile, val){
         in_units = tile_type.in_units;
     } catch (e){
         log.debug("Unable to find units for ${tile.title}:: Input units = "+in_units+"  Output units = "+out_units);
-         log.debug(e);
     }
       
     if (in_units != out_units && out_units != "none")
@@ -1218,14 +1213,18 @@ def applyConversion(tile, val){
             break;
             case "degrees":
                 switch (out_units) {
-                    case "cardinal": val = getWindDirection(val); break;
+                    case "cardinal":
+                    val = getWindDirection(val); 
+                    break;
                     case "radians": val = (val * 3.1415926535) * 180.0; break;
                     default: val = "UNSUPPORTED";
                 } 
             break;
             case "radians":
                 switch (out_units) {
-                    case "cardinal": val = getWindDirection(((val * 3.1415926535) * 180.0)); break;
+                    case "cardinal":  
+                    val = getWindDirection(((val * 3.1415926535) * 180.0)); 
+                    break;
                     case "degrees": val = ((val * 180) / 3.1415926535); break;
                     default: val = "UNSUPPORTED";
                 }  
@@ -1300,7 +1299,6 @@ def applyConversion(tile, val){
                 else val = "UNSUPPORTED";
                 break;
         }
-    
         return val;
 
     }
@@ -1428,6 +1426,7 @@ def formatTextData(tile, val){
         case "uppercase":  return ["value", val.toUpperCase()];
         case "title":      return ["value", val.split(" ").collect{it.capitalize()}.join(" ")];
     }
+    return ["value", val];
 }
 
 
@@ -1460,7 +1459,6 @@ def formatDewPoint(tile, val) {
 }
 
 def getSensorData(measurement){
-    log.debug(measurement);
     device_id = measurement.tokenize('.')[1];
     attribute = measurement.tokenize('.')[2];
     
@@ -1500,13 +1498,13 @@ def buildWeatherData(){
                 tile.value = "";
             }
         } catch (error){
-             log.debug(tile.name+": Unable to find parse function: $parse_func " + e);   
+             log.debug(val+" "+unit_type+" "+parse_func+"::: Issue executing parse function: $parse_func " + error);   
         }
     }
     atomicState.tile_settings = temp;
 }
 
-def getTileHTML(item){
+def getTileHTML(item, locked){
     var = item.var;
     
     fontScale = 4.6;
@@ -1517,9 +1515,11 @@ def getTileHTML(item){
     
     height = item.h;
     html = "";    
+    tile_locked = locked ? "false" : "true";
+    
     if (item.display==true){
             html += """ <div id="${var}_tile_main" class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
-                                                  data-gs-y="${item.baseline_row}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="false"
+                                                  data-gs-y="${item.baseline_row}" data-gs-width="${item.w}" data-gs-height="${height}" data-gs-locked="${tile_locked}"
                                                   ondblclick="setOptions('${var}')">
 
                     <div id="${var}_title" style="display: none;">${item.title}</div>
@@ -1994,7 +1994,7 @@ def defineNewTileDialog(){
     typeList = atomicState.newTileDialog;
     
     html = "";
-    html += """<dialog id="addTileDialog" class="mdl-dialog mdl-shadow--12dp" tabindex="-1" style = "background-color: rgba(255, 255, 255, 0.90); border-radius: 2vh; height: 95vh">
+    html += """<dialog id="addTileDialog" class="mdl-dialog mdl-shadow--12dp" tabindex="-1" style = "background-color: rgba(255, 255, 255, 0.90); border-radius: 2vh; height: 95vh; visibility: none;">
                    <div class="mdl-dialog__content">
                       <div class="mdl-layout">
                           <div id="options_title" class="mdl-layout__title" style = "color: black; text-align: center;">
@@ -2072,7 +2072,7 @@ def defineTileDialog(){
     }
       
     def html = """
-        <dialog id="tileOptions" class="mdl-dialog mdl-shadow--12dp" tabindex="-1" style = "background-color: rgba(255, 255, 255, 0.90); border-radius: 2vh; height: 95vh">
+        <dialog id="tileOptions" class="mdl-dialog mdl-shadow--12dp" tabindex="-1" style = "background-color: rgba(255, 255, 255, 0.90); border-radius: 2vh; height: 95vh; visibility: none;">
           <div class="mdl-dialog__content">
 
             <div class="mdl-layout">
@@ -2274,7 +2274,7 @@ def getTileListItem(Map map){
     return html;
 }
 
-def defineHTML_Tile(){
+def defineHTML_Tile(locked){
     
     def temp_units = '°';
     def rain_units = '"';
@@ -2332,7 +2332,7 @@ def defineHTML_Tile(){
    
     //Main Tile Building Code
     atomicState.tile_settings.eachWithIndex{item, index->
-       html += getTileHTML(item);
+       html += getTileHTML(item, locked);
     } //each  
     
     html += """
@@ -2410,7 +2410,7 @@ def defineScript(){
     return html;
 }
 
-def getWeatherTile() {
+def getWeatherTile(config) {
     def fullSizeStyle = "margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden";
    
     buildWeatherData();
@@ -2422,9 +2422,9 @@ def getWeatherTile() {
     html += defineHTML_CSS();
     html += """</head>
                <body onload="initializeWeather()">"""
-    html += defineHTML_Tile();
-    html += defineTileDialog();
-    html += defineNewTileDialog();
+    html += defineHTML_Tile(config);
+    if (config) html += defineTileDialog();
+    if (config) html += defineNewTileDialog();
     
     
     html += defineScript();
@@ -2454,8 +2454,13 @@ def initializeAppEndpoint() {
 
 //oauth endpoints
 def getTile() {
-    render(contentType: "text/html", data: getWeatherTile());      
+    render(contentType: "text/html", data: getWeatherTile(false));      
 }
+
+def getGraph() {
+    render(contentType: "text/html", data: getWeatherTile(true));      
+}
+
 
 def getData() {
     buildWeatherData();
