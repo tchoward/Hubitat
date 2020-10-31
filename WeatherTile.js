@@ -1,5 +1,4 @@
-//google.load('visualization', '1.0', { 'packages': ['corechart'] });
-//google.setOnLoadCallback(drawChart);
+//Test
 
 var sunrise;
 var sunset;
