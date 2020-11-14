@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat;
  *  Hubigraph Line Graph Child App
  *
  *  Copyright 2020, but let's behonest, you'll copy it
- *iu:
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
  *
@@ -1265,11 +1265,13 @@ def applyConversion(tile, val){
 
                 switch (out_units) {
                     case "time_twelve":
-                        val = d.getTimeString();
+                        SimpleDateFormat simpDate;
+                        simpDate = new SimpleDateFormat("h:mm");
+                        val = simpDate.format(d);
                         break;
                     case "time_two_four":
                         SimpleDateFormat simpDate;
-                        simpDate = new SimpleDateFormat("kk:mm:ss");
+                        simpDate = new SimpleDateFormat("kk:mm");
                         val = simpDate.format(d);
                         break;
                     default:
