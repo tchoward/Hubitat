@@ -356,7 +356,7 @@ def mainPage() {
                                   uvi:                  [name: "UV Index",            enum: unitUVI,       out:  "uvi",             parse_func: "formatNumericData"],
                                   visibility:           [name: "Visibility",          enum: unitDistance,  out:  "visibility",      parse_func: "formatNumericData"],
                                   blank:                [name: "Blank Tile",          enum: unitBlank,     out:  "none",            parse_func: "none"],
-                                  day:                  [name: "Day of Week",         enum: unitDayofWeek, out:  "short",           parse_func: "formatNumericData"],
+                                  day:                  [name: "Day of Week",         enum: unitDayofWeek, out:  "short",           parse_func: "formatDayData"],
                                   text:                 [name: "Text Description",    enum: unitText,      out:  "plain",           parse_func: "formatTextData"],
                                  ];
                                  
@@ -1314,7 +1314,6 @@ def translateCondition(tile, condition) {
 
     icon = "mdi-weather-sunny-off";
     
-    def now = new Date().getTime() / 1000;
     
     pairings = [
         [name: "thunderstorm with light rain",      icon: "weather-lightning-rainy"],
@@ -1378,10 +1377,27 @@ def translateCondition(tile, condition) {
     ];
    
     try {
-        return_val = ["icon", pairings.find{el->  el.name == condition.toLowerCase()}.icon]; 
+        def now = new Date();
+        String period = tile.period;
+        timeframe = period.split("\\.");
+        
+        if (timeframe[0] == "hourly"){
+            num_hours = timeframe[1].toInteger();
+            use( groovy.time.TimeCategory ) {
+                now = now + num_hours.hours;               
+            }
+        }
+        
+        check_condition = condition;
+        if (isNight(now)) check_condition+=" night";
+        return_val = ["icon", pairings.find{el->  el.name == check_condition}.icon]; 
+        
     } catch (e){
-        log.debug (tile.name+": Unable to return "+condition+": "+e);
-        return_val = ["icon", "alert-circle"];  
+        try {
+            return_val = ["icon", pairings.find{el->  el.name == condition}.icon]; 
+        } catch (ex) {
+            return_val = ["icon", "alert-circle"];
+        }
     }
     return return_val;
 }
@@ -1390,6 +1406,21 @@ def formatNumericData(tile, val){
     if (val == null)
         val = 0;
     return ["value",  applyDecimals(tile, applyConversion(tile, val))];   
+}
+
+def getTime(date){
+
+    return (float)date.getHours()+(60.0/(float)date.getMinutes());
+}
+
+def isNight(date){
+    def location = getLocation();
+    sunrise = getTime(location.sunrise);
+    sunset = getTime(location.sunset);
+    now = getTime(date);
+    if (now < sunrise || now > sunset) return true
+    else return false;
+    
 }
 
 def formatHourData(tile, val){
