@@ -810,7 +810,10 @@ def longTermStoragePage(){
                             bytes = (events.size*128.0)/1024.0
                             total_bytes += bytes;
                             
-                            recommendedUpdateRate = Math.round(((events[0].date-events[events.size-1].date)/1000)/60);
+                            if (events != null && events.size > 1)
+                                recommendedUpdateRate = Math.round(((events[0].date-events[events.size-1].date)/1000)/60);
+                            else
+                                recommendedUpdateRate = 4*60;
                     }
                     
                 }
