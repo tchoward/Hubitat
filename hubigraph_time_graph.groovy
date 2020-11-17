@@ -396,7 +396,7 @@ def graphSetupPage(){
                         
                         container << parent.hubiForm_enum (this, title:             "Time Integration Function", 
                                                                  name:              "var_${sensor.id}_${attribute}_function",
-                                                                 list:              ["Average", "Min", "Max", "Mid"],
+                                                                 list:              ["Average", "Min", "Max", "Mid", "Sum"],
                                                                  default:           "Average");
                         
                         container << parent.hubiForm_enum (this, title:             "Axis Side", 
@@ -1455,6 +1455,16 @@ function averageEvents(minTime, maxTime, data, drop_val) {
     }, { date: minTime+((maxTime - minTime)/2), value: drop_val});
 }
 
+function sumEvents(minTime, maxTime, data, drop_val) {
+    const matches = data.filter(it => it.date > minTime && it.date <= maxTime);
+    return matches.reduce((sum, it) => {
+        if (sum.value == drop_val) sum.value = 0;
+        sum.value += it.value;
+        return sum;
+    }, { date: minTime+((maxTime - minTime)/2), value: drop_val});
+}
+
+
 function maxEvents(minTime, maxTime, data, drop_val) {
     const matches = data.filter(it => it.date > minTime && it.date <= maxTime);
 if (matches.length != 0) {
@@ -1568,6 +1578,7 @@ function drawChart(callback) {
                     case "Min":     newEntry = minEvents(current, next, events, drop_val);     break;
                     case "Max":     newEntry = maxEvents(current, next, events, drop_val);     break;
                     case "Mid":     newEntry = midEvents(current, next, events, drop_val);     break;
+                    case "Sum":     newEntry = sumEvents(current, next, events, drop_val);     break;
                 }
                 
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), newEntry.value];
