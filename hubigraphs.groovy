@@ -919,8 +919,8 @@ def hubiTool_create_tile(child, location="graph") {
                         log.info "Created HTTP Switch [${childDevice}]"
                         
                         //Send the html automatically
-                        childDevice.setGraph("${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
-                        log.info "Sent setGraph: ${state.localEndpointURL}graph/?access_token=${state.endpointSecret}"
+			childDevice.setGraph("${state.localEndpointURL}${location}/?access_token=${state.endpointSecret}");
+			log.info "Sent setGraph: ${state.localEndpointURL}${location}/?access_token=${state.endpointSecret}"
                         }
                 else {
                         
