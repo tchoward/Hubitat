@@ -1461,8 +1461,8 @@ function averageEvents(minTime, maxTime, data, drop_val) {
 function sumEvents(minTime, maxTime, data, drop_val) {
     const matches = data.filter(it => it.date > minTime && it.date <= maxTime);
     return matches.reduce((sum, it) => {
-        if (sum.value == drop_val) sum.value = 0;
-        sum.value += it.value;
+        if (sum.value == drop_val) sum.value = parseFloat(0);
+        sum.value += parseFloat(it.value);
         return sum;
     }, { date: minTime+((maxTime - minTime)/2), value: drop_val});
 }
