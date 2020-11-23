@@ -1383,16 +1383,20 @@ def translateCondition(tile, condition) {
         def now = new Date();
         String period = tile.period;
         timeframe = period.split("\\.");
+        def round_hour = false;
         
         if (timeframe[0] == "hourly"){
+            round_hour = true;
             num_hours = timeframe[1].toInteger();
             use( groovy.time.TimeCategory ) {
-                now = now + num_hours.hours;               
+                now = now + num_hours.hours;              
             }
         }
         
         check_condition = condition;
-        if (isNight(now)) check_condition+=" night";
+        if (isNight(now, round_hour)) {
+            check_condition+=" night";
+        }
         return_val = ["icon", pairings.find{el->  el.name == check_condition}.icon]; 
         
     } catch (e){
@@ -1411,16 +1415,17 @@ def formatNumericData(tile, val){
     return ["value",  applyDecimals(tile, applyConversion(tile, val))];   
 }
 
-def getTime(date){
-
-    return (float)date.getHours()+(60.0/(float)date.getMinutes());
+def getMinHour(date){
+    return (float)(date.getHours())+((float)date.getMinutes()/60.0);
 }
 
-def isNight(date){
+def isNight(date, round_hour){
     def location = getLocation();
-    sunrise = getTime(location.sunrise);
-    sunset = getTime(location.sunset);
-    now = getTime(date);
+    sunrise = getMinHour(location.sunrise);
+    sunset = getMinHour(location.sunset);
+    now = round_hour ? (float)date.getHours() : getMinHour(date);
+    Calendar cal = Calendar.getInstance();
+    
     if (now < sunrise || now > sunset) return true
     else return false;
     
