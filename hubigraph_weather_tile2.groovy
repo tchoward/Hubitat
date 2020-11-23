@@ -657,7 +657,6 @@ def mainPage() {
             }
         }
         atomicState.tile_type = temp;
-        log.debug(atomicState.tile_type);
     }
     
     temp = atomicState.tile_type;
