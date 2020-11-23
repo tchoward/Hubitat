@@ -391,8 +391,8 @@ def mainPage() {
                                  cloud_coverage:        [name: "Cloud Coverage",         type: "percent",             ow: "clouds",               in_units: "percent_numeric",      current: "yes", hourly: "no", daily: "yes", sensor: "no"],
                                  visibility:            [name: "Visibility",             type: "distance",            ow: "visibility",           in_units: "miles",                current: "yes", hourly: "no", daily: "yes", sensor: "no"],
                                  
-                                 wind_speed:            [name: "Wind Speed",             type: "velocity",            ow: "wind_speed",           in_units: "meters_per_second",    current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-                                 wind_gust:             [name: "Wind Gust",              type: "velocity",            ow: "wind_gust",            in_units: "meters_per_second",    current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 wind_speed:            [name: "Wind Speed",             type: "velocity",            ow: "wind_speed",           in_units: "miles_per_hour",    current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 wind_gust:             [name: "Wind Gust",              type: "velocity",            ow: "wind_gust",            in_units: "miles_per_hour",    current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
                                  wind_direction:        [name: "Wind Direction",         type: "direction",           ow: "wind_deg",             in_units: "degrees",              current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
                                  
                                  rain_past_hour:        [name: "Rain past Hour",         type: "depth",               ow: "rain.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no", sensor: "no"],
@@ -649,14 +649,15 @@ def mainPage() {
         
         //reset to OpenWeather Data
         temp = atomicState.tile_type;
-        temp.wind_speed.in_units = 'meters_per_second';
-        temp.wind_gust.in_units = 'meters_per_second';
-        atomicState.tile_type.each{key, item->
-            if (item.sensor == "no"){
+        temp.wind_speed.in_units = 'miles_per_hour';
+        temp.wind_gust.in_units = 'miles_per_hour';
+        atomicState.tile_type.each{key, item->                    
+           if (item.sensor == "no"){
                 temp << ["${key}": item];    
             }
         }
         atomicState.tile_type = temp;
+        log.debug(atomicState.tile_type);
     }
     
     temp = atomicState.tile_type;
