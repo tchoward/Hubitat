@@ -649,6 +649,8 @@ def mainPage() {
         
         //reset to OpenWeather Data
         temp = atomicState.tile_type;
+        temp.wind_speed.in_units = 'meters_per_second';
+        temp.wind_gust.in_units = 'meters_per_second';
         atomicState.tile_type.each{key, item->
             if (item.sensor == "no"){
                 temp << ["${key}": item];    
