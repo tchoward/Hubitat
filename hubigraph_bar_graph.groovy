@@ -128,7 +128,8 @@ def attributeConfigurationPage() {
          parent.hubiForm_section(this, "Graph Order", 1, "directions"){
              parent.hubiForm_list_reorder(this, "graph_order", "background");       
          }
-         
+        
+         def decimalsEnum = [[0:"None (123)"], [1: "One (123.1)"], [2: "Two (123.12)"], [3: "Three (123.123)"], [4: "Four (123.1234"]];
         
          count = 0;
          sensors.each { sensor ->
@@ -136,7 +137,18 @@ def attributeConfigurationPage() {
              attributes.each { attribute ->
                  container = [];
                  parent.hubiForm_section(this, "${sensor.displayName} ${attribute}", 1, "directions"){
-                            container << parent.hubiForm_text_input(this,   "Override Device Name<small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
+                            
+                            input( type: "enum", name: "attribute_${sensor.id}_${attribute}_decimals", 
+                                                 title: "<b>Number of Decimal Places to Display</b>", 
+                                                 multiple: false, required: false, options: decimalsEnum, 
+                                                 defaultValue: 1);
+                     
+                            container << parent.hubiForm_text_input(this, "<b>Scale Factor for Values</b><br><small>Example: To scale down by 10X, input 0.1<br>Leave as <b>1</b> for unchanged</small>",
+                                                                    "attribute_${sensor.id}_${attribute}_scale",
+                                                                    "1", false);
+
+                     
+                            container << parent.hubiForm_text_input(this,   "<b>Override Device Name</b><small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                             "graph_name_override_${sensor.id}_${attribute}",
                                                                             "%deviceName%: %attributeName%", false);
                             container << parent.hubiForm_color      (this,  "Bar Background",               "attribute_${sensor.id}_${attribute}_background", "#3e4475", false, true);
@@ -661,6 +673,11 @@ function onBeforeUnload() {
     if(websocket) websocket.close();
 }
 
+function formatValue(val, opts){
+   val = val * parseFloat(opts.scale);
+   return val.toFixed(opts.decimals); 
+}
+
 function drawChart(callback) {
     let now = new Date().getTime();
     let min = now - options.graphTimespan;
@@ -696,7 +713,7 @@ function drawChart(callback) {
         const name = subscriptions.labels[deviceId][attr].replace('%deviceName%', subscriptions.sensors[deviceId].displayName).replace('%attributeName%', attr);
         const colors = subscriptions.colors[deviceId][attr];
         if (colors.showAnnotation == true){
-            cur_String = `\${cur_.toFixed(1)}\${colors.annotation_units} `;
+            cur_String = `\${formatValue(cur_, colors)}\${colors.annotation_units} `;
             units_ = `\${colors.annotation_units}`;
         }
 
@@ -838,6 +855,8 @@ def getSubscriptions() {
                                             "annotation_color":            settings["attribute_${sensor.id}_${attribute}_annotation_color"],
                                             "annotation_units":            settings["attribute_${sensor.id}_${attribute}_annotation_units"],
                                             "opacity":                     settings["attribute_${sensor.id}_${attribute}_opacity"]/100.0,
+                                            "scale":                       settings["attribute_${sensor.id}_${attribute}_scale"],
+                                            "decimals":                    settings["attribute_${sensor.id}_${attribute}_decimals"]
                                            ];
         }
                                                
