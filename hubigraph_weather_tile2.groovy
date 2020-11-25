@@ -1068,7 +1068,7 @@ def getMapData(map, loc){
                 cur = cur[str];
             }
         } catch (e){
-             log.debug(loc+": Cannot find data: "+e); 
+             //log.debug(loc+": Cannot find data: "+e); 
              return -1;
         }
     }
@@ -1556,6 +1556,8 @@ def getTileHTML(item, locked){
     height = item.h;
     html = "";    
     tile_locked = locked ? "false" : "true";
+    background = getRGBA(item.background_color, (Float.parseFloat(item.background_opacity)));
+    font = getRGBA(item.font_color, Float.parseFloat(item.font_opacity));
     
     if (item.display==true){
             html += """ <div id="${var}_tile_main" class="grid-stack-item" data-gs-id = "${var}" data-gs-x="${item.baseline_column}" 
@@ -1570,7 +1572,7 @@ def getTileHTML(item, locked){
                     <div id="${var}_tile" class="grid-stack-item-content" style="font-size: ${fontScale*height}vh; 
                                                                           line-height: ${fontScale*lineScale*height}vh;
                                                                           text-align: ${item.justification};
-                                                                          background-color: ${item.background_color};
+                                                                          background-color: ${background};
                                                                           font-weight: ${item.font_weight};"> """;
         
         //Compute Icon and other spacing
@@ -1578,14 +1580,14 @@ def getTileHTML(item, locked){
         //Left Icon
         if (item.icon_loc != "right"){
             item.icon_space = item.icon_space ? item.icon_space : "";
-            html+="""<span id="${var}_icon" class="mdi mdi-${item.icon}" style="font-size: ${iconScale*height}vh; color: ${item.font_color};">${item.icon_space}</span>""";
+            html+="""<span id="${var}_icon" class="mdi mdi-${item.icon}" style="font-size: ${iconScale*height}vh; color: ${font};">${item.icon_space}</span>""";
         }
         //Text
         if (item.text == "null" || item.text == null) item.text=""; 
-        html+="""<span id="${var}_text" style="color: ${item.font_color};">${item.text}</span>""";
+        html+="""<span id="${var}_text" style="color: ${font};">${item.text}</span>""";
         
         //Main Content
-        html += """<span id="${var}" style="color: ${item.font_color};">${item.value}</span>"""
+        html += """<span id="${var}" style="color: ${font};">${item.value}</span>"""
         
         //Units
         try{
@@ -1601,12 +1603,12 @@ def getTileHTML(item, locked){
         //Unit Spacing
         html += """<span id="${var}_unit_space">${item.unit_space}</span>"""
                     
-        html += """<span id="${var}_units" style="font-size: ${iconScale*height}vh; color: ${item.font_color};">${units}</span>""";  
+        html += """<span id="${var}_units" style="font-size: ${iconScale*height}vh; color: ${font};">${units}</span>""";  
         
         //Right Icon
         if (item.icon_loc == "right"){
             html+="""<span>${item.icon_space}</span>""";
-            html+="""<span id="${var}_icon" class="mdi mdi-${item.icon}" style="color: ${item.font_color};"></span>""";
+            html+="""<span id="${var}_icon" class="mdi mdi-${item.icon}" style="color: ${font};"></span>""";
         }
         html += """</div></div>""";
     } //if display    
@@ -1638,6 +1640,7 @@ def getRGBA(hex, opacity){
 }
 
 def defineHTML_Header(){
+
     def html = """
     <link rel="stylesheet" href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
@@ -2326,6 +2329,12 @@ def defineHTML_Tile(locked){
         wind_units = ' m/sec';
         pressure_units = 'mmHg';
     }
+    
+    background = 'black'
+    if (background_color != null) {
+        transparent = background_color_transparent ? 0.0 : background_opacity;
+        background = getRGBA(background_color, transparent);
+    } 
        
     def html = """
     <style type="text/css">
@@ -2339,7 +2348,7 @@ def defineHTML_Tile(locked){
     }
 
     </style>
-    <body style="background-color:black; overflow: visible;">
+     <body style="background-color:${background}; overflow: visible;">
     
      <div class="flex-container" style="display: none;">
         
