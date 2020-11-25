@@ -259,8 +259,11 @@ function setColor(color, opacity, id) {
 
 function setbkColor(color, opacity, id) {
 
-    $('#' + id).css('background-color', color);
-    $('#' + id).css('opacity', opacity / 100);
+    rgb = hexToRgb(color);
+
+    colorString = "rgba(" + rgb.r + ", " + rgb.g + ", " + rgb.b + ", " + (opacity / 100) + ")"
+
+    $('#' + id).css('background-color', colorString);
 }
 
 function setTileText(text, id) {
@@ -483,11 +486,12 @@ function saveWindow() {
     dialog.close();
     let color = document.getElementById("text_color").value;
     let opacity = document.getElementById("text_slider").value;
-    setColor(color, opacity, focusTile);
 
     let bkcolor = document.getElementById("background_color").value;
     let bkopacity = document.getElementById("background_slider").value;
     setbkColor(bkcolor, bkopacity, focusTile + "_tile");
+    setColor(color, opacity, focusTile);
+
 
     let text = document.getElementById("tileText").value;
     setTileText(text, focusTile + "_text");
