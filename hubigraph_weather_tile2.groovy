@@ -363,53 +363,7 @@ def mainPage() {
                                   
                                  
         
-        atomicState.tile_type = [
-                                 weather_icon:          [name: "Weather Icon",          type: "icon",                 ow: "weather.0.description", in_units: "none",                 current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-                                 weather_description:   [name: "Weather Description",   type: "text",                 ow: "weather.0.description", in_units: "none",                 current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-                                 
-                                 feels_like:            [name: "Feels Like",            type: "temperature",          ow: "feels_like",            in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "no" , sensor: "no"],
-                                 feels_like_morning:    [name: "Morning Feels Like",    type: "temperature",          ow: "feels_like.morn",       in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
-                                 feels_like_day:        [name: "Day Feels Like",        type: "temperature",          ow: "feels_like.day",        in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
-                                 feels_like_evening:    [name: "Evening Feels Like",    type: "temperature",          ow: "feels_like.eve",        in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],                          
-                                 feels_like_night:      [name: "Night Feels Like",      type: "temperature",          ow: "feels_like.night",      in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
-                                
-                                 temperature:           [name: "Temperature",            type: "temperature",         ow: "temp",                 in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "no", sensor: "no"],
-                                 temperature_max:       [name: "Maximum Temperature",    type: "temperature",         ow: "temp.max",             in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
-                                 temperature_min:       [name: "Minimum Temperature",    type: "temperature",         ow: "temp.min",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
-                                 temperature_morning:   [name: "Morning Temperature",    type: "temperature",         ow: "temp.morn",            in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
-                                 temperature_day:       [name: "Day Temperature",        type: "temperature",         ow: "temp.day",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
-                                 temperature_evening:   [name: "Evening Temperature",    type: "temperature",         ow: "temp.eve",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],                          
-                                 temperature_night:     [name: "Night Temperature",      type: "temperature",         ow: "temp.night",           in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
-                                 
-                                 humidity:              [name: "Humidity",               type: "percent",             ow: "humidity",             in_units: "percent_numeric",      current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-
-                                 dew_point:             [name: "Dew Point",              type: "temperature",         ow: "dew_point",            in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-                                 
-                                 pressure:              [name: "Pressure",               type: "pressure",            ow: "pressure",             in_units: "millibars",            current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-     
-                                 uv_index:              [name: "UV Index",               type: "uvi",                 ow: "uvi",                  in_units: "uvi",                  current: "yes", hourly: "no", daily: "yes", sensor: "no"],
-                                 cloud_coverage:        [name: "Cloud Coverage",         type: "percent",             ow: "clouds",               in_units: "percent_numeric",      current: "yes", hourly: "no", daily: "yes", sensor: "no"],
-                                 visibility:            [name: "Visibility",             type: "distance",            ow: "visibility",           in_units: "miles",                current: "yes", hourly: "no", daily: "yes", sensor: "no"],
-                                 
-                                 wind_speed:            [name: "Wind Speed",             type: "velocity",            ow: "wind_speed",           in_units: "miles_per_hour",    current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-                                 wind_gust:             [name: "Wind Gust",              type: "velocity",            ow: "wind_gust",            in_units: "miles_per_hour",    current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-                                 wind_direction:        [name: "Wind Direction",         type: "direction",           ow: "wind_deg",             in_units: "degrees",              current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-                                 
-                                 rain_past_hour:        [name: "Rain past Hour",         type: "depth",               ow: "rain.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no", sensor: "no"],
-                                 snow_past_hour:        [name: "Snow past Hour",         type: "depth",               ow: "snow.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no", sensor: "no"],
-                                 rain:                  [name: "Rain",                   type: "depth",               ow: "rain",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
-                                 snow:                  [name: "Snow",                   type: "depth",               ow: "snow",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
-                                 chance_precipitation:  [name: "Chance of Precipitation",type: "percent",             ow: "pop",                  in_units: "percent_decimal",      current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-                                 
-                                 sunrise:               [name: "Sunrise",                type: "time",                ow: "sunrise",              in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-                                 sunset:                [name: "Sunset",                 type: "time",                ow: "sunset",               in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
-                    
-                                 hour:                  [name: "Hour",                   type: "time",                ow: "dt",                   in_units: "time_seconds",         current: "no", hourly: "yes", daily: "no", sensor: "no"],
-                                 day:                   [name: "Day",                    type: "day",                 ow: "dt",                   in_units: "time_seconds",         current: "no", hourly: "yes", daily: "yes", sensor: "no"],
-      
-                                 blank:                 [name: "Blank Tile",             type: "blank",               ow: "none",                 in_units: "none",                 current: "no", hourly: "no", daily: "no", sensor: "no"]
-        ];
-    
+            
         atomicState.tile_settings = [[title: 'Forecast Weather Icon',          var: "weather_icon",  type: "weather_icon", period:"current", value: "",            
                                                                                icon: "alert-circle", icon_loc: "center",  icon_space: "",  
                                                                                h: 6,  w: 12, baseline_row: 1,  baseline_column:  13, 
@@ -636,6 +590,56 @@ def mainPage() {
         
                
     } else {
+
+        temp_type = [
+                                 weather_icon:          [name: "Weather Icon",          type: "icon",                 ow: "weather.0.description", in_units: "none",                 current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 weather_description:   [name: "Weather Description",   type: "text",                 ow: "weather.0.description", in_units: "none",                 current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 
+                                 feels_like:            [name: "Feels Like",            type: "temperature",          ow: "feels_like",            in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "no" , sensor: "no"],
+                                 feels_like_morning:    [name: "Morning Feels Like",    type: "temperature",          ow: "feels_like.morn",       in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                 feels_like_day:        [name: "Day Feels Like",        type: "temperature",          ow: "feels_like.day",        in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                 feels_like_evening:    [name: "Evening Feels Like",    type: "temperature",          ow: "feels_like.eve",        in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],                          
+                                 feels_like_night:      [name: "Night Feels Like",      type: "temperature",          ow: "feels_like.night",      in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                
+                                 temperature:           [name: "Temperature",            type: "temperature",         ow: "temp",                 in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "no", sensor: "no"],
+                                 temperature_max:       [name: "Maximum Temperature",    type: "temperature",         ow: "temp.max",             in_units: "fahrenheit",           current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                 temperature_min:       [name: "Minimum Temperature",    type: "temperature",         ow: "temp.min",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
+                                 temperature_morning:   [name: "Morning Temperature",    type: "temperature",         ow: "temp.morn",            in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
+                                 temperature_day:       [name: "Day Temperature",        type: "temperature",         ow: "temp.day",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
+                                 temperature_evening:   [name: "Evening Temperature",    type: "temperature",         ow: "temp.eve",             in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],                          
+                                 temperature_night:     [name: "Night Temperature",      type: "temperature",         ow: "temp.night",           in_units: "fahrenheit",           current: "no",  hourly: "no", daily: "yes", sensor: "no"],
+                                 
+                                 humidity:              [name: "Humidity",               type: "percent",             ow: "humidity",             in_units: "percent_numeric",      current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+
+                                 dew_point:             [name: "Dew Point",              type: "temperature",         ow: "dew_point",            in_units: "fahrenheit",           current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 
+                                 pressure:              [name: "Pressure",               type: "pressure",            ow: "pressure",             in_units: "millibars",            current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+     
+                                 uv_index:              [name: "UV Index",               type: "uvi",                 ow: "uvi",                  in_units: "uvi",                  current: "yes", hourly: "no", daily: "yes", sensor: "no"],
+                                 cloud_coverage:        [name: "Cloud Coverage",         type: "percent",             ow: "clouds",               in_units: "percent_numeric",      current: "yes", hourly: "no", daily: "yes", sensor: "no"],
+                                 visibility:            [name: "Visibility",             type: "distance",            ow: "visibility",           in_units: "miles",                current: "yes", hourly: "no", daily: "yes", sensor: "no"],
+                                 
+                                 wind_speed:            [name: "Wind Speed",             type: "velocity",            ow: "wind_speed",           in_units: "miles_per_hour",    current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 wind_gust:             [name: "Wind Gust",              type: "velocity",            ow: "wind_gust",            in_units: "miles_per_hour",    current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 wind_direction:        [name: "Wind Direction",         type: "direction",           ow: "wind_deg",             in_units: "degrees",              current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 
+                                 rain_past_hour:        [name: "Rain past Hour",         type: "depth",               ow: "rain.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no", sensor: "no"],
+                                 snow_past_hour:        [name: "Snow past Hour",         type: "depth",               ow: "snow.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no", sensor: "no"],
+                                 rain:                  [name: "Rain",                   type: "depth",               ow: "rain",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                 snow:                  [name: "Snow",                   type: "depth",               ow: "snow",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                 chance_precipitation:  [name: "Chance of Precipitation",type: "percent",             ow: "pop",                  in_units: "percent_decimal",      current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 
+                                 sunrise:               [name: "Sunrise",                type: "time",                ow: "sunrise",              in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                                 sunset:                [name: "Sunset",                 type: "time",                ow: "sunset",               in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
+                    
+                                 hour:                  [name: "Hour",                   type: "time",                ow: "dt",                   in_units: "time_seconds",         current: "no", hourly: "yes", daily: "no", sensor: "no"],
+                                 day:                   [name: "Day",                    type: "day",                 ow: "dt",                   in_units: "time_seconds",         current: "no", hourly: "yes", daily: "yes", sensor: "no"],
+      
+                                 blank:                 [name: "Blank Tile",             type: "blank",               ow: "none",                 in_units: "none",                 current: "no", hourly: "no", daily: "no", sensor: "no"],
+                                 time_stamp:            [name: "Data Time Stamp",         type: "time",                ow: "dt",                   in_units: "time_seconds",         current: "yes", hourly: "no", daily: "no", sensor: "no"]
+        ];
+        
+        atomicState.tile_type = temp_type;
 
         
         //Update the Output Types
