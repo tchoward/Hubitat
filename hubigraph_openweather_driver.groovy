@@ -76,7 +76,14 @@ void openWeatherHandler(resp, data) {
         log.warn 'Calling' + atomicState.ow_uri
         log.warn resp.getStatus() + ':' + resp.getErrorMessage()
 	} else {
-         sendEvent(name: 'current_weather', value: resp.data);
+        now = new Date();       
+        sendEvent(name: 'current_weather', value: now.getTime());
+        state.weatherData = resp.data;
     }
 }
+
+String getWeatherData(){
+     return state.weatherData;   
+}    
+    
 
