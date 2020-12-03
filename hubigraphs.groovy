@@ -69,7 +69,7 @@ def getOpenWeatherData(){
          log.debug("Error: No Child Found");
          return null;
     }
-    return(childDevice.currentState("current_weather").getStringValue());
+    return(childDevice.getWeatherData());
 }
 
 def setupOpenWeather(){
