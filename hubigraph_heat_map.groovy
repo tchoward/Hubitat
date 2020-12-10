@@ -515,7 +515,7 @@ def buildData() {
           attributes.each { attribute ->
               if (attribute == "lastupdate"){
                   lastEvent = sensor.getLastActivity();
-                  latest = lastEvent ? Date.parse("yyyy-MM-dd HH:mm:ss.SSS", sensor.getLastActivity().toString()).getTime() : 0;
+                  latest = lastEvent ? Date.parse("yyyy-MM-dd HH:mm:ss.SSSZ", sensor.getLastActivity().toString()).getTime() : 0;
                   resp[sensor.id][attribute] = [current: (now.getTime()-latest), date: latest];
               } else {
                   latest = sensor.latestState(attribute);
