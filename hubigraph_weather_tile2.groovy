@@ -343,23 +343,6 @@ def mainPage() {
                                   blank:   [title: "Blank Tile", num_time: 0, time_units:  ""],
                                   sensor:  [title: "Device Measurement", num_time: 0, time_units: ""],
                                 ];
-        
-        atomicState.unit_type = [ 
-                                  temperature:          [name: "Temperature",         enum: unitTemp,      out:  "fahrenheit",      parse_func: "formatNumericData"],
-                                  percent:              [name: "Percentage",          enum: unitPercent,   out:  "percent_numeric", parse_func: "formatNumericData"],
-                                  icon:                 [name: "Weather Icons",       enum: unitIcon,      out:  "none",            parse_func: "translateCondition"],
-                                  pressure:             [name: "Pressure",            enum: unitPressure,  out:  "inches_mercury",  parse_func: "formatNumericData"],
-                                  velocity:             [name: "Velocity",            enum: unitWind,      out:  "miles_per_hour",  parse_func: "formatNumericData"], 
-                                  time:                 [name: "Time",                enum: unitTime,      out:  "time_twelve",     parse_func: "formatNumericData"],
-                                  depth:                [name: "Depth",               enum: unitDepth,     out:  "inches",          parse_func: "formatNumericData"],
-                                  direction:            [name: "Direction",           enum: unitDirection, out:  "cardinal",        parse_func: "formatNumericData"],
-                                  uvi:                  [name: "UV Index",            enum: unitUVI,       out:  "uvi",             parse_func: "formatNumericData"],
-                                  visibility:           [name: "Visibility",          enum: unitDistance,  out:  "visibility",      parse_func: "formatNumericData"],
-                                  blank:                [name: "Blank Tile",          enum: unitBlank,     out:  "none",            parse_func: "none"],
-                                  day:                  [name: "Day of Week",         enum: unitDayofWeek, out:  "short",           parse_func: "formatDayData"],
-                                  text:                 [name: "Text Description",    enum: unitText,      out:  "plain",           parse_func: "formatTextData"],
-                                 ];
-                                 
                                   
                                  
         
@@ -627,6 +610,7 @@ def mainPage() {
                                  snow_past_hour:        [name: "Snow past Hour",         type: "depth",               ow: "snow.1h",              in_units: "millimeters",          current: "yes", hourly: "yes", daily: "no", sensor: "no"],
                                  rain:                  [name: "Rain",                   type: "depth",               ow: "rain",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
                                  snow:                  [name: "Snow",                   type: "depth",               ow: "snow",                 in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
+                                 precipitation:         [name: "Precipitation",          type: "depth",               ow: "precipitation",        in_units: "millimeters",          current: "no",  hourly: "no",  daily: "yes", sensor: "no"],
                                  chance_precipitation:  [name: "Chance of Precipitation",type: "percent",             ow: "pop",                  in_units: "percent_decimal",      current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
                                  
                                  sunrise:               [name: "Sunrise",                type: "time",                ow: "sunrise",              in_units: "time_seconds",         current: "yes", hourly: "yes", daily: "yes", sensor: "no"],
@@ -640,7 +624,24 @@ def mainPage() {
         ];
         
         atomicState.tile_type = temp_type;
-
+        
+         temp_unit = [ 
+                                  temperature:          [name: "Temperature",         enum: unitTemp,      out:  "fahrenheit",      parse_func: "formatNumericData"],
+                                  percent:              [name: "Percentage",          enum: unitPercent,   out:  "percent_numeric", parse_func: "formatNumericData"],
+                                  icon:                 [name: "Weather Icons",       enum: unitIcon,      out:  "none",            parse_func: "translateCondition"],
+                                  pressure:             [name: "Pressure",            enum: unitPressure,  out:  "inches_mercury",  parse_func: "formatNumericData"],
+                                  velocity:             [name: "Velocity",            enum: unitWind,      out:  "miles_per_hour",  parse_func: "formatNumericData"], 
+                                  time:                 [name: "Time",                enum: unitTime,      out:  "time_twelve",     parse_func: "formatNumericData"],
+                                  depth:                [name: "Depth",               enum: unitDepth,     out:  "inches",          parse_func: "formatNumericData"],
+                                  direction:            [name: "Direction",           enum: unitDirection, out:  "cardinal",        parse_func: "formatNumericData"],
+                                  uvi:                  [name: "UV Index",            enum: unitUVI,       out:  "uvi",             parse_func: "formatNumericData"],
+                                  visibility:           [name: "Visibility",          enum: unitDistance,  out:  "visibility",      parse_func: "formatNumericData"],
+                                  blank:                [name: "Blank Tile",          enum: unitBlank,     out:  "none",            parse_func: "none"],
+                                  day:                  [name: "Day of Week",         enum: unitDayofWeek, out:  "short",           parse_func: "formatDayData"],
+                                  text:                 [name: "Text Description",    enum: unitText,      out:  "plain",           parse_func: "formatTextData"],
+                                 ];
+                                 
+        atomicState.unit_type = temp_unit;
         
         //Update the Output Types
         temp = atomicState.unit_type;
@@ -1036,7 +1037,9 @@ def getIconList(){
         [name: "Gauge",                 icon: "gauge"],
         [name: "Thermostat",            icon: "thermostat"],
         [name: "Water Percent",         icon: "water-percent"],
-        [name: "Wave",                  icon: "wave"]];
+        [name: "Wave",                  icon: "wave"],
+        [name: "Snow",                  icon: "snowflake"],
+        [name: "Water",                 icon: "water"],];
 }
 
 def getWeatherData(){  
@@ -1414,7 +1417,7 @@ def translateCondition(tile, condition) {
 
 def formatNumericData(tile, val){
     if (val == null)
-        val = 0;
+        val = 0; 
     return ["value",  applyDecimals(tile, applyConversion(tile, val))];   
 }
 
@@ -1525,8 +1528,24 @@ def buildWeatherData(){
            measurement = atomicState.tile_type."${tile.type}".ow;
            if (period == "sensor"){
                val = getSensorData(measurement);        
+           } else if (measurement == "precipitation"){
+               rain_val = getMapData(data, period+".rain");
+               snow_val = getMapData(data, period+".snow");
+               
+               //Special Case
+               if (rain_val == null) rain_val = 0;
+               if (snow_val == null) snow_val = 0;
+               
+               if (snow_val > rain_val){
+                   tile.icon = "snowflake";
+               } else {
+                   tile.icon = "water";
+               }
+               val = rain_val + snow_val;
+               
            } else if (period != "none" && measurement != "none") {
                val = getMapData(data, period+"."+measurement);
+               
            }
        } catch (e){
              log.debug(tile.name+": Unable to get data: "+period+", "+measurement);    
