@@ -622,6 +622,21 @@ def graphSetupPage(){
                                     }
                         }
                         
+                        container << parent.hubiForm_sub_section(this, "Restrict Displayed Values");
+                        
+                        container << parent.hubiForm_switch(this, title: "<b>Restrict Displaying Bad Values?</b>", name: "attribute_${sensor.id}_${attribute}_bad_value", default: false, submit_on_change: true);
+
+                        if (settings["attribute_${sensor.id}_${attribute}_bad_value"]==true){
+                            
+                            container << parent.hubiForm_text_input(this,"<b>Min Value to Exclude</b><br><small>If the recorded sensor value is <b>below</b> this value it will be dropped</small>",
+                                                                         "attribute_${sensor.id}_${attribute}_min_value",
+                                                                         "0", false);
+                            
+                            container << parent.hubiForm_text_input(this,"<b>Max Value to Exclude</b><br><small>If the recorded sensor value is <b>above</b> this value it will be dropped</small>",
+                                                                         "attribute_${sensor.id}_${attribute}_max_value",
+                                                                         "100", false);
+                        }
+                        
                         
                         
                         container <<  parent.hubiForm_sub_section(this, "Override Display Name on Graph");
@@ -1019,6 +1034,13 @@ private buildData() {
                 
                          
                 resp[sensor.id][attribute] = oldData.findAll{ it.date > graph_time}; 
+                
+                //Restrict "bad" values 
+                if (settings["attribute_${sensor.id}_${attribute}_bad_value"]==true){
+                    min = Float.valueOf(settings["attribute_${sensor.id}_${attribute}_min_value"]);
+                    max = Float.valueOf(settings["attribute_${sensor.id}_${attribute}_max_value"]);
+                    resp[sensor.id][attribute] = resp[sensor.id][attribute].findAll{ it.value > min && it.value < max}; 
+                }
                 
                 if (lts){
                     atomicState["history_${sensor.id}_${attribute}"] = cleanupData(oldData);
