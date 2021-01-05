@@ -1,9 +1,9 @@
 {
   "packageName": "HubiGraphs",
   "author": "Thomas Howard",
-  "version": "4.41",
+  "version": "4.5",
   "minimumHEVersion": "0.0",
-  "dateReleased": "2020-12-12",
+  "dateReleased": "2021-01-04",
   "apps": [
     {
       "id": "8707a4e2-785d-4916-acd7-749a0ed10d7c",
