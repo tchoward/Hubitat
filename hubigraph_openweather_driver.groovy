@@ -70,7 +70,6 @@ void pollOpenWeather() {
 
 
 void openWeatherHandler(resp, data) {
-    log.debug('Polling OpenWeatherMap.org')
     
     if(resp.getStatus() != 200 && resp.getStatus() != 207) {
         log.warn 'Calling' + atomicState.ow_uri
