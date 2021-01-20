@@ -514,12 +514,12 @@ def buildData() {
           resp[sensor.id] = [:];
           attributes.each { attribute ->
               if (attribute == "lastupdate"){
-                  lastEvent = sensor.getLastActivity();
-                  latest = lastEvent ? Date.parse("yyyy-MM-dd HH:mm:ss.SSSZ", sensor.getLastActivity().toString()).getTime() : 0;
-                  resp[sensor.id][attribute] = [current: (now.getTime()-latest), date: latest];
+                    lastEvent = sensor.getLastActivity();
+                    latest = lastEvent ? Date.parse("yyyy-MM-dd'T'hh:mm:ssZ", sensor.getLastActivity().toString()).getTime() : 0;
+                    resp[sensor.id][attribute] = [current: (now.getTime()-latest), date: latest];
               } else {
-                  latest = sensor.latestState(attribute);
-                  resp[sensor.id][attribute] = [current: latest.getValue(), date: latest.getDate()];
+                    latest = sensor.latestState(attribute);
+                    resp[sensor.id][attribute] = [current: latest.getValue(), date: latest.getDate()];
               }
           }
       }
