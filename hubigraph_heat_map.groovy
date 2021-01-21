@@ -371,7 +371,7 @@ def graphSetupPage(){
                 container << parent.hubiForm_color     (this, "Annotation Aura", "annotation_aura", "#000000", false);
                 container << parent.hubiForm_slider    (this, title: "Number Decimal Places", name: "graph_decimals",  default: 1, min: 0, max: 4, units: " decimal places"); 
                 container << parent.hubiForm_switch    (this, title: "Bold Annotation", name: "annotation_bold", default:false);
-                container << parent.hubiForm_switch    (this, title: "Italic Annotation", name: "annotation_bold", default:false);
+                container << parent.hubiForm_switch    (this, title: "Italic Annotation", name: "annotation_italic", default:false);
             }
             parent.hubiForm_container(this, container, 1); 
         }            
