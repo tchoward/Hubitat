@@ -36,6 +36,7 @@ import groovy.json.*;
 // V 1.8 Smoother sliders, bug fixes
 // V 2.0 New Version to Support Combo Graphs.  Support for Line Graphs is ended.    
 // V 2.1 Long Term Storage Enabled
+// V 4.6 Added finer control for timespan, resize graph sizes, bug fixes
 
 // Credit to Alden Howard for optimizing the code.
 
@@ -100,7 +101,7 @@ def call(Closure code) {
     code.setResolveStrategy(Closure.DELEGATE_ONLY);
     code.setDelegate(this);
     code.call();
-}
+} 
 
 /********************************************************************************************************************************
 *********************************************************************************************************************************
@@ -133,7 +134,16 @@ def graphSetupPage(){
                       ["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1200000":"20 Minutes"], ["1800000":"Half Hour"], ["3600000":"1 Hour"], ["6400000":"2 Hours"], ["19200000":"6 Hours"],
                       ["43200000":"12 Hours"], ["86400000":"1 Day"]];
     
-    def timespanEnum = [["60000":"1 Minute"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"], ["2419200000":"2 Weeks"], ["1814400000":"3 Weeks"], ["2419200000":"1 Month"]]
+    def timespanEnum = [["60000":"1 Minute"], 
+                        ["3600000":"1 Hour"], 
+                        ["43200000":"12 Hours"], 
+                        ["86400000":"1 Day"], 
+                        ["259200000":"3 Days"], 
+                        ["604800000":"1 Week"], 
+                        ["2419200000":"2 Weeks"], 
+                        ["1814400000":"3 Weeks"], 
+                        ["2419200000":"1 Month"], 
+                        ["custom": "Custom Timespan"]];
      
      def timespanEnum2 = [["10":"10 Milliseconds"], ["1000":"1 Second"], ["5000":"5 Seconds"], ["30000":"30 Seconds"], ["60000":"1 Minute"], ["120000":"2 Minutes"], ["300000":"5 Minutes"], ["600000":"10 Minutes"],
                           ["2400000":"30 minutes"], ["3600000":"1 Hour"], ["43200000":"12 Hours"], ["86400000":"1 Day"], ["259200000":"3 Days"], ["604800000":"1 Week"]];
@@ -148,16 +158,49 @@ def graphSetupPage(){
       
         parent.hubiForm_section(this,"General Options", 1)
         {      
-            input( type: "enum", name: "graph_update_rate", title: "<b>Select Integration Time</b><br><small>(The amount of time each data point covers)</small>", multiple: false, required: true, options: timespanEnum2, defaultValue: "300000", submitOnChange: true)
-            input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b></br><small>(The amount of time the graph displays)</small>", multiple: false, required: true, options: timespanEnum, defaultValue: "43200000", submitOnChange: true)
-            input( type: "enum", name: "graph_refresh_rate", title: "<b>Select Graph Update Rate</b></br><small>(For panel viewing; the refresh rate of the graph)", multiple: false, required: true, options: updateRateEnum, defaultValue: "300000")
+            input( type: "enum", name: "graph_update_rate", title: "<b>Integration Time</b><br><small>(The amount of time each data point covers)</small>", 
+                                 multiple: false, required: true, options: timespanEnum2, defaultValue: "300000", submitOnChange: true)
+
+            input( type: "enum", name: "graph_refresh_rate", title: "<b>Graph Update Rate</b></br><small>(For panel viewing; the refresh rate of the graph)", 
+                                 multiple: false, required: true, options: updateRateEnum, defaultValue: "300000")
+
             container = [];
-            points = graph_update_rate ? (long)(Double.parseDouble(graph_timespan)/Double.parseDouble(graph_update_rate)) : 280;
+
+            container <<  parent.hubiForm_sub_section(this, "Graph Time Span<br><small>Amount of time the graph covers</small>");
+
+            container << parent.hubiForm_slider (this,  title: "<b>Days</b>", name: "graph_timespan_days",  
+                                                        default: 1, min: 0, max: 30, units: " days", submit_on_change: true);
+
+            container << parent.hubiForm_slider (this,  title: "<b>Hours</b>", name: "graph_timespan_hours",  
+                                                        default: 0, min: 0, max: 24, units: " hours", submit_on_change: true);
+            
+            container << parent.hubiForm_slider (this,  title: "<b>Minutes</b>", name: "graph_timespan_minutes",  
+                                                        default: 0, min: 0, max: 60, units: " seconds", submit_on_change: true);
+
+            //input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b></br><small>(The amount of time the graph displays)</small>", 
+            //                     multiple: false, required: true, options: timespanEnum, defaultValue: "43200000", submitOnChange: true)
+
+            //secs = 100000;
+            if (!graph_timespan_days){
+                secs = (long)86400000;
+            } else {
+                secs = (long)((double)(graph_timespan_days)*86400000+
+                              (double)(graph_timespan_hours)*3600000+
+                              (double)(graph_timespan_minutes)*60000);
+            }
+
+            app.updateSetting("graph_timespan", secs);
+
+            points = graph_update_rate ? (long)(secs/Double.parseDouble(graph_update_rate)) : 280;
+            
             if (points > 2000) {
                 container << parent.hubiForm_text (this, """<span style="color: red; font-weight: bold;">WARNING:</span> <b>${(points)} Points </b>will be generated per Attribute per Graph<br><small>Too many points will cause Hubigraphs to hang or take a long time to generate</small>""");
             } else {
                 container << parent.hubiForm_text (this, "NOTE: <b>${(points)} Points </b>will be generated per Attribute per Graph");
             }
+
+            container <<  parent.hubiForm_sub_section(this, "Other Options");
+
             container << parent.hubiForm_color (this, "Graph Background",    "graph_background", "#FFFFFF", false)
             container << parent.hubiForm_switch(this, title: "<b>Smooth Graph Points</b><br><small>(Enable Google Graph Smoothing)</small>", name: "graph_smoothing", default: false);
             container << parent.hubiForm_switch(this, title: "<b>Flip Graph to Vertical?</b><br><small>(Rotate 90 degrees)</small>", name: "graph_y_orientation", default: false);
@@ -182,10 +225,25 @@ def graphSetupPage(){
             
          parent.hubiForm_section(this, "Graph Size", 1){
             container = [];
-            container << parent.hubiForm_switch     (this, title: "<b>Set size of Graph?</b><br><small>(False = Fill Window)</small>", name: "graph_static_size", default: false, submit_on_change: true);
+
+            container << parent.hubiForm_switch     (this,  title: "<b>Set Fill % of Graph?</b><br><small>(False = Default (80%) Fill)</small>", 
+                                                            name: "graph_percent_fill", default: false, submit_on_change: true);
+            if (graph_percent_fill==true){   
+
+                container << parent.hubiForm_slider (this,  title: "Horizontal fill % of the graph", name: "graph_h_fill",  
+                                                            default: 80, min: 1, max: 100, units: "%", submit_on_change: false);
+                container << parent.hubiForm_slider (this,  title: "Vertical fill % of the graph", name: "graph_v_fill",  
+                                                            default: 80, min: 1, max: 100, units: "%", submit_on_change: false); 
+                                                       
+            }
+            container << parent.hubiForm_switch     (this,  title: "<b>Set size of Graph?</b><br><small>(False = Fill Window)</small>", 
+                                                            name: "graph_static_size", default: false, submit_on_change: true);
             if (graph_static_size==true){      
-                container << parent.hubiForm_slider (this, title: "Horizontal dimension of the graph", name: "graph_h_size",  default_value: 800, min: 100, max: 3000, units: " pixels", submit_on_change: false);
-                container << parent.hubiForm_slider (this, title: "Vertical dimension of the graph", name: "graph_v_size",  default_value: 600, min: 100, max: 3000, units: " pixels", submit_on_change: false);   
+
+                container << parent.hubiForm_slider (this,  title: "Horizontal dimension of the graph", name: "graph_h_size",  
+                                                            default: 800, min: 100, max: 3000, units: " pixels", submit_on_change: false);
+                container << parent.hubiForm_slider (this,  title: "Vertical dimension of the graph", name: "graph_v_size",  
+                                                            default: 600, min: 100, max: 3000, units: " pixels", submit_on_change: false);   
             }
 
             parent.hubiForm_container(this, container, 1); 
@@ -609,9 +667,9 @@ def graphSetupPage(){
                         
                         //Line and Area Graphs can be "Drop-line"
                         if ((graphType == "Line" || graphType == "Area") && enumType==false && settings["attribute_${sensor.id}_${attribute}_custom_states"] == false) {
-                                    
-                                    container <<  parent.hubiForm_sub_section(this, "Drop Line");
-                            
+
+                                    container << parent.hubiForm_sub_section(this, "Handle Missing Values");
+                         
                                     container << parent.hubiForm_switch(this, title: "<b>Display Missing Data as a Drop Line?</b>", name: "attribute_${sensor.id}_${attribute}_drop_line", default: false, submit_on_change: true);
                                                               
                                     if (settings["attribute_${sensor.id}_${attribute}_drop_line"]==true){
@@ -620,6 +678,13 @@ def graphSetupPage(){
                                                                                      "attribute_${sensor.id}_${attribute}_drop_value",
                                                                                      "0", false);                                    
                                     }
+
+                                    container << parent.hubiForm_switch(this, title: "<b>Extend Left Value?</b><br><small>When values are unavailable, extend value to left</small>", 
+                                                                              name: "attribute_${sensor.id}_${attribute}_extend_left", default: false, submit_on_change: false);
+
+                                    container << parent.hubiForm_switch(this, title: "<b>Extend Right Value?</b><br><small>When values are unavailable, extend value to right</small>", 
+                                                                              name: "attribute_${sensor.id}_${attribute}_extend_right", default: false, submit_on_change: false);
+                       
                         }
                         
                         container << parent.hubiForm_sub_section(this, "Restrict Displayed Values");
@@ -1009,7 +1074,7 @@ private buildData() {
     def then = new Date();
     
     use (groovy.time.TimeCategory) {
-           val =  Double.parseDouble(graph_timespan)/1000.0;
+           val =  Double.parseDouble("${graph_timespan}")/1000.0;
            then -= ((int)val).seconds;
            graph_time = then.getTime();
     }
@@ -1055,11 +1120,10 @@ def getChartOptions(){
     
     /*Setup Series*/
     def series = ["series" : [:]];
-    
-    
+        
     def options = [
         "graphReduction": graph_max_points,
-        "graphTimespan": Long.parseLong(graph_timespan),
+        "graphTimespan": Long.parseLong("${graph_timespan}"),
         "graphUpdateRate": Integer.parseInt(graph_update_rate),
         "graphRefreshRate" : Integer.parseInt(graph_refresh_rate),
         "overlays": [   "display_overlays" : show_overlay,
@@ -1070,8 +1134,9 @@ def getChartOptions(){
         "graphOptions": [
             "tooltip" : ["format" : "short"], 
             "width": graph_static_size ? graph_h_size : "100%",
-            "height": graph_static_size ? graph_v_size: "100%",
-            "chartArea": [ "width": graph_static_size ? graph_h_size : "80%", "height": graph_static_size ? graph_v_size: "80%"],
+            "height": graph_static_size ? graph_v_size : "100%",
+            "chartArea": [  "width":    graph_percent_fill ? "${graph_h_fill}%" : "80%", 
+                            "height":   graph_percent_fill ? "${graph_v_fill}%" : "80%"],
             "hAxis": ["textStyle": ["fontSize": graph_haxis_font, 
                                     "color": graph_hh_color_transparent ? "transparent" : graph_hh_color ], 
                       "gridlines": ["color": graph_ha_color_transparent ? "transparent" : graph_ha_color, 
@@ -1565,6 +1630,8 @@ function drawChart(callback) {
     var drop_val;
     var newEntry;
     var next;
+
+    
     //adjust for days 
     if (options.graphUpdateRate >= 86400000){
         let d = new Date(then);
@@ -1573,19 +1640,30 @@ function drawChart(callback) {
     }
     
     console.info(subscriptions);
-    console.info(then+" "+spacing);
+
     //map the graph data
     Object.entries(graphData).forEach(([deviceIndex, attributes]) => {
         Object.entries(attributes).forEach(([attribute, events]) => {
-            console.log("#2: "+deviceIndex+" "+attributes)
+
             let func = subscriptions.var[deviceIndex][attribute].function;
-            current = then;
-            if (subscriptions.drop[deviceIndex][attribute].valid == "true"){
+            let num_events = events.length;
+
+            extend_left = subscriptions.extend[deviceIndex][attribute].left;
+            extend_right = subscriptions.extend[deviceIndex][attribute].right;
+            drop_line = subscriptions.drop[deviceIndex][attribute].valid;
+
+            if (drop_line == "true"){
                 drop_val = parseFloat(subscriptions.drop[deviceIndex][attribute].value);
+            } else if (num_events>0 && extend_left) {
+                drop_val = events[0].value;   
             } else {
                 drop_val = null;
             }
             
+            
+
+            current = then;
+
             while (current < now){
                 if (subscriptions.states[deviceIndex][attribute] != undefined && events.length > 0){
                     if (drop_val == null){
@@ -1598,6 +1676,7 @@ function drawChart(callback) {
                     drop_val = newEntry == undefined ? events[0].value : newEntry.value;
                 }
                 next = current+spacing;
+
                 switch (func){
                     case "Average": newEntry = averageEvents(current, next, events, drop_val); break;
                     case "Min":     newEntry = minEvents(current, next, events, drop_val);     break;
@@ -1605,10 +1684,21 @@ function drawChart(callback) {
                     case "Mid":     newEntry = midEvents(current, next, events, drop_val);     break;
                     case "Sum":     newEntry = sumEvents(current, next, events, drop_val);     break;
                 }
+
+                if (drop_line != "true"){
+                    if (num_events > 0 && events[0].date >= next){
+                        drop_val = null;
+                    }
+                    if (num_events > 0 && events[num_events-1].date <= next && extend_right){
+                        drop_val = events[num_events-1].value;
+                    }
+                }
+                    
                 
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), newEntry.value];
                 accumData[newEntry.date] = [ ...(accumData[newEntry.date] ? accumData[newEntry.date] : []), getStyle(deviceIndex, attribute)];
                 current += spacing;
+                    
             }
         });
     });
@@ -1786,6 +1876,7 @@ def getSubscriptions() {
     def attributes = [:];
     def labels = [:];
     def drop_ = [:];
+    def extend_ = [:];
     def var_ = [:];
     def graph_type_ = [:];
     def states_ = [:];
@@ -1804,6 +1895,7 @@ def getSubscriptions() {
         }
         
         drop_[sensor.id] = [:];
+        extend_[sensor.id] = [:];
         graph_type_[sensor.id] = [:];
         var_[sensor.id] = [:];
         states_[sensor.id] = [:];
@@ -1832,6 +1924,12 @@ def getSubscriptions() {
             drop_[sensor.id][attr] = [    valid: drop_valid  ? "true" : "false",
                                           value: drop_valid ? settings["attribute_${sensor.id}_${attr}_drop_value"] : "null"
                                       ];
+
+            extend_[sensor.id][attr] = [
+                right: settings["attribute_${sensor.id}_${attr}_extend_right"],
+                left:  settings["attribute_${sensor.id}_${attr}_extend_left"]
+            ];
+
             
             graph_type_[sensor.id][attr] = settings["graph_type_${sensor.id}_${attr}"];
             
@@ -1853,6 +1951,7 @@ def getSubscriptions() {
         attributes: attributes, 
         labels : labels,
         drop : drop_,
+        extend: extend_,
         graph_type: graph_type_,
         var : var_,
         states: states_
