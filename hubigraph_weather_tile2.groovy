@@ -125,13 +125,13 @@ def tileSetupPage(){
     def updateEnum = [["60000":"1 Minute"],["300000":"5 Minutes"], ["600000":"10 Minutes"], ["1200000":"20 Minutes"], ["1800000":"Half Hour"], 
                       ["3600000":"1 Hour"], ["6400000":"2 Hours"], ["19200000":"6 Hours"], ["43200000":"12 Hours"], ["86400000":"1 Day"]];
     
-    def unitEnum =       [["imperial":"Imperial (°F, mph, in, inHg, 0:00 am)"], ["metric":"Metric (°C, m/sec, mm, mmHg, 00:00)"]]; 
-    def unitTemp =       [["fahrenheit": "Fahrenheit (°F)"], ["celsius" : "Celsius (°C)"], ["kelvin" : "Kelvin (K)"]];
+    def unitEnum =       [["imperial":"Imperial (�F, mph, in, inHg, 0:00 am)"], ["metric":"Metric (�C, m/sec, mm, mmHg, 00:00)"]]; 
+    def unitTemp =       [["fahrenheit": "Fahrenheit (�F)"], ["celsius" : "Celsius (�C)"], ["kelvin" : "Kelvin (K)"]];
     def unitWind =       [["meters_per_second": "Meters per Second (m/s)"], ["miles_per_hour": "Miles per Hour (mph)"], ["knots": "Knots (kn)"], ["kilometers_per_hour": "Kilometers per Hour (km/h)"]];
     def unitPrecip =     [["millimeters": "Millimeters (mm)"], ["inches": """Inches (") """]];
     def unitPressure =   [["millibars": "Millibars (mbar)"], ["millimeters_mercury": "Millimeters of Mercury (mmHg)"], ["inches_mercury": "Inches of Mercury (inHg)"], ["hectopascal" : "Hectopascal (hPa)"]];
-    def unitDirection =  [["degrees": "Degrees (°)"], ["radians": "Radians (°)"], ["cardinal" : "Cardinal (N, NE, E, SE, etc)"]];
-    def unitTrend =      [["trend_numeric": "Numeric (↑ < 0, → = 0, ↓ > 0)"], ["trend_text": "Text (↑ rising, → steady, ↓ falling)"]];
+    def unitDirection =  [["degrees": "Degrees (�)"], ["radians": "Radians (�)"], ["cardinal" : "Cardinal (N, NE, E, SE, etc)"]];
+    def unitTrend =      [["trend_numeric": "Numeric (� < 0, � = 0, � > 0)"], ["trend_text": "Text (� rising, � steady, � falling)"]];
     def unitPercent =    [["percent_numeric": "Numeric (0 to 100)"], ["percent_decimal": "Decimal (0.0 to 1.0)"]];
     def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
     def unitDate =       [["day_only": "Day Only (Thursday)"],["date_only":"Date Only (29)"],["day_date":"Day and Date (Thursday 29)"], ["month_day":"Month and Day (June 29)"]];  
@@ -196,12 +196,12 @@ def parseSensor(str){
 
 def deviceSelectionPage() {
     def final_attrs;
-    def unitTemp =       [["fahrenheit": "Fahrenheit (°F)"], ["celsius" : "Celsius (°C)"], ["kelvin" : "Kelvin (K)"]];
+    def unitTemp =       [["fahrenheit": "Fahrenheit (�F)"], ["celsius" : "Celsius (�C)"], ["kelvin" : "Kelvin (K)"]];
     def unitWind =       [["meters_per_second": "Meters per Second (m/s)"], ["miles_per_hour": "Miles per Hour (mph)"], ["knots": "Knots (kn)"], ["kilometers_per_hour": "Kilometers per Hour (km/h)"]];
     def unitLength =     [["millimeters": "Millimeters (mm)"], ["inches": """Inches (") """]];
     def unitPressure =   [["millibars": "Millibars (mbar)"], ["millimeters_mercury": "Millimeters of Mercury (mmHg)"], ["inches_mercury": "Inches of Mercury (inHg)"], ["hectopascal" : "Hectopascal (hPa)"]];
-    def unitDirection =  [["degrees": "Degrees (°)"], ["radians", "Radians (°)"], ["cardinal", "Cardinal (N, NE, E, SE, etc)"]];
-    def unitTrend =      [["trend_numeric": "Numeric (↑ < 0, → = 0, ↓ > 0)"], ["trend_text": "Text (↑ rising, → steady, ↓ falling)"]];
+    def unitDirection =  [["degrees": "Degrees (�)"], ["radians", "Radians (�)"], ["cardinal", "Cardinal (N, NE, E, SE, etc)"]];
+    def unitTrend =      [["trend_numeric": "Numeric (� < 0, � = 0, � > 0)"], ["trend_text": "Text (� rising, � steady, � falling)"]];
     def unitPercent =    [["percent_numeric": "Numeric (0 to 100)"], ["percent_decimal": "Decimal (0.0 to 1.0)"]];
     
     
@@ -318,12 +318,12 @@ def enableAPIPage() {
 }
 
 def mainPage() {
-    def unitTemp =       [["fahrenheit": "Fahrenheit (°F)"], ["celsius" : "Celsius (°C)"], ["kelvin" : "Kelvin (K)"]];
+    def unitTemp =       [["fahrenheit": "Fahrenheit (�F)"], ["celsius" : "Celsius (�C)"], ["kelvin" : "Kelvin (K)"]];
     def unitWind =       [["meters_per_second": "Meters per Second (m/s)"], ["miles_per_hour": "Miles per Hour (mph)"], ["knots": "Knots (kn)"], ["kilometers_per_hour": "Kilometers per Hour (km/h)"]];
     def unitDepth =      [["millimeters": "Millimeters (mm)"], ["inches": """Inches (") """]];
     def unitPressure =   [["millibars": "Millibars (mbar)"], ["millimeters_mercury": "Millimeters of Mercury (mmHg)"], ["inches_mercury": "Inches of Mercury (inHg)"], ["hectopascal" : "Hectopascal (hPa)"]];
-    def unitDirection =  [["degrees": "Degrees (°)"], ["radians" : "Radians (°)"], ["cardinal": "Cardinal (N, NE, E, SE, etc)"]];
-    def unitTrend =      [["trend_numeric": "Numeric (↑ < 0, → = 0, ↓ > 0)"], ["trend_text": "Text (↑ rising, → steady, ↓ falling)"]];
+    def unitDirection =  [["degrees": "Degrees (�)"], ["radians" : "Radians (�)"], ["cardinal": "Cardinal (N, NE, E, SE, etc)"]];
+    def unitTrend =      [["trend_numeric": "Numeric (� < 0, � = 0, � > 0)"], ["trend_text": "Text (� rising, � steady, � falling)"]];
     def unitPercent =    [["percent_numeric": "Numeric (0 to 100)"], ["percent_decimal": "Decimal (0.0 to 1.0)"]];
     def unitTime =       [["time_seconds" : "Seconds since 1970"], ["time_milliseconds" : "Milliseconds since 1970"], ["time_twelve" : "12 Hour (2:30 PM)"], ["time_two_four" : "24 Hour (14:30)"]];
     def unitUVI=         [["uvi" : "UV Index"]];
@@ -944,11 +944,11 @@ private getUnits(unit, value){
     try{
         switch (unit.toLowerCase()){
             case "f":
-            case "°f":
-                return [name: "Farenheit (°F)", var: "temperature", units: "fahrenheit"]; break;
+            case "�f":
+                return [name: "Farenheit (�F)", var: "temperature", units: "fahrenheit"]; break;
             case "c":
-            case "°c":
-                return [name: "Celsius (°C)", var: "temperature", units: "celcius"]; break;
+            case "�c":
+                return [name: "Celsius (�C)", var: "temperature", units: "celcius"]; break;
             case "mph": 
                 return [name: "Miles per Hour (mph)", var: "velocity", units: "miles_per_hour"]; break;
             case "m/s":
@@ -959,11 +959,11 @@ private getUnits(unit, value){
             case "mm":
             case '"':
                 return [name: 'Millimeters (mm)', var: "depth", units: "millimeters"]; break;
-            case "°":
+            case "�":
             case "deg":
-                return [name: "Degrees (°)", var: "direction", units: "degrees"]; break;
+                return [name: "Degrees (�)", var: "direction", units: "degrees"]; break;
             case "rad":
-                return [name: "Radians (°)", var: "direction", units: "radians"]; break;
+                return [name: "Radians (�)", var: "direction", units: "radians"]; break;
             case "inhg":
                 return [name: "Inches of Mercury (inHg)", var: "pressure", units: "inches_mercury"]; break;
             case "mmhg":
@@ -2145,31 +2145,30 @@ def defineTileDialog(){
            <div class="mdl-grid" style="width: 100%">
               <div class = "border-container">
               <div id="text_box" class="flex-container">
-                  <div class="flex-item" style="max-width:18%; flex-basis: 18%;" tabindex="-1">
+                  <div class="flex-item" style="max-width:15%; flex-basis: 15%;" tabindex="-1">
                     <button id="trash_button" type="button" class="mdl-button mdi mdi-trash-can-outline" onclick="deleteTile()" style="color: darkred; font-size: 4vh !important;"></button>
                     <div class="mdl-tooltip" for="trash_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Delete this tile</div>
                   </div>
                                
-                     <div class="flex-item" style="max-width:18%; flex-basis: 18%" tabindex="-1">
+                     <div class="flex-item" style="max-width:15%; flex-basis: 15%" tabindex="-1">
                         <button id="new_tile" type="button" class="mdl-button mdi mdi-shape-rectangle-plus"" onclick="newTile()" style="color: darkgreen; font-size: 4vh !important;"></button>
                         <div class="mdl-tooltip" for="new_tile" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Place New Tile</div>
                     </div>
-
-                    <div class="flex-item" style="max-width:10%; flex-basis: 10%;" tabindex="-1">
-                    <span class="mdi mdi-drag-vertical-variant" style="color: gray; font-size: 6vh !important; line-height: 6vh !important;"></span>
-                  </div>
-                    
-                    <div class="flex-item" style="max-width:18%; flex-basis: 18%" tabindex="-1">
+                    <div class="flex-item" style="max-width:15%; flex-basis: 15%" tabindex="-1">
                         <button id="save_button" type="button" class="mdl-button mdi mdi-content-save" onclick="saveWindow()" style="color: darkgreen; font-size: 4vh !important;"></button>
                         <div class="mdl-tooltip" for="save_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Save/Close</div>
                     </div>
-                    <div class="flex-item" style="max-width:18%; flex-basis: 18%" tabindex="-1">
+                    <div class="flex-item" style="max-width:15%; flex-basis: 15%" tabindex="-1">
                         <button id="save_all_button" type="button" class="mdl-button mdi mdi-content-save-all" onclick="saveAllWindow()" style="color: darkgreen; font-size: 4vh !important;"></button>
                         <div class="mdl-tooltip" for="save_all_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Save Colors and Opacity to All Tiles</div>
                     </div>
-                    <div class="flex-item" style="max-width:18%; flex-basis: 18% padding-bottom: 0 !important;" tabindex="-1">
+                    <div class="flex-item" style="max-width:15%; flex-basis: 15% padding-bottom: 0 !important;" tabindex="-1">
                         <button id="close_button" type="button" class="mdl-button mdi mdi-close-circle" onclick="closeWindow()" style="color: darkred; font-size: 4vh !important;"></button>
                         <div class="mdl-tooltip" for="close_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)">Exit/Don't Save</div>
+                    </div>
+                    <div class="flex-item" style="max-width:15%; flex-basis: 15% padding-bottom: 0 !important;" tabindex="-1">
+                        <button id="update_button" type="button" class="mdl-button mdi mdi-cloud-refresh" onclick="getWeatherData()" style="color: darkgreen; font-size: 4vh !important;"></button>
+                        <div class="mdl-tooltip" for="update_button" style="background-color: rgba(255,255,255,0.75); color: rgba(0,0,0,100);)"><b>Refresh View</b><br>This may take some time, depending on the number of tiles</div>
                     </div>
               </div>
               </div>
@@ -2338,7 +2337,7 @@ def getTileListItem(Map map){
 
 def defineHTML_Tile(locked){
     
-    def temp_units = '°';
+    def temp_units = '�';
     def rain_units = '"';
     def m_time_units = ' am';
     def e_time_units = ' pm';
