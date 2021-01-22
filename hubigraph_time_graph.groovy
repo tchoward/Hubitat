@@ -168,26 +168,27 @@ def graphSetupPage(){
 
             container <<  parent.hubiForm_sub_section(this, "Graph Time Span<br><small>Amount of time the graph covers</small>");
 
+            if (graph_timespan_days == null){
+                app.updateSetting("graph_timespan_days", 1);
+                app.updateSetting("graph_timespan_hours", 0);
+                app.updateSetting("graph_timespan_minutes", 0);
+                graph_timespan_days = 1;
+                graph_timespan_hours = 0;
+                graph_timespan_minutes = 0;
+            }
+
             container << parent.hubiForm_slider (this,  title: "<b>Days</b>", name: "graph_timespan_days",  
-                                                        default: 1, min: 0, max: 30, units: " days", submit_on_change: true);
+                                                        default: 0, min: 0, max: 30, units: " days", submit_on_change: true);
 
             container << parent.hubiForm_slider (this,  title: "<b>Hours</b>", name: "graph_timespan_hours",  
                                                         default: 0, min: 0, max: 24, units: " hours", submit_on_change: true);
             
             container << parent.hubiForm_slider (this,  title: "<b>Minutes</b>", name: "graph_timespan_minutes",  
                                                         default: 0, min: 0, max: 60, units: " seconds", submit_on_change: true);
-
-            //input( type: "enum", name: "graph_timespan", title: "<b>Select Timespan to Graph</b></br><small>(The amount of time the graph displays)</small>", 
-            //                     multiple: false, required: true, options: timespanEnum, defaultValue: "43200000", submitOnChange: true)
-
-            //secs = 100000;
-            if (!graph_timespan_days){
-                secs = (long)86400000;
-            } else {
-                secs = (long)((double)(graph_timespan_days)*86400000+
-                              (double)(graph_timespan_hours)*3600000+
-                              (double)(graph_timespan_minutes)*60000);
-            }
+            
+            secs = (long)((double)(graph_timespan_days)*86400000+
+                          (double)(graph_timespan_hours)*3600000+
+                          (double)(graph_timespan_minutes)*60000);
 
             app.updateSetting("graph_timespan", secs);
 
@@ -1324,7 +1325,6 @@ function getOptions() {
 function getSubscriptions() {
     return jQuery.get("${state.localEndpointURL}getSubscriptions/?access_token=${state.endpointSecret}", (data) => {
         console.log("Got Subscriptions");
-        //console.log(data);
         subscriptions = data;
         
     });
@@ -1333,7 +1333,6 @@ function getSubscriptions() {
 function getGraphData() {
     return jQuery.get("${state.localEndpointURL}getData/?access_token=${state.endpointSecret}", (data) => {
         console.log("Got Graph Data");
-        //console.log(data);
         graphData = data;
     });
 }
@@ -1347,7 +1346,7 @@ function parseEvent(event) {
 
     if(subscriptions.ids.includes(deviceId) && subscriptions.attributes[deviceId].includes(event.name)) {
         
-        let value = isNaN(event.value) ? event.value.replace(/ /g,'') : (Math.round(event.value * 100) / 100).toFixed(2);
+        let value = isNaN(event.value) ? event.value.replace(/ /g,'') : parseFloat((Math.round(event.value * 100) / 100).toFixed(2));
         
         let attribute = event.name;
 
@@ -1356,8 +1355,6 @@ function parseEvent(event) {
         if (state != undefined){
             value = parseFloat(state);
         }
-        
-        //console.log("Got: "+attribute+"= "+value);
 
         graphData[deviceId][attribute].push({ date: now, value: value });
 
@@ -1650,28 +1647,25 @@ function drawChart(callback) {
 
             extend_left = subscriptions.extend[deviceIndex][attribute].left;
             extend_right = subscriptions.extend[deviceIndex][attribute].right;
-            drop_line = subscriptions.drop[deviceIndex][attribute].valid;
+            let drop_line = subscriptions.drop[deviceIndex][attribute].valid;
+            let drop_val = null;
 
             if (drop_line == "true"){
                 drop_val = parseFloat(subscriptions.drop[deviceIndex][attribute].value);
             } else if (num_events>0 && extend_left) {
                 drop_val = events[0].value;   
-            } else {
-                drop_val = null;
-            }
-            
-            
+            } 
 
             current = then;
 
             while (current < now){
-                if (subscriptions.states[deviceIndex][attribute] != undefined && events.length > 0){
-                    if (drop_val == null){
-                        drop_val = events[0].value;
-                    } else {
-                        drop_val = newEntry.value;
-                    }
-                }
+                //if (subscriptions.states[deviceIndex][attribute] != undefined && events.length > 0){
+                //    if (drop_val == null){
+                //        drop_val = events[0].value;
+                //    } else {
+                //        drop_val = newEntry.value;
+                //    }
+                //}
                 if (subscriptions.graph_type[deviceIndex][attribute] == "Stepped"){
                     drop_val = newEntry == undefined ? events[0].value : newEntry.value;
                 }
@@ -1686,7 +1680,7 @@ function drawChart(callback) {
                 }
 
                 if (drop_line != "true"){
-                    if (num_events > 0 && events[0].date >= next){
+                    if (num_events > 0 && next >= events[0].date && extend_left){
                         drop_val = null;
                     }
                     if (num_events > 0 && events[num_events-1].date <= next && extend_right){
