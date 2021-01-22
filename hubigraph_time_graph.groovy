@@ -172,9 +172,9 @@ def graphSetupPage(){
                 app.updateSetting("graph_timespan_days", 1);
                 app.updateSetting("graph_timespan_hours", 0);
                 app.updateSetting("graph_timespan_minutes", 0);
-                graph_timespan_days = 1;
-                graph_timespan_hours = 0;
-                graph_timespan_minutes = 0;
+                settings["graph_timespan_days"] = 1;
+                settings["graph_timespan_hours"] = 0;
+                settings["graph_timespan_minutes"] = 0;
             }
 
             container << parent.hubiForm_slider (this,  title: "<b>Days</b>", name: "graph_timespan_days",  
@@ -186,10 +186,14 @@ def graphSetupPage(){
             container << parent.hubiForm_slider (this,  title: "<b>Minutes</b>", name: "graph_timespan_minutes",  
                                                         default: 0, min: 0, max: 60, units: " seconds", submit_on_change: true);
             
-            secs = (long)((double)(graph_timespan_days)*86400000+
-                          (double)(graph_timespan_hours)*3600000+
-                          (double)(graph_timespan_minutes)*60000);
-
+            if (graph_timespan_days==null){
+                secs = 86400000;
+            } else {
+                secs = (long)((double)(graph_timespan_days)*86400000+
+                              (double)(graph_timespan_hours)*3600000+
+                              (double)(graph_timespan_minutes)*60000);
+            }
+            
             app.updateSetting("graph_timespan", secs);
 
             points = graph_update_rate ? (long)(secs/Double.parseDouble(graph_update_rate)) : 280;
