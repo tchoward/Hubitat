@@ -538,7 +538,7 @@ function saveWindow() {
 
     setText(null, focusTile);
     updateGroovy();
-    setTimeout(() => { getWeatherData() } , 1000);
+    //setTimeout(() => { getWeatherData() } , 1000);
 
 }
 
@@ -756,7 +756,7 @@ function addNewTileClose(){
     addNewTile(var_name, type, period, selected_new_tile_span, selected_new_tile_time);
 
     updateGroovy();
-    setTimeout(() => { getWeatherData() } , 1000);
+    //setTimeout(() => { getWeatherData() } , 1000);
 }
 
 function updateGroovy() {
@@ -774,6 +774,11 @@ function updateGroovy() {
 }
 
 function getWeatherData() {
+    
+    dialog.close();
+    $("body").css("cursor", "progress");
+
+
     return jQuery.get(localURL + "getData/?access_token=" + secretEndpoint, (data) => {
 
         data.forEach(tile=>{
@@ -788,6 +793,8 @@ function getWeatherData() {
 
         });
         console.log(options.tiles)
+        $("body").css("cursor", "default");
+
     });
 
 }
