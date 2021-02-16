@@ -78,6 +78,18 @@ mappings {
             GET: "getSubscriptions"
         ]
     }
+    
+    path("/onTileLoad/") {
+        action: [
+            GET: "onTileLoad"
+        ]
+    }
+    
+    path("/onTileUnload/") {
+        action: [
+            GET: "onTileUnload"
+        ]
+    }
 }
 
 def call(Closure code) {
@@ -274,6 +286,21 @@ def mainPage() {
                         container << parent.hubiForm_switch(this, title: "Install Hubigraph Tile Device?", name: "install_device", default: false, submit_on_change: true);
                         if (install_device==true){ 
                              container << parent.hubiForm_text_input(this, "Name for HubiGraph Tile Device", "device_name", "Hubigraph Tile", "false");
+                             commands_ = sensor_.getSupportedCommands();
+                             final_commands = [];
+                             commands_.each{command_->
+                                 final_commands += command_.getName();
+                             }
+                             container << parent.hubiForm_enum(this,
+                                                               title:    "Device command to run when tile loads (optional)", 
+                                                               name:     "tile_onLoad",
+                                                               list:     final_commands,
+                                                               default:  "");
+                             container << parent.hubiForm_enum(this,
+                                                               title:    "Device command to run when tile unloads (optional)", 
+                                                               name:     "tile_onUnload",
+                                                               list:     final_commands,
+                                                               default:  "");
                         }
                         parent.hubiForm_container(this, container, 1); 
                     }
@@ -475,6 +502,12 @@ function update() {
 }
 
 async function onLoad() {
+
+    //call onTileLoad endpoint
+    jQuery.get("${state.localEndpointURL}onTileLoad/?access_token=${state.endpointSecret}", (data) => {
+        console.log("Called onTileLoad");
+    });
+
     //first load
     await getOptions();
     await getSubscriptions();
@@ -491,6 +524,10 @@ async function onLoad() {
     websocket.onmessage = (event) => {
         parseEvent(JSON.parse(event.data));
     }
+    //BJC
+    websocket.onclose = () => {
+        console.log("WebSocket Closed!");
+    }
 
     //attach resize listener
     window.addEventListener("resize", () => {
@@ -500,6 +537,11 @@ async function onLoad() {
 
 function onBeforeUnload() {
     if(websocket) websocket.close();
+
+    //call onTileUnload endpoint
+    jQuery.get("${state.localEndpointURL}onTileUnload/?access_token=${state.endpointSecret}", (data) => {
+        console.log("Called onTileUnload");
+    });
 }
 
 function drawChart() {
@@ -518,7 +560,7 @@ function drawChart() {
 }
 
 google.charts.setOnLoadCallback(onLoad);
-window.onBeforeUnload = onBeforeUnload;
+window.addEventListener("beforeunload", function(event) { onBeforeUnload(); });
       </script>
       </head>
       <body style="${fullSizeStyle}">
@@ -615,4 +657,22 @@ def getSubscriptions() {
     ];
     
     return render(contentType: "text/json", data: JsonOutput.toJson(subscriptions));
+}
+
+def onTileLoad() {
+    if (tile_onLoad) {
+        log.debug("calling ${tile_onLoad}()")
+        sensor_."${tile_onLoad}"()
+    } else {
+        log.debug("skipping onTileLoad")
+    }
+}
+
+def onTileUnload() {
+    if (tile_onUnload) {
+        log.debug("calling ${tile_onUnload}()")
+        sensor_."${tile_onUnload}"()
+    } else {
+        log.debug("skipping onTileUnload")
+    }
 }
