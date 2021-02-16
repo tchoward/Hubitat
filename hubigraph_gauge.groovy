@@ -524,7 +524,6 @@ async function onLoad() {
     websocket.onmessage = (event) => {
         parseEvent(JSON.parse(event.data));
     }
-    //BJC
     websocket.onclose = () => {
         console.log("WebSocket Closed!");
     }
