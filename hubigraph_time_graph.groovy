@@ -168,14 +168,19 @@ def graphSetupPage(){
 
             container <<  parent.hubiForm_sub_section(this, "Graph Time Span<br><small>Amount of time the graph covers</small>");
 
-            if (graph_timespan_days == null){
+            if (graph_timespan_weeks == null){
+                app.updateSetting("graph_timespan_weeks", 0);
                 app.updateSetting("graph_timespan_days", 1);
                 app.updateSetting("graph_timespan_hours", 0);
                 app.updateSetting("graph_timespan_minutes", 0);
+                settings["graph_timespan_weeks"] = 0;
                 settings["graph_timespan_days"] = 1;
                 settings["graph_timespan_hours"] = 0;
                 settings["graph_timespan_minutes"] = 0;
             }
+
+            container << parent.hubiForm_slider (this,  title: "<b>Weeks</b>", name: "graph_timespan_weeks",  
+                                                        default: 0, min: 0, max: 104, units: " weeks", submit_on_change: true);
 
             container << parent.hubiForm_slider (this,  title: "<b>Days</b>", name: "graph_timespan_days",  
                                                         default: 0, min: 0, max: 30, units: " days", submit_on_change: true);
@@ -186,10 +191,11 @@ def graphSetupPage(){
             container << parent.hubiForm_slider (this,  title: "<b>Minutes</b>", name: "graph_timespan_minutes",  
                                                         default: 0, min: 0, max: 60, units: " seconds", submit_on_change: true);
             
-            if (graph_timespan_days==null){
+            if (graph_timespan_weeks==null){
                 secs = 86400000;
             } else {
-                secs = (long)((double)(graph_timespan_days)*86400000+
+                secs = (long)((double)(graph_timespan_weeks)*604800000+
+                              (double)(graph_timespan_days)*86400000+
                               (double)(graph_timespan_hours)*3600000+
                               (double)(graph_timespan_minutes)*60000);
             }
