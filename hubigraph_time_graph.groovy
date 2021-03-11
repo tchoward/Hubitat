@@ -452,9 +452,20 @@ def graphSetupPage(){
                 settings["attributes_${sensor.id}"].each { attribute ->
                     
                     parent.hubiForm_section(this,"${sensor.displayName} - ${attribute}", 1){
-                               
-                        container = [];
+
+                        container = [];      
+
+                        if (parent.ltsAvailable(sensor.id, attribute)){
+
+                            container <<  parent.hubiForm_sub_section(this, "Long Term Storage");
+                            container << parent.hubiForm_switch(this, title: "<b>Long Term Storage Available, Use it?</b>", name: "var_${sensor.id}_${attribute}_lts", default: false, submit_on_change: false);
                         
+                        } else {
+
+                            app.updateSetting ("var_${sensor.id}_${attribute}_lts", [type: "bool", value: "false"]); 
+                        
+                        }
+
                         container <<  parent.hubiForm_sub_section(this, "Plot Options");
                         
                         container << parent.hubiForm_enum (this, title:             "Plot Type", 
@@ -677,7 +688,7 @@ def graphSetupPage(){
                         }
                         
                         //Line and Area Graphs can be "Drop-line"
-                        if ((graphType == "Line" || graphType == "Area") && enumType==false && settings["attribute_${sensor.id}_${attribute}_custom_states"] == false) {
+                        if ((graphType == "Line" || graphType == "Area" || graphType == "Stepped") && enumType==false && settings["attribute_${sensor.id}_${attribute}_custom_states"] == false) {
 
                                     container << parent.hubiForm_sub_section(this, "Handle Missing Values");
                          
@@ -786,6 +797,7 @@ def enableAPIPage() {
 }
 
 def mainPage() {
+
     dynamicPage(name: "mainPage") {        
        
             def container = [];
@@ -798,9 +810,7 @@ def mainPage() {
                parent.hubiForm_section(this, "Graph Options", 1, "tune"){
                     container = [];
                     container << parent.hubiForm_page_button(this, "Select Device/Data", "deviceSelectionPage", "100%", "vibration");
-                    container << parent.hubiForm_page_button(this, "Configure Graph", "graphSetupPage", "100%", "poll");
-                    container << parent.hubiForm_page_button(this, "Long Term Storage", "longTermStoragePage", "100%", "storage");
-                    
+                    container << parent.hubiForm_page_button(this, "Configure Graph", "graphSetupPage", "100%", "poll");                    
                     parent.hubiForm_container(this, container, 1); 
                 }
                 parent.hubiForm_section(this, "Local Graph URL", 1, "link"){
@@ -809,28 +819,6 @@ def mainPage() {
                     
                     parent.hubiForm_container(this, container, 1); 
                 }
-                
-                
-                if (lts){
-                    parent.hubiForm_section(this, "Long Term Storage", 1, "calendar"){
-                        container = [];
-                        sensors.each { sensor ->
-                            settings["attributes_${sensor.id}"].each {attribute ->
-                                if (atomicState["history_${sensor.id}_${attribute}"]){
-                                    data = atomicState["history_${sensor.id}_${attribute}"];
-                                    container << parent.hubiForm_text(this, "<b>${sensor.displayName} - ${attribute}</b><br><small>${new Date(data[0].date)}<br>${new Date(data[data.size-1].date)}<br>${data.size} Events </small>");
-                                                       
-                                }
-                            }
-                        }
-                        if (container==[]){
-                            container << parent.hubiForm_text(this, "<b>Long Term Storage Enabled</b><br>Events will be stored when a graph is refreshed and nightly.<br>Details will populate over time.");       
-                        }
-                    
-                        parent.hubiForm_container(this, container, 1);
-                    }
-                }
-                
                 
                 if (graph_timespan){
                      parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
@@ -871,113 +859,11 @@ def mainPage() {
     } //dynamicPage
 }
 
-def longTermStoragePage(){
-    def resp = [:];
-    def today = new Date();
-    def then = new Date();
-    def events = [];
-    
-    use (groovy.time.TimeCategory) {
-           then -= 1.days;
-    }
-    
-    dynamicPage(name: "longTermStoragePage", title: "") {
-        
-        def total_bytes = 0;
-        def recommendedUpdateRate = 0;
-        
-        section() {
-            if(!sensors) {
-                paragraph "Please select Sensors and Graph Options Before setting up storage"
-            } else {
-                          
-                sensors.each { sensor ->
-                    resp[sensor.id] = [:];
-                        settings["attributes_${sensor.id}"].each {attribute ->
-                            def start = new Date();
-                            events = sensor.statesSince(attribute, then, [max: 100]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
-                            //events = sensor.events();
-                            events = events.flatten();
-                            bytes = (events.size*128.0)/1024.0
-                            total_bytes += bytes;
-                            
-                            if (events != null && events.size > 1)
-                                recommendedUpdateRate = Math.round(((events[0].date-events[events.size-1].date)/1000)/60);
-                            else
-                                recommendedUpdateRate = 4*60;
-                    }
-                    
-                }
-                    
-                parent.hubiForm_section(this, "Storage Options", 1, "memory"){
-                    def timeEnum = ["1 Day", "2 Days", "3 Days", "4 Days", "5 Days", "6 Days", "1 Week", "2 Weeks", "3 Weeks", "1 Month", "2 Months", "Indefinite"];
-                    def updateEnum = ["5 Minutes", "15 Minutes", "30 Minutes", "1 Hour", "2 Hours", "3 Hours", "4 Hours", "5 Hours", "6 Hours"];
-                    
-                    container = [];
-                    container << parent.hubiForm_switch(this, title: "<b>Utilize Long Term Storage for Sensors</b>", 
-                                                              name: "lts", 
-                                                              default: false, 
-                                                              submit_on_change: true);
-                            
-                    if (lts == true){                         
-                        container << parent.hubiForm_enum(this, title: "Time of Storage to Maintain",
-                                                                name: "lts_time",
-                                                                list: timeEnum,
-                                                                default: "1 Week",
-                                                                submit_on_change: true); 
-                        
-                        container << parent.hubiForm_enum(this, title: "Time to Refresh/Maintain Storage",
-                                                                name: "lts_update",
-                                                                list: updateEnum,
-                                                                default: "1 Hour",
-                                                                submit_on_change: false);
-                        
-                        if (lts_time == null) 
-                            app.updateSetting("lts_time",   [type: "enum", value: "1 Week"]);
-                            app.updateSetting("lts_update", [type: "enum", value: "1 Hour"]);
-                        lts_time = "1 Week";
-                        
-                        def factor = getDays(lts_time);
-                        
-                        factor = (total_bytes*factor);
-                        
-                        if (factor < 1024){
-                             factor = factor.setScale(1, BigDecimal.ROUND_DOWN);
-                             factorString = factor+" Kb";
-                        } else {
-                             factor = factor/1024;
-                             factor = factor.setScale(2, BigDecimal.ROUND_DOWN);
-                             factorString = factor+" Mb";
-                        }
-                        
-                        container << parent.hubiForm_text(this, "Estimated Storage Needed: "+factorString+"<br>Recommended Update Rate: "+Math.floor((recommendedUpdateRate/60))+" hours" );
-
-               
-                    } else {
-                        sensors.each { sensor ->
-                            settings["attributes_${sensor.id}"].each {attribute ->
-                                atomicState["history_${sensor.id}_${attribute}"] = null;
-                            }
-                        }
-                    }
-                    parent.hubiForm_container(this, container, 1);
-                }  
-                
-
-
-            } //else
-        }
-    }
-}
-
 /********************************************************************************************************************************
 *********************************************************************************************************************************
 ****************************************** END PAGES ********************************************************************************
 *********************************************************************************************************************************
 *********************************************************************************************************************************/
-def longTermStorageUpdate(){
-    buildData();
-}
 
 def getDays(str){
 
@@ -1019,31 +905,13 @@ private removeChildDevices(delete) {
 }
 
 def updated() {
+    
     app.updateLabel(app_name);
     
     if (install_device == true){
         parent.hubiTool_create_tile(this);
     }
-    
-    now = new Date();
-    minutes = now.getMinutes();
-    rate = minutes % 15;
-    
-    
-    if (lts){
-        switch (lts_update){
-            case "5 Minutes" :  schedule("${minutes} ${minutes % 5}/5 ) * * * ? *", longTermStorageUpdate); break;
-            case "15 Minutes" : schedule("${minutes} ${minutes % 15}/15 * * * ? *", longTermStorageUpdate); break;
-            case "30 Minutes" : schedule("${minutes} ${minutes % 30}/30 * * * ? *", longTermStorageUpdate); break;
-            case "1 Hour" :     schedule("${minutes} ${minutes} 0/1 * * ? *", longTermStorageUpdate); break;
-            case "2 Hours" :    schedule("${minutes} ${minutes} 0/2 * * ? *", longTermStorageUpdate); break;
-            case "3 Hours" :    schedule("${minutes} ${minutes} 0/3 * * ? *", longTermStorageUpdate); break;
-            case "4 Hours" :    schedule("${minutes} ${minutes} 0/4 * * ? *", longTermStorageUpdate); break;
-            case "5 Hours" :    schedule("${minutes} ${minutes} 0/5 * * ? *", longTermStorageUpdate); break;
-            case "6 Hours" :    schedule("${minutes} ${minutes} 0/6 * * ? *", longTermStorageUpdate); break;
-        }
-    }
-    
+
 }
 
 def initialize() {
@@ -1054,6 +922,7 @@ private getValue(id, attr, val){
     def reg = ~/[a-z,A-Z]+/;
     
     orig = val;
+    val = "${val}"
     val = val.replaceAll("\\s","");
     if (settings["attribute_${id}_${attr}_${val}"]!=null){
         ret = Double.parseDouble(settings["attribute_${id}_${attr}_${val}"]);
@@ -1079,6 +948,7 @@ private cleanupData(data){
 }
 
 private buildData() {
+
     def resp = [:]
     
     def graph_time;
@@ -1094,22 +964,14 @@ private buildData() {
         sensors.each { sensor ->
             resp[sensor.id] = [:];
             settings["attributes_${sensor.id}"].each {attribute ->
-                def newData = [];  
-                //if this exists in storage
-                if (atomicState["history_${sensor.id}_${attribute}"]) {
-                    oldData = atomicState["history_${sensor.id}_${attribute}"];
-                    then = new Date(oldData[oldData.size-1].date);
-                } else {
-                     oldData = [];   
-                }
-                
-                            
-                newData << sensor.statesSince(attribute, then, [max: 2000]).collect{[ date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
-                newData = newData.flatten();
-                oldData += newData.reverse();
-                
-                         
-                resp[sensor.id][attribute] = oldData.findAll{ it.date > graph_time}; 
+
+                start = new Date();
+
+                data = parent.getData(sensor, attribute, settings["var_${sensor.id}_${attribute}_lts"], then);
+
+                data = data.collect{[date: it.date.getTime(), value: getValue(sensor.id, attribute, it.value)]}
+
+                resp[sensor.id][attribute] = data.findAll{ it.date > graph_time}; 
                 
                 //Restrict "bad" values 
                 if (settings["attribute_${sensor.id}_${attribute}_bad_value"]==true){
@@ -1118,9 +980,9 @@ private buildData() {
                     resp[sensor.id][attribute] = resp[sensor.id][attribute].findAll{ it.value > min && it.value < max}; 
                 }
                 
-                if (lts){
-                    atomicState["history_${sensor.id}_${attribute}"] = cleanupData(oldData);
-                } else atomicState["history_${sensor.id}_${attribute}"] = null;
+                atomicState["history_${sensor.id}_${attribute}"] = null;
+
+                end = new Date();
             }    
         }
     }
@@ -1802,7 +1664,6 @@ def getOverlay(){
     
     val.each{ str->
         splitStr = str.split('_');
-        log.debug(splitStr);
         deviceId = splitStr[1];
         attribute = splitStr[2];
     
