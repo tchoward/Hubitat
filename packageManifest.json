@@ -100,6 +100,13 @@
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_weather_tile2.groovy",
       "required": true,
       "oauth": true
+    },
+    {
+      "id": "d4bd3e09-eb98-4a13-9f75-1671c28626f5",
+      "name": "Hubigraph Long Term Storage Device",
+      "namespace": "tchoward",
+      "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_long_term_storage.groovy",
+      "required": true
     }
   ],
   "drivers": [
@@ -116,7 +123,7 @@
       "namespace": "tchoward",
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_openweather_driver.groovy",
       "required": true
-    }  
+    }
   ],
   "files" : [
 		{
