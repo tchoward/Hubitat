@@ -20,7 +20,67 @@ preferences {
     // The parent app preferences are pretty simple: just use the app input for the child app.
     page(name: "mainPage", title: "Graph Creator", install: true, uninstall: true, submitOnChange: true)
     page(name: "setupOpenWeather", title: "Setup Open Weather", nextPage: "mainPage")
+    page(name: "setupLongTermStorage", title: "Setup Long Term Storage")
 }
+
+def call(Closure code) {
+    code.setResolveStrategy(Closure.DELEGATE_ONLY);
+    code.setDelegate(this);
+    code.call();
+}
+
+def getLongTermStorage() {
+    lts = getChildAppByLabel("Hubigraph Long Term Storage")
+}
+
+def getEvents(Map map){
+
+    sensor = map.sensor;
+    attribute = map.attribute;
+    then = map.start_time;
+    
+    log.debug(sensor.getStatus());
+
+    respEvents = sensor.statesSince(attribute, then, [max: 100]).collect{[ date: it.date, value: it.value]}
+    respEvents = respEvents.flatten();
+    respEvents = respEvents.reverse();
+    log.debug("Retrieved "+respEvents.size());
+
+    return respEvents;
+}
+
+
+def getData(sensor, attribute, lts, time){
+
+    return_data = [];
+
+    then = time;
+    if (lts) {
+        ltsApp = getChildAppByLabel("Hubigraph Long Term Storage");
+        return_data = ltsApp.getFileData(sensor, attribute);
+        then = return_data[return_data.size()-1].date;
+    }
+    events = getEvents(sensor: sensor, attribute: attribute, start_time: then);
+
+    return_data = (return_data << events).flatten();
+
+    return return_data;
+
+
+}
+
+def ltsAvailable(sensor, attribute){
+    lts = getChildAppByLabel("Hubigraph Long Term Storage");
+
+    if (lts!=null){
+        return lts.isStorage(sensor, attribute);    
+    }
+    else {
+        log.debug("Long Term Storage is NULL")
+        return false;
+    }
+}
+
 
 def mainPage(){
     
@@ -43,8 +103,11 @@ def mainPage(){
     
     
     dynamicPage(name: "mainPage"){
-       section {
-            app(name: "hubiGraphLine", appName: "Hubigraph Line Graph",    namespace: "tchoward", title: "Create New Line Graph (Deprecated)", multiple: true)
+        section {
+            app(name: "hubiStorage",    appName: "Hubigraph Long Term Storage",    namespace: "tchoward", title: "Setup Long Term Storage", multiple: true)
+        }
+        section {
+            app(name: "hubiWidget",    appName: "Hubigraph Bubble Widget",    namespace: "tchoward", title: "Create New Bubble Widget", multiple: true)
             app(name: "hubiBarGraph",  appName: "Hubigraph Bar Graph",     namespace: "tchoward", title: "Create New Bar Graph", multiple: true)
 			app(name: "hubiRangeBar",  appName: "Hubigraph Range Bar",     namespace: "tchoward", title: "Create New Range Bar", multiple: true)
             app(name: "hubiGraphTime", appName: "Hubigraph Time Line",     namespace: "tchoward", title: "Create New Time Line", multiple: true)
@@ -55,22 +118,13 @@ def mainPage(){
             app(name: "hubiForecast",  appName: "Hubigraph Forecast Tile", namespace: "tchoward", title: "Create New Forecast Tile", multiple: true)
             app(name: "hubiWeather2",   appName: "Hubigraph Weather Tile 2",  namespace: "tchoward", title: "Create New Weather Tile 2", multiple: true)
             app(name: "hubiRadar",      appName: "Hubigraph Radar Tile",      namespace: "tchoward", title: "Create New Radar Tile", multiple: true)
-
-
         }
         section {
             href name: "setupOpenWeather", title: "Setup Up Open Weather for Weather Tile", description: "", page: "setupOpenWeather"    
         } 
     }
 }
-def getOpenWeatherData(){
-    childDevice =  getChildDevice("OPEN_WEATHER${app.id}");
-    if (!childDevice){
-         log.debug("Error: No Child Found");
-         return null;
-    }
-    return(childDevice.getWeatherData());
-}
+
 
 def setupOpenWeather(){
     
@@ -91,10 +145,6 @@ def setupOpenWeather(){
     }   
 }
 
-def makeCopy(child){
-
-}
-
 def installed() {
     log.debug "Installed with settings: ${settings}"
     initialize()
@@ -102,10 +152,6 @@ def installed() {
 
 def updated() {
     log.debug "Updated with settings: ${settings}"
-    
-    
-    
-   
     
     unsubscribe()
     initialize()
@@ -263,7 +309,7 @@ def hubiForm_section(child, title, pos, icon="", Closure code) {
 	
         child.call(){
                 def id = title.replace(' ', '_').replace('(', '').replace(')','');
-                def title_ = title.replace("'", "’").replace("`", "’");
+                def title_ = title.replace("'", "").replace("`", "");
 
                 def titleHTML = """
                         <div class="mdl-layout__header" style="display: block; background:#033673; margin: 0 -16px; width: calc(100% + 32px); position: relative; z-index: ${pos}; overflow: visible;">          
@@ -320,7 +366,8 @@ def hubiForm_enum(Map map, child){
                 if (settings[var] == null){
                     app.updateSetting ("${var}", defaultVal);
                 }
-                def actualVal = settings[var] != null ? settings[var] : defaultVal;
+
+                def actualVal = settings[var] != null ? "${settings[var]}" : defaultVal;
                 def submitOnChange = submit_on_change ? "submitOnChange" : "";
 		 
                 def html_ = """    
@@ -423,7 +470,7 @@ def hubiForm_text_input(child, title, var, defaultVal, submitOnChange){
                 ${title}
                 </label>
                 <input type="text" name="settings[${var}]" 
-                        class="mdl-textfield__input ${submitOnChange == "true" ? "submitOnChange" : ""} " 
+                        class="mdl-textfield__input ${submitOnChange ? "submitOnChange" : ""} " 
                         value="${settings[var]}" placeholder="Click to set" id="settings[${var}]">
                 """
         
@@ -728,8 +775,8 @@ def hubiForm_graph_preview(child){
                         <style> 
                             .iframe-container {
                                   overflow: hidden;
-                                  width: 55vmin;
-                                  height: 65vmin;
+                                  width: 45vmin;
+                                  height: 45vmin;
                                   position: relative;
                             }
 
@@ -753,7 +800,7 @@ def hubiForm_graph_preview(child){
 def hubiForm_sub_section(child, myText=""){
 
 		child.call(){
-                def newText = myText.replaceAll( /'/, '’' ).replace("'", "’").replace("`", "’")
+                def newText = myText.replaceAll( /'/, '' ).replace("'", "").replace("`", "")
                 def html_ = 
                         """
                        
@@ -854,7 +901,7 @@ def hubiForm_list_reorder(child, var, var_color, solid_background="") {
             order_.each { device_->
                 deviceName_ = parent.hubiTools_get_name_from_id(device_.id, sensors);
                 title_ = """<b>${deviceName_}</b><br><p style="float: right;">${device_.attribute}</p>""";
-                title_.replace("'", "’").replace("`", "’");
+                title_.replace("'", "").replace("`", "");
                 list_data << [title: title_, var: "attribute_${device_.id}_${device_.attribute}"];
             }
             
