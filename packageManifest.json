@@ -103,7 +103,7 @@
     },
     {
       "id": "d4bd3e09-eb98-4a13-9f75-1671c28626f5",
-      "name": "Hubigraph Long Term Storage Device",
+      "name": "Hubigraph Long Term Storage",
       "namespace": "tchoward",
       "location": "https://raw.githubusercontent.com/tchoward/Hubitat/master/hubigraph_long_term_storage.groovy",
       "required": true
