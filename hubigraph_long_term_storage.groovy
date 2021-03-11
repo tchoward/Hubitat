@@ -425,12 +425,25 @@ def deviceSelectionPage(){
     dynamicPage(name: "deviceSelectionPage"){
 
         parent.hubiForm_section(this,"Login Information", 1) {
+                if (settings["hpmSecurity"]==null){
+                    settings["hpmSecurity"] = true;
+                    app.updateSetting("hpmSecurity", [type: "bool", value: "true"]); 
+                }
 
-                input "username", "string", title: "Hub Security username", required: true, submitOnChange: true
-                input "password", "password", title: "Hub Security password", required: true, submitOnChange: true
+                container = [];
+                container << parent.hubiForm_switch (this, title: "<b>Use Hubitat Security?</b>", 
+                                                           name: "hpmSecurity", default: true, submit_on_change: true);
+                
+                parent.hubiForm_container(this, container, 1);         
+
+
+                if (settings["hpmSecurity"] == true){
+                    input "username", "string", title: "Hub Security username", required: false, submitOnChange: true
+                    input "password", "password", title: "Hub Security password", required: false, submitOnChange: true
+                }
         }
 
-        if (username && password && login()){
+        if (login()){
             parent.hubiForm_section(this,"Sensor and Attribute Selection", 1) {
 
                 input "sensors", "capability.*", title: "<b>Sensor Selection for Long Term Storage</b>", multiple: true, submitOnChange: true
