@@ -145,6 +145,15 @@ def setupOpenWeather(){
     }   
 }
 
+def getOpenWeatherData(){
+    childDevice =  getChildDevice("OPEN_WEATHER${app.id}");
+    if (!childDevice){
+         log.debug("Error: No Child Found");
+         return null;
+    }
+    return(childDevice.getWeatherData());
+}
+
 def installed() {
     log.debug "Installed with settings: ${settings}"
     initialize()
