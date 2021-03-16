@@ -39,12 +39,9 @@ def getEvents(Map map){
     attribute = map.attribute;
     then = map.start_time;
     
-    log.debug(sensor.getStatus());
-
-    respEvents = sensor.statesSince(attribute, then, [max: 100]).collect{[ date: it.date, value: it.value]}
+    respEvents = sensor.statesSince(attribute, then, [max: 2000]).collect{[ date: it.date, value: it.value]}
     respEvents = respEvents.flatten();
     respEvents = respEvents.reverse();
-    log.debug("Retrieved "+respEvents.size());
 
     return respEvents;
 }
@@ -60,6 +57,7 @@ def getData(sensor, attribute, lts, time){
         return_data = ltsApp.getFileData(sensor, attribute);
         then = return_data[return_data.size()-1].date;
     }
+
     events = getEvents(sensor: sensor, attribute: attribute, start_time: then);
 
     return_data = (return_data << events).flatten();
@@ -76,7 +74,6 @@ def ltsAvailable(sensor, attribute){
         return lts.isStorage(sensor, attribute);    
     }
     else {
-        log.debug("Long Term Storage is NULL")
         return false;
     }
 }
@@ -271,8 +268,9 @@ def hubiForm_table(Map map, child){
 }
 
 def hubiForm_text(child, text){
+
     child.call(){
-        def html_ = """$text""";
+        def html_ = """${text}""";
     
         return html_
     }
@@ -809,14 +807,15 @@ def hubiForm_graph_preview(child){
 def hubiForm_sub_section(child, myText=""){
 
 		child.call(){
-                def newText = myText.replaceAll( /'/, '' ).replace("'", "").replace("`", "")
+                def id = myText.replaceAll("[^a-zA-Z0-9]", "");
+                def newText = myText.replaceAll("'", "").replaceAll("`", "")
                 def html_ = 
                         """
                        
                         <div class="mdl-layout__header" style="display: block; min-height: 0;">
                                 <div class="mdl-layout__header-row" style="height: 48px;">
                                 <span class="mdl-layout__title" style="margin-left: -32px; font-size: 9px; width: auto;">
-                                    <h4 id="${myTest}" style="font-size: 16px;">${newText}</h5>
+                                    <h4 id="${id}" style="font-size: 16px;">${newText}</h5>
                                 </span>
                                 </div>
                         </div>
@@ -966,7 +965,6 @@ def hubiTool_create_tile(child, location="graph") {
                 log.info "Creating HubiGraph Child Device"
         
                 def childDevice = getChildDevice("HUBIGRAPH_${app.id}");     
-                log.debug(childDevice);
                 
                 if (!childDevice) {
                         if (!device_name) device_name="Dummy Device";
