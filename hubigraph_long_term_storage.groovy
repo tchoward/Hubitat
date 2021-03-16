@@ -304,7 +304,7 @@ def quantizeData(events, mins, funct, dec){
 
 def optionsPage() {
 
-    def quantizationEnum = [["0": "None"], ["5" : "5 Minutes"], ["10" : "10 Minutes"], ["20" : "Minutes"], ["30" : "30 Minutes"], 
+    def quantizationEnum = [["0": "None"], ["5" : "5 Minutes"], ["10" : "10 Minutes"], ["20" : "20 Minutes"], ["30" : "30 Minutes"], 
                        ["60" : "1 Hour"], ["120" : "2 Hours"], ["180" : "3 Hours"], ["240" : "4 Hours"], ["360" : "6 Hours"],
                        ["480" : "8 Hours"], ["1440" : "24 Hours"]];
 
