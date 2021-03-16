@@ -797,6 +797,7 @@ def enableAPIPage() {
 }
 
 def mainPage() {
+    unschedule();
 
     dynamicPage(name: "mainPage") {        
        
