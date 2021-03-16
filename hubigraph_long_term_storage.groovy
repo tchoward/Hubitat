@@ -261,7 +261,7 @@ def quantizeData(events, mins, funct, dec){
     
     minutes = mins as Integer;
     decimals = dec as Integer;
-
+    
     microSeconds = minutes*1000*60;
     newEvents = [];
     if (microSeconds == 0) return events;
@@ -274,8 +274,6 @@ def quantizeData(events, mins, funct, dec){
     while (idx < events.size()){
         
         currTime = events[idx].date.getTime();
-
-        //log.debug(currTime+" "+stop);
 
         if (currTime >= stop){
             if (tempEvents.size() == 1){
@@ -337,7 +335,7 @@ def optionsPage() {
                                 required: false, multiple: false, options: storageEnum, submitOnChange: false, defaultValue: "7");
 
                         input ( type: "enum", name: "${sensor.id}_${attr}_time_every", title: "Store Data Every X Hours", 
-                                required: false, multiple: false, options: hoursEnum, submitOnChange: false, defaultValue: 24);
+                                required: true, multiple: false, options: hoursEnum, submitOnChange: false, defaultValue: 24);
                         
                         input ( type: "time", name: "${sensor.id}_${attr}_time", title: "Time to Start Storing Data", 
                                 required: false, multiple: false, submitOnChange: false, defaultValue: "12:00");
