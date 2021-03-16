@@ -362,7 +362,7 @@ def graphSetupPage(){
                 container << parent.hubiForm_color      (this, "Legend", "graph_legend", "#000000", false);
                 parent.hubiForm_container(this, container, 1); 
                 input( type: "enum", name: "graph_legend_position", title: "<b>Legend Position</b>", defaultValue: "Bottom", options: legendPosition);
-                input( type: "enum", name: "graph_legend_in side_position", title: "<b>Legend Justification</b>", defaultValue: "center", options: insidePosition);
+                input( type: "enum", name: "graph_legend_inside_position", title: "<b>Legend Justification</b>", defaultValue: "center", options: insidePosition);
             } else {
                  parent.hubiForm_container(this, container, 1); 
             }
