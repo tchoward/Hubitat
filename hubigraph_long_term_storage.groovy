@@ -440,8 +440,16 @@ def deviceSelectionPage(){
                     input "password", "password", title: "Hub Security password", required: false, submitOnChange: true
                 }
         }
+        log.debug("""${settings["hpmSecurity"]} ${login()}""")
+        if (settings["hpmSecurity"] == true && !login()){
+            parent.hubiForm_section(this,"Login Error", 1) {
+                container = [];
+                container << parent.hubiForm_text(this, """<b>CANNOT LOGIN</b><br>If you have Hub Security Enabled, please put in correct login credentials<br>
+                                                                If not, please deselect <b>Use Hubitat Security</b>""");
+                parent.hubiForm_container(this, container, 1);         
+            }
 
-        if (login()){
+        } else {
             parent.hubiForm_section(this,"Sensor and Attribute Selection", 1) {
 
                 input "sensors", "capability.*", title: "<b>Sensor Selection for Long Term Storage</b>", multiple: true, submitOnChange: true
@@ -498,7 +506,8 @@ def getEvents(Map map){
 }
 
 def login() {
-	if (hpmSecurity)
+    
+	if (settings["hpmSecurity"] && settings["hpmSecurity"]==true)
 	{
 		def result = false
 		try
