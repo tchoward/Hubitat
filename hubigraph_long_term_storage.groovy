@@ -183,9 +183,6 @@ def isStorage(id, attribute){
 def updateData(data){
 
     sensor = sensors.find{it.id == data.id};
-
-    //log.debug("Updating Data for ${sensor.name} ${data.attribute}")
-
     appendFile(sensor, data.attribute);
 }
 
@@ -196,8 +193,6 @@ def getCronString(sensor, attribute){
     attr = attribute.replaceAll(" ", "_");
     date = Date.parse(dateFormat, settings["${sensor.id}_${attr}_time"]);
     repeat = settings["${sensor.id}_${attr}_time_every"];
-
-    log.debug("Scheduling ${sensor.name} (${attribute})");
 
     schedule("0 ${date.getMinutes()} ${date.getHours()}/${repeat} ? * * *", updateData, [overwrite: false, data: [id: sensor.id, attribute: attribute]]);
 
@@ -564,10 +559,8 @@ def fileExists(sensor, attribute){
     try {
         httpGet(params) { resp ->
             if (resp != null){
-                log.debug("File Exists for ${sensor.name} (${attribute})");
                 return true;
             } else {
-                log.debug("File DOES NOT Exists for ${sensor.name} (${attribute})");
                 return false;
             }
         }
