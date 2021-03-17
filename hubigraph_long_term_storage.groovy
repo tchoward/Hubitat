@@ -176,7 +176,6 @@ def isStorage(id, attribute){
         if (settings["${id}_attributes"].find{it == attribute} != null) return true;
         else return false;
     } else {
-        log.debug("Sensor not found");
         return false;
     }
 }
