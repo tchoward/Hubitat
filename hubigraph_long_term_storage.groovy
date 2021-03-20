@@ -50,7 +50,7 @@ def ignoredEvents() { return [ 'lastReceive' , 'reachable' ,
 
 def version() { return "v1.0" }
 
-definition(
+definition (
     name: "Hubigraph Long Term Storage",
     namespace: "tchoward",
     author: "Thomas Howard",
@@ -147,8 +147,12 @@ def mainPage() {
 
                             storage = getCurrentDailyStorage(sensor, attribute);
 
-                            subcontainer << parent.hubiForm_text(this, sensor_name);
-                            subcontainer << parent.hubiForm_text(this, attribute);
+                            filename_ = getFileName(sensor, attribute);
+
+                            uri_ = "http://${location.hub.localIP}:8080/local/${filename_}";
+
+                            subcontainer << parent.hubiForm_text(this, sensor_name, uri_);
+                            subcontainer << parent.hubiForm_text(this, attribute, uri_);
                             subcontainer << parent.hubiForm_text(this, storage.num_events);
                             subcontainer << parent.hubiForm_text(this, storage.first);
                             subcontainer << parent.hubiForm_text(this, storage.last);
@@ -156,7 +160,10 @@ def mainPage() {
 
                             container << parent.hubiForm_subcontainer(this, objects: subcontainer, breakdown: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2]);
                         
-                            getCronString(sensor, attribute);                        
+                            getCronString(sensor, attribute);  
+
+                            data = [id: sensor.id, attribute: attribute];
+                            updateData(data);                      
                         }   
                     }
                 }
@@ -181,7 +188,6 @@ def isStorage(id, attribute){
 }
 
 def updateData(data){
-
     sensor = sensors.find{it.id == data.id};
     appendFile(sensor, data.attribute);
 }
@@ -206,41 +212,51 @@ def averageFrequency(events){
     return sum/events.size();
 }
 
-def sum(events, decimals){
+def sum(events, decimals, round, granularity){
     sum = new Float(0);
     events.each{event->
         sum += Float.valueOf(event.value);
     }
-    return [date: events[events.size()-1].date, value: sum.round(decimals)];
+
+    tdate = [date : events[events.size()-1].date, boundary: round, granularity: granularity];
+    return [date: roundDate(tdate), value: sum.round(decimals)];
 }
 
-def average(events, decimals){
+def average(events, decimals, round, granularity){
     sum = new Float(0);
     events.each{event->
         sum += Float.valueOf(event.value);
     }
     sum /= events.size();
-    return [date: events[events.size()-1].date, value: sum.round(decimals)];
+        
+    tdate = [date : events[events.size()-1].date, boundary: round, granularity: granularity];
+    return [date: roundDate(tdate), value: sum.round(decimals)];
 }
 
-def min(events, decimals){
+def min(events, decimals, round, granularity){
     min = Float.valueOf(events[0].value);
     events.each{event->
         min = Float.valueOf(event.value) < min ? Float.valueOf(event.value) : min;
     }
-    return [date: events[events.size()-1].date, value: min.round(decimals)];
+    
+    tdate = [date : events[events.size()-1].date, boundary: round, granularity: granularity];
+    return [date: roundDate(tdate), value: min.round(decimals)];
 }
 
-def max(events, decimals){
+def max(events, decimals, round, granularity){
     max = Float.valueOf(events[0].value);
     events.each{event->
         max = Float.valueOf(event.value) > max ? Float.valueOf(event.value) : max;
     }
-    return [date: events[events.size()-1].date, value: max.round(decimals)];
+
+    tdate = [date : events[events.size()-1].date, boundary: round, granularity: granularity];
+    return [date: roundDate(tdate), value: max.round(decimals)];
 }
 
-def count(events, decimals){
-    return [date: events[events.size()-1].date, value: events.size()];
+def count(events, decimals, round, granularity){
+    
+    tdate = [date : events[events.size()-1].date, boundary: round, granularity: granularity];
+    return [date: roundDate(tdate), value: events.size()];
 }
 
 def getTime(text){
@@ -250,8 +266,28 @@ def getTime(text){
 
 }
 
+def roundDate(Map map){
 
-def quantizeData(events, mins, funct, dec){
+    t = [["0": "None"], ["5" : "5 Minutes"], ["10" : "10 Minutes"], ["20" : "20 Minutes"], ["30" : "30 Minutes"], 
+                       ["60" : "1 Hour"], ["120" : "2 Hours"], ["180" : "3 Hours"], ["240" : "4 Hours"], ["360" : "6 Hours"],
+                       ["480" : "8 Hours"], ["1440" : "24 Hours"]];
+
+    date = map.date;
+    boundary = map.boundary != null ? map.boundary : false;
+    granularity = map.granularity as Integer;
+
+    if (!boundary) return date;
+
+    if (granularity > 60 && granularity < 1440)
+        nearest = org.apache.commons.lang3.time.DateUtils.truncate(date, Calendar.HOUR);
+    else if (granularity == 1440)
+        nearest = org.apache.commons.lang3.time.DateUtils.truncate(date, Calendar.DAY);
+
+    return nearest;    
+}
+
+
+def quantizeData(events, mins, funct, dec, boundary){
     
     minutes = mins as Integer;
     decimals = dec as Integer;
@@ -260,22 +296,21 @@ def quantizeData(events, mins, funct, dec){
     newEvents = [];
     if (microSeconds == 0) return events;
     
-    stop = events[0].date.getTime() + microSeconds;
+    stop = roundDate([date: events[0].date, granularity: minutes, boundary: boundary]).getTime() + microSeconds;
 
     tempEvents = [];
     idx = 0;
 
     while (idx < events.size()){
         
-        currTime = events[idx].date.getTime();
+        currTime = roundDate([date: events[idx].date, granularity: minutes, boundary: boundary]).getTime();
 
-        if (currTime >= stop){
+        if (currTime > stop){
             if (tempEvents.size() == 1){
-                newEntry = tempEvents[0];
+                newEntry = "${funct}"(tempEvents, decimals, boundary, minutes);
                 newEvents.add(newEntry);
             } else if (tempEvents.size() != 0){
-                newEntry = "${funct}"(tempEvents, decimals);
-                newEvents.add(newEntry);
+                newEntry = "${funct}"(tempEvents, decimals, boundary, minutes);
             }
             stop += microSeconds; 
             tempEvents = [];
@@ -289,7 +324,7 @@ def quantizeData(events, mins, funct, dec){
     
     } else if (tempEvents.size() != 0){
        
-        newEntry = "${funct}"(tempEvents, decimals);
+        newEntry = "${funct}"(tempEvents, decimals, boundary, minutes);
         newEvents.add(newEntry);
     }
 
@@ -328,11 +363,14 @@ def optionsPage() {
                         input( type: "enum", name: "${sensor.id}_${attr}_storage", title: "Amount of Storage to Maintain", 
                                 required: false, multiple: false, options: storageEnum, submitOnChange: false, defaultValue: "7");
 
+                        input( type: "bool", name: "${sensor.id}_${attr}_boundary", title: "Save Data on Hour/Day Boundary", 
+                                required: false, multiple: false, submitOnChange: false, defaultValue: false);
+
                         input ( type: "enum", name: "${sensor.id}_${attr}_time_every", title: "Store Data Every X Hours", 
                                 required: true, multiple: false, options: hoursEnum, submitOnChange: false, defaultValue: 24);
                         
                         input ( type: "time", name: "${sensor.id}_${attr}_time", title: "Time to Start Storing Data", 
-                                required: false, multiple: false, submitOnChange: false, defaultValue: "12:00");
+                                required: false, multiple: false, submitOnChange: false, defaultValue: "00:00");
 
                         input( type: "enum", name: "${sensor.id}_${attr}_quantization", title: "Data Quantization", 
                                 required: false, multiple: false, options: quantizationEnum, submitOnChange: true, defaultValue: "0");
@@ -359,8 +397,10 @@ def optionsPage() {
                                                     settings["${sensor.id}_${attr}_quantization_function"] : "average"; 
                             quantization_decimals = settings["${sensor.id}_${attr}_quantization_decimals"] ? 
                                                     settings["${sensor.id}_${attr}_quantization_decimals"] : 1; 
+                            quantization_boundary = settings["${sensor.id}_${attr}_boundary"] ? 
+                                                    settings["${sensor.id}_${attr}_boundary"] : false;
                               
-                            quantData = quantizeData(events, quantization_minutes, quantization_function, quantization_decimals);
+                            quantData = quantizeData(events, quantization_minutes, quantization_function, quantization_decimals, quantization_boundary);
 
                             frequency = averageFrequency(events);
                             container << parent.hubiForm_sub_section(this, "Estimated Storage Expense");
@@ -434,7 +474,6 @@ def deviceSelectionPage(){
                     input "password", "password", title: "Hub Security password", required: false, submitOnChange: true
                 }
         }
-        log.debug("""${settings["hpmSecurity"]} ${login()}""")
         if (settings["hpmSecurity"] == true && !login()){
             parent.hubiForm_section(this,"Login Error", 1) {
                 container = [];
@@ -464,7 +503,7 @@ def deviceSelectionPage(){
                             final_attrs = final_attrs.unique(false);   
                         } catch (e) {
                             final_attrs = [["1" : "ERROR"]];
-                            log.debug(e);
+                            log.debug("Error: ${e}");
                         }
                         sensor_name = sensor.label != null ? sensor.label : sensor.name;
                         input( type: "enum", name: "${sensor.id}_attributes", title: "${sensor_name} attribute(s) to Store", 
@@ -525,7 +564,6 @@ def login() {
 				]
 			)
 			{ resp ->
-			log.debug resp.data?.text
 				if (resp.data?.text?.contains("The login information you supplied was incorrect."))
 					result = false
 				else {
@@ -693,6 +731,9 @@ def appendFile(sensor, attribute){
     quantization_minutes =  settings["${sensor.id}_${attr}_quantization"]; 
     quantization_function = settings["${sensor.id}_${attr}_quantization_function"]; 
     quantization_decimals = settings["${sensor.id}_${attr}_quantization_decimals"];
+    quantization_boundary = settings["${sensor.id}_${attr}_boundary"] ? 
+                            settings["${sensor.id}_${attr}_boundary"] : false;
+
     storage =               settings["${sensor.id}_${attr}_storage"] as Integer;
 
     uri = "http://${location.hub.localIP}:8080/local/${filename_}"
@@ -726,7 +767,7 @@ def appendFile(sensor, attribute){
                 write_data = parse_data;
             }
             
-            write_data = quantizeData(write_data, quantization_minutes, quantization_function, quantization_decimals);
+            write_data = quantizeData(write_data, quantization_minutes, quantization_function, quantization_decimals, quantization_boundary);
             
             writeFile(sensor, attribute, JsonOutput.toJson(write_data))
 
@@ -741,7 +782,7 @@ def appendFile(sensor, attribute){
             }
             
             respEvents = getEvents(sensor: sensor, attribute: attribute, start_time: then);
-            respEvents = quantizeData(respEvents, quantization_minutes, quantization_function, quantization_decimals);
+            respEvents = quantizeData(respEvents, quantization_minutes, quantization_function, quantization_decimals, quantization_boundary);
 
             write_data = respEvents == null ? "" : JsonOutput.toJson(respEvents);
 
@@ -846,7 +887,7 @@ def getCurrentDailyStorage(sensor, attribute){
             return [num_events: respEvents.size(), first: respEvents[0].date, last: respEvents[respEvents.size()-1].date, size: respEvents.size()];
 
         } catch (e)  {
-            log.debug(e)
+            log.debug("Error: ${e}")
             return -1;
         }
 
