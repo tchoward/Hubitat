@@ -267,10 +267,17 @@ def hubiForm_table(Map map, child){
     }
 }
 
-def hubiForm_text(child, text){
+def hubiForm_text(child, text, link=null){
 
     child.call(){
-        def html_ = """${text}""";
+
+        def html_ = "";
+        if (link != null){
+            html_ = """<a href="${link}" target="_blank">${text}</a>""";
+        } else {
+            html_ = """${text}""";
+
+        }
     
         return html_
     }
