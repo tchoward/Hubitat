@@ -200,7 +200,7 @@ def graphSetupPage(){
                               (double)(graph_timespan_minutes)*60000);
             }
             
-            app.updateSetting("graph_timespan", secs);
+            app.updateSetting("graph_timespan", [type: "number", value: secs]);
 
             points = graph_update_rate ? (long)(secs/Double.parseDouble(graph_update_rate)) : 280;
             
