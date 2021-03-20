@@ -279,9 +279,9 @@ def roundDate(Map map){
     if (!boundary) return date;
 
     return date;
-    if (granularity > 60 && granularity < 1440)
+    if (granularity > 60 && granularity < 1440) {}
         //nearest = org.apache.commons.lang3.time.DateUtils.truncate(date, Calendar.HOUR);
-    else if (granularity == 1440)
+    else if (granularity == 1440) {}
         //nearest = org.apache.commons.lang3.time.DateUtils.truncate(date, Calendar.DAY);
     
     return nearest;    
