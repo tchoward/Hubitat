@@ -2,7 +2,7 @@ import groovy.json.*;
 import java.text.DecimalFormat;
 import java.math.*; 
 
-//For terminal3
+
 /**
  *  Hubigraph Line Graph Child App
  *
@@ -278,11 +278,10 @@ def roundDate(Map map){
 
     if (!boundary) return date;
 
-    return date;
-    if (granularity > 60 && granularity < 1440) {}
-        //nearest = org.apache.commons.lang3.time.DateUtils.truncate(date, Calendar.HOUR);
-    else if (granularity == 1440) {}
-        //nearest = org.apache.commons.lang3.time.DateUtils.truncate(date, Calendar.DAY);
+    if (granularity > 60 && granularity < 1440)
+        nearest = org.apache.commons.lang3.time.DateUtils.truncate(date, Calendar.HOUR);
+    else if (granularity == 1440)
+        nearest = org.apache.commons.lang3.time.DateUtils.truncate(date, Calendar.DAY);
     
     return nearest;    
 }
@@ -719,7 +718,7 @@ def getFileData(sensor, attribute){
             parse_data = convertToMap(jsonSlurper.parseText("${file_data}"));
         }
     } catch (e) {
-        log.debug("Cannot Get File data for ${sensor.name} (${attribute})")
+        log.debug("Cannot Get File data for ${sensor.name} (${attribute}) :: ${e}");
     }
     return parse_data;
 }
