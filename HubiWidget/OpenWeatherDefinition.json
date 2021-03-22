@@ -1,0 +1,317 @@
+{
+    "weather_icon": {
+        "name": "Weather Icon",
+        "type": "icon",
+        "ow": "weather.0.description",
+        "in_units": "none",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "weather_description": {
+        "name": "Weather Description",
+        "type": "text",
+        "ow": "weather.0.description",
+        "in_units": "none",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "feels_like": {
+        "name": "Feels Like",
+        "type": "temperature",
+        "ow": "feels_like",
+        "in_units": "fahrenheit",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "no"
+    },
+    "feels_like_morning": {
+        "name": "Morning Feels Like",
+        "type": "temperature",
+        "ow": "feels_like.morn",
+        "in_units": "fahrenheit",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "feels_like_day": {
+        "name": "Day Feels Like",
+        "type": "temperature",
+        "ow": "feels_like.day",
+        "in_units": "fahrenheit",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "feels_like_evening": {
+        "name": "Evening Feels Like",
+        "type": "temperature",
+        "ow": "feels_like.eve",
+        "in_units": "fahrenheit",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "feels_like_night": {
+        "name": "Night Feels Like",
+        "type": "temperature",
+        "ow": "feels_like.night",
+        "in_units": "fahrenheit",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "temperature": {
+        "name": "Temperature",
+        "type": "temperature",
+        "ow": "temp",
+        "in_units": "fahrenheit",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "no"
+    },
+    "temperature_max": {
+        "name": "Maximum Temperature",
+        "type": "temperature",
+        "ow": "temp.max",
+        "in_units": "fahrenheit",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "temperature_min": {
+        "name": "Minimum Temperature",
+        "type": "temperature",
+        "ow": "temp.min",
+        "in_units": "fahrenheit",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "temperature_morning": {
+        "name": "Morning Temperature",
+        "type": "temperature",
+        "ow": "temp.morn",
+        "in_units": "fahrenheit",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "temperature_day": {
+        "name": "Day Temperature",
+        "type": "temperature",
+        "ow": "temp.day",
+        "in_units": "fahrenheit",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "temperature_evening": {
+        "name": "Evening Temperature",
+        "type": "temperature",
+        "ow": "temp.eve",
+        "in_units": "fahrenheit",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "temperature_night": {
+        "name": "Night Temperature",
+        "type": "temperature",
+        "ow": "temp.night",
+        "in_units": "fahrenheit",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "humidity": {
+        "name": "Humidity",
+        "type": "percent",
+        "ow": "humidity",
+        "in_units": "percent_numeric",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "dew_point": {
+        "name": "Dew Point",
+        "type": "temperature",
+        "ow": "dew_point",
+        "in_units": "fahrenheit",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "pressure": {
+        "name": "Pressure",
+        "type": "pressure",
+        "ow": "pressure",
+        "in_units": "millibars",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "uv_index": {
+        "name": "UV Index",
+        "type": "uvi",
+        "ow": "uvi",
+        "in_units": "uvi",
+        "current": "yes",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "cloud_coverage": {
+        "name": "Cloud Coverage",
+        "type": "percent",
+        "ow": "clouds",
+        "in_units": "percent_numeric",
+        "current": "yes",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "visibility": {
+        "name": "Visibility",
+        "type": "distance",
+        "ow": "visibility",
+        "in_units": "miles",
+        "current": "yes",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "wind_speed": {
+        "name": "Wind Speed",
+        "type": "velocity",
+        "ow": "wind_speed",
+        "in_units": "miles_per_hour",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "wind_gust": {
+        "name": "Wind Gust",
+        "type": "velocity",
+        "ow": "wind_gust",
+        "in_units": "miles_per_hour",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "wind_direction": {
+        "name": "Wind Direction",
+        "type": "direction",
+        "ow": "wind_deg",
+        "in_units": "degrees",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "rain_past_hour": {
+        "name": "Rain past Hour",
+        "type": "depth",
+        "ow": "rain.1h",
+        "in_units": "millimeters",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "no"
+    },
+    "snow_past_hour": {
+        "name": "Snow past Hour",
+        "type": "depth",
+        "ow": "snow.1h",
+        "in_units": "millimeters",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "no"
+    },
+    "rain": {
+        "name": "Rain",
+        "type": "depth",
+        "ow": "rain",
+        "in_units": "millimeters",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "snow": {
+        "name": "Snow",
+        "type": "depth",
+        "ow": "snow",
+        "in_units": "millimeters",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "precipitation": {
+        "name": "Precipitation",
+        "type": "depth",
+        "ow": "precipitation",
+        "in_units": "millimeters",
+        "current": "no",
+        "hourly": "no",
+        "daily": "yes"
+    },
+    "precipitation_hour": {
+        "name": "Precipitation",
+        "type": "depth",
+        "ow": "precipitation.1h",
+        "in_units": "millimeters",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "no"
+    },
+    "chance_precipitation": {
+        "name": "Chance of Precipitation",
+        "type": "percent",
+        "ow": "pop",
+        "in_units": "percent_decimal",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "sunrise": {
+        "name": "Sunrise",
+        "type": "time",
+        "ow": "sunrise",
+        "in_units": "time_seconds",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "sunset": {
+        "name": "Sunset",
+        "type": "time",
+        "ow": "sunset",
+        "in_units": "time_seconds",
+        "current": "yes",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "hour": {
+        "name": "Hour",
+        "type": "time",
+        "ow": "dt",
+        "in_units": "time_seconds",
+        "current": "no",
+        "hourly": "yes",
+        "daily": "no"
+    },
+    "day": {
+        "name": "Day",
+        "type": "day",
+        "ow": "dt",
+        "in_units": "time_seconds",
+        "current": "no",
+        "hourly": "yes",
+        "daily": "yes"
+    },
+    "time_stamp": {
+        "name": "Data Time Stamp",
+        "type": "time",
+        "ow": "dt",
+        "in_units": "time_seconds",
+        "current": "yes",
+        "hourly": "no",
+        "daily": "no"
+    }
+}
