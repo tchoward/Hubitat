@@ -1,0 +1,662 @@
+   {"grid" : { "x": 41, "y":51 },
+    "widgets" : [
+        {
+            "name": "Temperature",
+            "type": "circle",
+            "location": {
+                "x": 21,
+                "y": 12
+            },
+            "circle": {
+                "size": {
+                    "radius": 20
+                },
+                "color": "gray",
+                "line_width": 5
+            },
+            "connections": {},
+            "arc": {
+                "min": 0,
+                "max": 100
+            },
+            "options": {
+                "show_title": true
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.65,
+                    "value": "75",
+                    "units": "",
+                    "dynamic": true,
+                    "color": "white",
+                    "decimals": 0,
+                    "weight": 900
+                }
+            ]
+        },
+        {
+            "name": "Temp_Icon",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Temperature",
+            "location": {
+                "degrees": 180,
+                "recessed": -4
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "gray",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "icon",
+                    "icon": "Home Temperature",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "white"
+                }
+            ]
+        },
+        {
+            "name": "High",
+            "units": "°",
+            "type": "circle",
+            "parent_widget": "Temperature",
+            "location": {
+                "degrees": -105,
+                "recessed": 0.0
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#F39783",
+                "line_width": 1
+            },
+            "input": {
+                "type": "temperature",
+                "units": "fahrenheit"
+            },
+            "connections": {},
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "value": "67",
+                    "units": "",
+                    "dynamic": true,
+                    "color": "#F39783",
+                    "decimals": 0
+                }
+            ]
+        },
+        {
+            "name": "Low",
+            "units": "°",
+            "type": "circle",
+            "parent_widget": "Temperature",
+            "location": {
+                "degrees": -75,
+                "recessed": 0.0
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#ADD8E6",
+                "line_width": 1
+            },
+            "input": {
+                "type": "temperature",
+                "units": "fahrenheit"
+            },
+            "connections": {},
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "value": "33",
+                    "units": "",
+                    "dynamic": true,
+                    "color": "#ADD8E6",
+                    "decimals": 0
+                }
+            ]
+        },
+        {
+            "name": "Feels Like",
+            "units": "°",
+            "type": "circle",
+            "parent_widget": "Temperature",
+            "location": {
+                "degrees": 0,
+                "recessed": -5
+            },
+            "circle": {
+                "size": {
+                    "radius" : 10
+                },
+                "color": "gray",
+                "line_width": 3
+            },
+            "input": {
+                "type": "temperature",
+                "units": "fahrenheit"
+            },
+            "connections": {},
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.6,
+                    "value": "99",
+                    "units": "",
+                    "dynamic": true,
+                    "color": "darkcyan",
+                    "decimals": 0
+                }
+            ]
+        },
+        {
+            "name": "Current Icon",
+            "type": "circle",
+            "units": "",
+            "location": {
+                "x": 8,
+                "y": 27
+            },
+            "circle": {
+                "size": {
+                    "radius": 12
+                },
+                "color": "gray",
+                "line_width": 5
+            },
+            "connections": {},
+            "arc": {
+                "min": 0,
+                "max": 100
+            },
+            "options": {
+                "show_title": true
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.45,
+                    "size": 0.65,
+                    "dynamic": true,
+                    "color": "white"
+                }
+            ]
+        },
+        {
+            "name": "Cloud Cover",
+            "type": "circle",
+            "parent_widget": "Current Icon",
+            "location": {
+                "degrees": -45,
+                "recessed": -1.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#FFDAB9",
+                "line_width": 1
+            },
+            "connections": {},
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.6,
+                    "value": "99",
+                    "units": "%",
+                    "dynamic": true,
+                    "color": "#FFDAB9",
+                    "decimals": 0
+                }
+            ]
+        },
+        {
+            "name": "Wind",
+            "type": "circle",
+            "units": "",
+            "location": {
+                "x": 9,
+                "y": 42
+            },
+            "circle": {
+                "size": {
+                    "radius": 11
+                },
+                "color": "gray",
+                "line_width": 5
+            },
+            "input": {
+                "type": "velocity",
+                "units": "miles_per_hour"
+            },
+            "connections": {},
+            "arc": {
+                "min": 0,
+                "max": 100
+            },
+            "options": {
+                "show_title": true
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.65,
+                    "value": "75",
+                    "units": "",
+                    "dynamic": true,
+                    "color": "orange",
+                    "decimals": 0
+                }
+            ]
+        },
+        {
+            "name": "Wind_Icon",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Wind",
+            "location": {
+                "degrees": 180,
+                "recessed": -2.1
+            },
+            "circle": {
+                "size": {
+                    "radius": 4
+                },
+                "color": "orange",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "icon",
+                    "icon": "Windy",
+                    "location": 0.4,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "orange"
+                }
+            ]
+        },
+        {
+            "name": "Wind Gust",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Wind",
+            "location": {
+                "degrees": -45,
+                "recessed": -1.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "orange",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.65,
+                    "decimals": 0,
+                    "dynamic": false,
+                    "color": "orange"
+                }
+            ]
+        },
+        {
+            "name": "Daily Precipitation",
+            "type": "circle",
+            "units": "",
+            "location": {
+                "x": 33,
+                "y": 27
+            },
+            "circle": {
+                "size": {
+                    "radius": 11
+                },
+                "color": "gray",
+                "line_width": 5
+            },
+            "connections": {},
+            "arc": {
+                "min": 0,
+                "max": 100
+            },
+            "options": {
+                "show_title": true
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.65,
+                    "value": "75",
+                    "units": "",
+                    "dynamic": true,
+                    "color": "#6495ED",
+                    "decimals": 1
+                }
+            ]
+        },
+        {
+            "name": "Precipitation Icon",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Daily Precipitation",
+            "location": {
+                "degrees": 180,
+                "recessed": -2.1
+            },
+            "circle": {
+                "size": {
+                    "radius": 4
+                },
+                "color": "#6495ED",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "icon",
+                    "icon": "Precipitation",
+                    "location": 0.4,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "#6495ED"
+                }
+            ]
+        },
+        {
+            "name": "Precipitation Chance",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Daily Precipitation",
+            "location": {
+                "degrees": 45,
+                "recessed": -1.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#6495ED",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.65,
+                    "decimals": 0,
+                    "units": "%",
+                    "dynamic": false,
+                    "color": "#6495ED"
+                }
+            ]
+        },
+        {
+            "name": "Precipitation Expected",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Daily Precipitation",
+            "location": {
+                "degrees": 135,
+                "recessed": -1.5
+            },
+            "circle": { 
+                "size": {
+                    "radius": 5
+                },
+                "color": "#6495ED",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.65,
+                    "decimals": 1,
+                    "dynamic": false,
+                    "color": "#6495ED"
+                }
+            ]
+        },
+        {
+            "name": "Humidity",
+            "type": "circle",
+            "location": {
+                "x": 33,
+                "y": 42
+            },
+            "circle": {
+                "size": {
+                    "radius": 11
+                },
+                "color": "gray",
+                "line_width": 5
+            },
+            "connections": {},
+            "arc": {
+                "min": 0,
+                "max": 100
+            },
+            "options": {
+                "show_title": true
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.65,
+                    "value": "75",
+                    "units": "%",
+                    "dynamic": true,
+                    "color": "green",
+                    "decimals": 0
+                }
+            ]
+        },
+        {
+            "name": "Humidity Icon",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Humidity",
+            "location": {
+                "degrees": 180,
+                "recessed": -2.1
+            },
+            "circle": {
+                "size": {
+                    "radius": 4
+                },
+                "color": "green",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "icon",
+                    "icon": "Humidity",
+                    "location": 0.4,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "green"
+                }
+            ]
+        },
+        {
+            "name": "Dewpoint",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Humidity",
+            "location": {
+                "degrees": 45,
+                "recessed": -1.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "green",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.65,
+                    "decimals": 0,
+                    "units": "°",
+                    "dynamic": false,
+                    "color": "green"
+                }
+            ]
+        },
+        {
+            "name": "Stickiness",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Humidity",
+            "location": {
+                "degrees": -45,
+                "recessed": -1.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "green",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.65,
+                    "decimals": 0,
+                    "units": "°",
+                    "dynamic": false,
+                    "color": "green",
+                    "conversion": [
+                        {"condition": "%value% < 55 ", "return" : "Dry"},
+                        {"condition": "%value% >= 55 && %value% < 60", "return" :   "Comfortable"},
+                        {"condition": "%value% >= 60 && %value% < 65", "return" :   "Slightly Humid"},
+                        {"condition": "%value% >= 65 && %value% < 70", "return":    "Humid"},
+                        {"condition": "%value% >= 70 && %value% < 75 ", "return":  "Very Humid"}
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Pressure",
+            "type": "circle",
+            "units": "",
+            "location": {
+                "x": 21,
+                "y": 36
+            },
+            "circle": {
+                "size": {
+                    "radius": 11
+                },
+                "color": "gray",
+                "line_width": 5
+            },
+            "input": {
+                "type": "velocity",
+                "units": "miles_per_hour"
+            },
+            "connections": {},
+            "arc": {
+                "min": 0,
+                "max": 100
+            },
+            "options": {
+                "show_title": true
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.65,
+                    "value": "75",
+                    "units": "", 
+                    "dynamic": true,
+                    "color": "purple",
+                    "decimals": 1
+                }
+            ]
+        },
+        {
+            "name": "Pressure Icon",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Pressure",
+            "location": {
+                "degrees": 180,
+                "recessed": -2.1
+            },
+            "circle": {
+                "size": {
+                    "radius": 4
+                },
+                "color": "purple",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "icon",
+                    "icon": "Gauge",
+                    "location": 0.4,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "purple"
+                }
+            ]
+        },
+        {
+            "name": "Pressure Trend",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Pressure",
+            "location": {
+                "degrees": 0,
+                "recessed": -2
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "purple",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.65,
+                    "decimals": 0,
+                    "dynamic": false,
+                    "color": "purple"
+                }
+            ]
+        }
+    ]
+}
