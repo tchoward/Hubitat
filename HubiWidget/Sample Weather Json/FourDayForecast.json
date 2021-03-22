@@ -1,0 +1,796 @@
+{"grid" : { "x": 40, "y":40 },
+    "widgets" : [
+        {
+            "name": "Day 1 Icon",
+            "type": "circle",
+            "units": "",
+            "location": {
+                "x": 10,
+                "y": 10
+            },
+            "circle": {
+                "size": {
+                    "radius": 17
+                }, 
+                "color": "gray",
+                "line_width": 5
+            },
+            "connections": {},
+
+            "options": {
+                "show_title": true
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.45,
+                    "size": 0.5,
+                    "dynamic": true,
+                    "color": "white",
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 1,
+                        "attribute" : "weather_icon",
+                        "output_units" : ""
+                    } 
+                    
+                }
+            ]
+        },
+        {
+            "name": "Day 1 Label",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Day 1 Icon",
+            "location": {
+                "degrees": 0,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "gray",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "gray",
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 1,
+                        "attribute" : "day",
+                        "output_units" : "time_day_initial"
+                    } 
+                }
+            ]
+        },
+        {
+            "name": "Day 1 High",
+            "type": "circle",
+            "parent_widget": "Day 1 Icon",
+            "location": {
+                "degrees": 140,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#F39783",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "#F39783",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 1,
+                        "attribute" : "temperature_max",
+                        "output_units" : "fahrenheit"
+                    } 
+                }
+            ]
+        },
+        {
+            "name": "Day 1 Low",
+            "type": "circle",
+            "parent_widget": "Day 1 Icon",
+            "location": {
+                "degrees": 220,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#ADD8E6",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "#ADD8E6",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 1,
+                        "attribute" : "temperature_min",
+                        "output_units" : "fahrenheit"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Day 1 Precipitation Total",
+            "type": "circle",
+            "parent_widget": "Day 1 Icon",
+            "location": {
+                "degrees": 40,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#6495ED",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.75,
+                    "dynamic": false,
+                    "color": "#6495ED",
+                    "decimals": 1,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 1,
+                        "attribute" : "precipitation",
+                        "output_units" : "inches"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Day 1 Precipitation Chance",
+            "type": "circle",
+            "parent_widget": "Day 1 Icon",
+            "location": {
+                "degrees": -40,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#6495ED",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.85,
+                    "units": "%",
+                    "color": "#6495ED",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 1,
+                        "attribute" : "chance_precipitation",
+                        "output_units" : "percent_numeric"
+                    }
+                }
+            ]
+        },
+
+
+        {
+            "name": "Day 2 Icon",
+            "type": "circle",
+            "units": "",
+            "location": {
+                "x": 30,
+                "y": 10
+            },
+            "circle": {
+                "size": {
+                    "radius": 17
+                }, 
+                "color": "gray",
+                "line_width": 5
+            },
+            "connections": {},
+
+            "options": {
+                "show_title": true
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.45,
+                    "size": 0.5,
+                    "dynamic": true,
+                    "color": "white",
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 2,
+                        "attribute" : "weather_icon",
+                        "output_units" : ""
+                    } 
+                    
+                }
+            ]
+        },
+        {
+            "name": "Day 2 Label",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Day 2 Icon",
+            "location": {
+                "degrees": 0,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "gray",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "gray",
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 2,
+                        "attribute" : "day",
+                        "output_units" : "time_day_initial"
+                    } 
+                }
+            ]
+        },
+        {
+            "name": "Day 2 High",
+            "type": "circle",
+            "parent_widget": "Day 2 Icon",
+            "location": {
+                "degrees": 140,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#F39783",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "#F39783",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 2,
+                        "attribute" : "temperature_max",
+                        "output_units" : "fahrenheit"
+                    } 
+                }
+            ]
+        },
+        {
+            "name": "Day 2 Low",
+            "type": "circle",
+            "parent_widget": "Day 2 Icon",
+            "location": {
+                "degrees": 220,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#ADD8E6",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "#ADD8E6",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 2,
+                        "attribute" : "temperature_min",
+                        "output_units" : "fahrenheit"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Day 2 Precipitation Total",
+            "type": "circle",
+            "parent_widget": "Day 2 Icon",
+            "location": {
+                "degrees": 40,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#6495ED",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.75,
+                    "dynamic": false,
+                    "color": "#6495ED",
+                    "decimals": 1,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 2,
+                        "attribute" : "precipitation",
+                        "output_units" : "inches"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Day 2 Precipitation Chance",
+            "type": "circle",
+            "parent_widget": "Day 2 Icon",
+            "location": {
+                "degrees": -40,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#6495ED",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.85,
+                    "units": "%",
+                    "color": "#6495ED",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 2,
+                        "attribute" : "chance_precipitation",
+                        "output_units" : "percent_numeric"
+                    }
+                }
+            ]
+        },
+
+        {
+            "name": "Day 3 Icon",
+            "type": "circle",
+            "units": "",
+            "location": {
+                "x": 10,
+                "y": 30
+            },
+            "circle": {
+                "size": {
+                    "radius": 17
+                }, 
+                "color": "gray",
+                "line_width": 5
+            },
+            "connections": {},
+
+            "options": {
+                "show_title": true
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.45,
+                    "size": 0.5,
+                    "dynamic": true,
+                    "color": "white",
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 3,
+                        "attribute" : "weather_icon",
+                        "output_units" : ""
+                    } 
+                    
+                }
+            ]
+        },
+        {
+            "name": "Day 3 Label",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Day 3 Icon",
+            "location": {
+                "degrees": 0,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "gray",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "gray",
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 3,
+                        "attribute" : "day",
+                        "output_units" : "time_day_initial"
+                    } 
+                }
+            ]
+        },
+        {
+            "name": "Day 3 High",
+            "type": "circle",
+            "parent_widget": "Day 3 Icon",
+            "location": {
+                "degrees": 140,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#F39783",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "#F39783",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 3,
+                        "attribute" : "temperature_max",
+                        "output_units" : "fahrenheit"
+                    } 
+                }
+            ]
+        },
+        {
+            "name": "Day 3 Low",
+            "type": "circle",
+            "parent_widget": "Day 3 Icon",
+            "location": {
+                "degrees": 220,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#ADD8E6",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "#ADD8E6",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 3,
+                        "attribute" : "temperature_min",
+                        "output_units" : "fahrenheit"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Day 3 Precipitation Total",
+            "type": "circle",
+            "parent_widget": "Day 3 Icon",
+            "location": {
+                "degrees": 40,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#6495ED",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.75,
+                    "dynamic": false,
+                    "color": "#6495ED",
+                    "decimals": 1,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 3,
+                        "attribute" : "precipitation",
+                        "output_units" : "inches"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Day 3 Precipitation Chance",
+            "type": "circle",
+            "parent_widget": "Day 3 Icon",
+            "location": {
+                "degrees": -40,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#6495ED",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.85,
+                    "units": "%",
+                    "color": "#6495ED",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 3,
+                        "attribute" : "chance_precipitation",
+                        "output_units" : "percent_numeric"
+                    }
+                }
+            ]
+        },
+
+        {
+            "name": "Day 4 Icon",
+            "type": "circle",
+            "units": "",
+            "location": {
+                "x": 30,
+                "y": 30
+            },
+            "circle": {
+                "size": {
+                    "radius": 17
+                }, 
+                "color": "gray",
+                "line_width": 5
+            },
+            "connections": {},
+
+            "options": {
+                "show_title": true
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.45,
+                    "size": 0.5,
+                    "dynamic": true,
+                    "color": "white",
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 4,
+                        "attribute" : "weather_icon",
+                        "output_units" : ""
+                    } 
+                    
+                }
+            ]
+        },
+        {
+            "name": "Day 4 Label",
+            "units": "",
+            "type": "circle",
+            "parent_widget": "Day 4 Icon",
+            "location": {
+                "degrees": 0,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "gray",
+                "line_width": 1
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "gray",
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 4,
+                        "attribute" : "day",
+                        "output_units" : "time_day_initial"
+                    } 
+                }
+            ]
+        },
+        {
+            "name": "Day 4 High",
+            "type": "circle",
+            "parent_widget": "Day 4 Icon",
+            "location": {
+                "degrees": 140,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#F39783",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "#F39783",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 4,
+                        "attribute" : "temperature_max",
+                        "output_units" : "fahrenheit"
+                    } 
+                }
+            ]
+        },
+        {
+            "name": "Day 4 Low",
+            "type": "circle",
+            "parent_widget": "Day 4 Icon",
+            "location": {
+                "degrees": 220,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#ADD8E6",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "#ADD8E6",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 4,
+                        "attribute" : "temperature_min",
+                        "output_units" : "fahrenheit"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Day 4 Precipitation Total",
+            "type": "circle",
+            "parent_widget": "Day 4 Icon",
+            "location": {
+                "degrees": 40,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#6495ED",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.75,
+                    "dynamic": false,
+                    "color": "#6495ED",
+                    "decimals": 1,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 4,
+                        "attribute" : "precipitation",
+                        "output_units" : "inches"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Day 4 Precipitation Chance",
+            "type": "circle",
+            "parent_widget": "Day 4 Icon",
+            "location": {
+                "degrees": -40,
+                "recessed": -2.5
+            },
+            "circle": {
+                "size": {
+                    "radius": 5
+                },
+                "color": "#6495ED",
+                "line_width": 3
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.85,
+                    "units": "%",
+                    "color": "#6495ED",
+                    "decimals": 0,
+                    "open_weather"   : {
+                        "time" : "daily",
+                        "offset" : 4,
+                        "attribute" : "chance_precipitation",
+                        "output_units" : "percent_numeric"
+                    }
+                }
+            ]
+        }
+    ]
+}
