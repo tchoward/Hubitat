@@ -1,0 +1,555 @@
+{"grid" : { "x": 105, "y":52 },
+    
+"widgets" : [
+        {
+            "name": "Spacer",
+            "order": "back",
+            "type": "rectangle",
+            "location": {
+                "x": 6,
+                "y": 26
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 50
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+            ]
+        },
+        {
+            "name": "Spacer2",
+            "parent_widget": "Spacer",
+            "type": "rectangle",
+            "location": {
+                "degrees": 90,
+                "recessed": 1
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 50
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+            ]
+        },
+        {
+            "name": "Spacer3",
+            "parent_widget": "Spacer2",
+            "type": "rectangle",
+            "location": {
+                "degrees": 90,
+                "recessed": 1
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 50
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+            ]
+        },
+        {
+            "name": "Spacer4",
+            "parent_widget": "Spacer3",
+            "type": "rectangle",
+            "location": {
+                "degrees": 90,
+                "recessed": 1
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 50
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+            ]
+        },
+        {
+            "name": "Spacer5",
+            "parent_widget": "Spacer4",
+            "type": "rectangle",
+            "location": {
+                "degrees": 90,
+                "recessed": 1
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 50
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+            ]
+        },
+        {
+            "name": "Spacer6",
+            "parent_widget": "Spacer5",
+            "type": "rectangle",
+            "location": {
+                "degrees": 90,
+                "recessed": 1
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 50
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+            ]
+        },
+        {
+            "name": "Spacer7",
+            "parent_widget": "Spacer6",
+            "type": "rectangle",
+            "location": {
+                "degrees": 90,
+                "recessed": 1
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 50
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+            ]
+        },
+        {
+            "name": "Spacer8",
+            "parent_widget": "Spacer7",
+            "type": "rectangle",
+            "location": {
+                "degrees": 90,
+                "recessed": 1
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 50
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+            ]
+        },
+        {
+            "name": "Spacer9",
+            "parent_widget": "Spacer8",
+            "type": "rectangle",
+            "location": {
+                "degrees": 90,
+                "recessed": 1
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 50
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+            ]
+        },
+        {
+            "name": "Icon1",
+            "parent_widget": "Spacer",
+            "type": "rectangle",
+            "location": {
+                "degrees": 180,
+                "recessed": -19
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 11
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+                {
+                    "type": "icon",
+                    "icon": "Home Temperature",
+                    "location": {
+                        "x": 0.5,
+                        "y": 0.5
+                    },
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "gray"
+                }
+            ]
+        },
+        {
+            "name": "Icon2",
+            "parent_widget": "Spacer",
+            "type": "rectangle",
+            "location": {
+                "degrees": 180,
+                "recessed": -33
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 11
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+                {
+                    "type": "icon",
+                    "icon": "Rain",
+                    "location": {
+                        "x": 0.5,
+                        "y": 0.5
+                    },
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "gray"
+                }
+            ]
+        },
+
+        {
+            "name": "Icon3",
+            "parent_widget": "Spacer",
+            "type": "rectangle",
+            "location": {
+                "degrees": 180,
+                "recessed": -42
+            },
+            "rectangle": {
+                "size": {
+                    "x" : 10,
+                    "y" : 6
+                },
+                "color": "#484848",
+                "line_width": 2,
+                "radius" : 4
+            },
+            "connections": {},
+            "options": {
+            },
+            "content": [
+                {
+                    "type": "icon",
+                    "icon": "Wind",
+                    "location": {
+                        "x": 0.5,
+                        "y": 0.5
+                    },
+                    "size": 0.50,
+                    "dynamic": false,
+                    "color": "gray"
+                }
+            ]
+        },
+
+        {
+            "name": "Weather",
+            "type": "circle",
+            "order": "front",
+            "parent_widget": "Spacer2",
+            "location": {
+                "degrees": 180,
+                "recessed": -7
+            },
+            "circle": {
+                "size": {
+                    "radius": 10
+                },
+                "color": "gray",
+                "line_width": 2
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location" : 0.5,
+                    "size": 0.75,
+                    "dynamic": false,
+                    "color": "white",
+                    "value": 99, 
+                    "decimals" : 0,
+                    "ow_time" : "hourly",
+                    "ow_attr" : "weather_icon",
+                    "ow_range" : "1..9",
+                    "ow_range_recessed" : 1
+
+                }
+            ]
+        },
+        {
+            "name": "Temperature",
+            "type": "circle",
+            "order": "front",
+            "parent_widget": "Weather",
+            "location": {
+                "degrees": 0,
+                "recessed": 1
+            },
+            "circle": {
+                "size": {
+                    "radius": 10
+                },
+                "color": "gray",
+                "line_width": 2
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "icon": "Home Temperature",
+                    "location" : 0.5,
+                    "size": 0.7,
+                    "dynamic": false,
+                    "color": "lightgray",
+                    "value": 99, 
+                    "decimals" : 0,
+                    "ow_time" : "hourly",
+                    "ow_attr" : "temperature",
+                    "ow_range" : "1..9",
+                    "ow_range_recessed" : 1
+
+                }
+            ]
+        },
+        {
+            "name": "Feels Like",
+            "type": "circle",
+            "order": "front",
+            "parent_widget": "Temperature",
+            "location": {
+                "degrees": 0,
+                "recessed": 1
+            },
+            "circle": {
+                "size": {
+                    "radius": 10
+                },
+                "color": "green",
+                "line_width": 2
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location" : 0.55,
+                    "size": 0.7,
+                    "dynamic": false,
+                    "color": "white",
+                    "value": 99, 
+                    "decimals" : 0,
+                    "ow_time" : "hourly",
+                    "ow_attr" : "feels_like",
+                    "ow_range" : "1..9",
+                    "ow_range_recessed" : 1,
+                    "ow_outunits": "fahrenheit"
+                }
+            ]
+        },
+        {
+            "name": "Hour",
+            "type": "circle",
+            "order": "front",
+            "parent_widget": "Spacer2",
+            "location": {
+                "degrees": 0,
+                "recessed": -7
+            },
+            "circle": {
+                "size": {
+                    "radius" : 9
+                },
+                "color": "black",
+                "line_width": 1
+            },
+            "connections": {},
+            "content": [
+                {
+                    "type": "sensor",
+                    "location": 0.5,
+                    "size": 0.6,
+                    "value": "99",
+                    "units": "",
+                    "dynamic": true,
+                    "color": "white", 
+                    "decimals": 0,
+                    "ow_time" : "hourly",
+                    "ow_attr" : "hour",
+                    "ow_range" : "1..9",
+                    "ow_range_recessed" : 2,    
+                    "ow_outunits": "time_twelve_short"
+
+                }
+            ]
+        },
+        {
+            "name": "Precipitation",
+            "order": "front",
+            "type": "circle",
+            "parent_widget": "Feels Like",
+            "location": {
+                "degrees": 0,
+                "recessed": 1
+            },
+            "circle": {
+                "size": {
+                    "radius": 10
+                },
+                "color": "#6495ED",
+                "line_width": 2
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location" : 0.5,
+                    "size": 0.6,
+                    "dynamic": false,
+                    "color": "white",
+                    "value": 99, 
+                    "units": "%",
+                    "decimals" : 0,
+                    "ow_time" : "hourly",
+                    "ow_attr" : "chance_precipitation",
+                    "ow_range" : "1..9",
+                    "ow_range_recessed" : 1,
+                    "ow_outunits": "percent_numeric"
+                }
+            ]
+        },
+        {
+            "name": "Precipitation Total",
+            "order": "front",
+            "type": "circle",
+            "parent_widget": "Precipitation",
+            "location": {
+                "degrees": 0,
+                "recessed": 1
+            },
+            "circle": {
+                "size": {
+                    "radius": 10
+                },
+                "color": "#6495ED",
+                "line_width": 2
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location" : 0.5,
+                    "size": 0.7,
+                    "dynamic": false,
+                    "color": "white",
+                    "value": 99, 
+                    "decimals" : 1,
+                    "ow_time" : "hourly",
+                    "ow_attr" : "precipitation_hour",
+                    "ow_range" : "1..9",
+                    "ow_range_recessed" : 1,
+                    "ow_outunits": "inches"
+                }
+            ]
+        },
+        {
+            "name": "Wind",
+            "order": "front",
+            "type": "circle",
+            "parent_widget": "Precipitation Total",
+            "location": {
+                "degrees": 0,
+                "recessed": 1
+            },
+            "circle": {
+                "size": {
+                    "radius": 10
+                },
+                "color": "orange",
+                "line_width": 2
+            },
+            "content": [
+                {
+                    "type": "sensor",
+                    "location" : 0.5,
+                    "size": 0.6,
+                    "dynamic": false,
+                    "color": "white",
+                    "value": 99, 
+                    "units": "",
+                    "decimals" : 0,
+                    "ow_time" : "hourly",
+                    "ow_attr" : "wind_speed",
+                    "ow_range" : "1..9",
+                    "ow_range_recessed" : 1,
+                    "ow_outunits": "miles_per_hour"
+                }
+            ]
+        }
+    ]
+}
+
+       
