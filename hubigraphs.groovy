@@ -55,7 +55,8 @@ def getData(sensor, attribute, lts, time){
     if (lts) {
         ltsApp = getChildAppByLabel("Hubigraph Long Term Storage");
         return_data = ltsApp.getFileData(sensor, attribute);
-        then = return_data[return_data.size()-1].date;
+        if (return_data.size()> 0) 
+            then = return_data[return_data.size()-1].date;
     }
 
     events = getEvents(sensor: sensor, attribute: attribute, start_time: then);
