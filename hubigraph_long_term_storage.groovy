@@ -861,7 +861,7 @@ def convertToJSON(obj){
 
 def getCurrentDailyStorage(sensor, attribute){
 
-    if (fileExists(sensor, attribute)){
+    if (fileExists(sensor, attribute) && readFile(sensor, attribute)?.data){
 
         json = readFile(sensor, attribute);
         data = json.data;
