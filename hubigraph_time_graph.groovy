@@ -816,7 +816,8 @@ def mainPage() {
                 }
                 parent.hubiForm_section(this, "Local Graph URL", 1, "link"){
                     container = [];
-                    container << parent.hubiForm_text(this, "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
+                    container << parent.hubiForm_text(this, "${fullLocalApiServerUrl("")}graph/?access_token=${state.endpointSecret}",
+                                                            "${fullLocalApiServerUrl("")}graph/?access_token=${state.endpointSecret}");
                     
                     parent.hubiForm_container(this, container, 1); 
                 }
