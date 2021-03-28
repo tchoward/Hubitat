@@ -1189,7 +1189,7 @@ class Loader {
 }
 
 function getOptions() {
-    return jQuery.get("${state.localEndpointURL}getOptions/?access_token=${state.endpointSecret}", (data) => {
+    return jQuery.get("${fullLocalApiServerUrl("")}getOptions/?access_token=${state.endpointSecret}", (data) => {
         options = data;
         console.log("Got Options");
         console.log(options);
@@ -1197,7 +1197,7 @@ function getOptions() {
 }
 
 function getSubscriptions() {
-    return jQuery.get("${state.localEndpointURL}getSubscriptions/?access_token=${state.endpointSecret}", (data) => {
+    return jQuery.get("${fullLocalApiServerUrl("")}getSubscriptions/?access_token=${state.endpointSecret}", (data) => {
         console.log("Got Subscriptions");
         subscriptions = data;
         
@@ -1205,7 +1205,7 @@ function getSubscriptions() {
 }
 
 function getGraphData() {
-    return jQuery.get("${state.localEndpointURL}getData/?access_token=${state.endpointSecret}", (data) => {
+    return jQuery.get("${fullLocalApiServerUrl("")}getData/?access_token=${state.endpointSecret}", (data) => {
         console.log("Got Graph Data");
         graphData = data;
     });
