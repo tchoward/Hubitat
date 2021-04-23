@@ -822,7 +822,7 @@ def mainPage() {
                     parent.hubiForm_container(this, container, 1); 
                 }
                 
-                if (graph_timespan){
+                if (graph_timespan!=null){
                      parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
                          container = [];
                          container << parent.hubiForm_graph_preview(this)
