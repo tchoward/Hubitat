@@ -71,25 +71,25 @@ preferences {
    
 
     mappings {
-        path("/graph/") {
+        path("/graph") {
             action: [
                 GET: "getGraph"
             ]
         }
     
-        path("/getData/") {
+        path("/getData") {
             action: [
                 GET: "getData"
             ]
         }
         
-        path("/getOptions/") {
+        path("/getOptions") {
             action: [
                 GET: "getOptions"
             ]
         }
         
-        path("/getSubscriptions/") {
+        path("/getSubscriptions") {
             action: [
                 GET: "getSubscriptions"
             ]
@@ -816,11 +816,19 @@ def mainPage() {
                 }
                 parent.hubiForm_section(this, "Local Graph URL", 1, "link"){
                     container = [];
-                    container << parent.hubiForm_text(this, "${fullLocalApiServerUrl("")}graph/?access_token=${state.endpointSecret}",
-                                                            "${fullLocalApiServerUrl("")}graph/?access_token=${state.endpointSecret}");
+                    container << parent.hubiForm_text(this, "${fullLocalApiServerUrl('graph')}?access_token=${state.endpointSecret}",
+                                                            "${fullLocalApiServerUrl('graph')}?access_token=${state.endpointSecret}");
                     
                     parent.hubiForm_container(this, container, 1); 
                 }
+                parent.hubiForm_section(this, "Remote Graph URL", 1, "link"){
+                    container = [];
+                    container << parent.hubiForm_text(this, "${fullApiServerUrl('graph')}?access_token=${state.endpointSecret}",
+                                                            "${fullApiServerUrl('graph')}?access_token=${state.endpointSecret}");
+                    
+                    parent.hubiForm_container(this, container, 1); 
+                }
+
                 
                 if (graph_timespan!=null){
                      parent.hubiForm_section(this, "Preview", 10, "show_chart"){                         
@@ -1189,7 +1197,7 @@ class Loader {
 }
 
 function getOptions() {
-    return jQuery.get("${fullLocalApiServerUrl("")}getOptions/?access_token=${state.endpointSecret}", (data) => {
+    return jQuery.get("${request?.requestSource == 'local' ? fullLocalApiServerUrl('getOptions') : fullApiServerUrl('getOptions')}?access_token=${state.endpointSecret}", (data) => {
         options = data;
         console.log("Got Options");
         console.log(options);
@@ -1197,7 +1205,7 @@ function getOptions() {
 }
 
 function getSubscriptions() {
-    return jQuery.get("${fullLocalApiServerUrl("")}getSubscriptions/?access_token=${state.endpointSecret}", (data) => {
+    return jQuery.get("${request?.requestSource == 'local' ? fullLocalApiServerUrl('getSubscriptions') : fullApiServerUrl('getSubscriptions')}?access_token=${state.endpointSecret}", (data) => {
         console.log("Got Subscriptions");
         subscriptions = data;
         
@@ -1205,7 +1213,7 @@ function getSubscriptions() {
 }
 
 function getGraphData() {
-    return jQuery.get("${fullLocalApiServerUrl("")}getData/?access_token=${state.endpointSecret}", (data) => {
+    return jQuery.get("${request?.requestSource == 'local' ? fullLocalApiServerUrl('getData') : fullApiServerUrl('getData')}?access_token=${state.endpointSecret}", (data) => {
         console.log("Got Graph Data");
         graphData = data;
     });
@@ -1688,12 +1696,12 @@ def getOverlay(){
 def getDateStringEvent(date) {
     def dateObj = date
     def yyyy = dateObj.getYear() + 1900
-    def MM = String.format("%02d", dateObj.getMonth()+1);
-    def dd = String.format("%02d", dateObj.getDate());
-    def HH = String.format("%02d", dateObj.getHours());
-    def mm = String.format("%02d", dateObj.getMinutes());
-    def ss = String.format("%02d", dateObj.getSeconds());
-    def dateString = /$yyyy-$MM-$dd $HH:$mm:$ss.000/;
+    def MM = String.format("%02d", dateObj.getMonth()+1)
+    def dd = String.format("%02d", dateObj.getDate())
+    def HH = String.format("%02d", dateObj.getHours())
+    def mm = String.format("%02d", dateObj.getMinutes())
+    def ss = String.format("%02d", dateObj.getSeconds())
+    def dateString = /$yyyy-$MM-$dd $HH:$mm:$ss.000/
     dateString
 }
     
@@ -1703,8 +1711,8 @@ def initializeAppEndpoint() {
             def accessToken = createAccessToken()
             if (accessToken) {
                 state.endpoint = getApiServerUrl()
-                state.localEndpointURL = fullLocalApiServerUrl("")  
-                state.remoteEndpointURL = fullApiServerUrl("/graph")
+                state.localEndpointURL = fullLocalApiServerUrl
+                state.remoteEndpointURL = fullApiServerUrl
                 state.endpointSecret = accessToken
             }
         }
@@ -1849,3 +1857,4 @@ def getColorCode(code){
     }
     return ret;
 }
+
