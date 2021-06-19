@@ -71,6 +71,11 @@ preferences {
    
 
     mappings {
+        path("/graph/") { // retained for preview from parent app
+            action: [
+                GET: "getGraph"
+            ]
+        }
         path("/graph") {
             action: [
                 GET: "getGraph"
