@@ -114,7 +114,7 @@ def deviceSelectionPage() {
             if (sensors) {
                 sensors.each{sensor ->
                     id = sensor.id;
-                    sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() };      
+                    sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() }.unique().sort();      
                     def container = [];
                     container <<  parent.hubiForm_sub_section(this,  "${sensor.displayName}");
                     parent.hubiForm_container(this, container, 1);     
