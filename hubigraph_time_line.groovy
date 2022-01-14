@@ -199,7 +199,7 @@ def attributeConfigurationPage() {
              def attributes = settings["attributes_${sensor.id}"];
              attributes.each { attribute ->
                  state.count_++;
-                 parent.hubiForm_section(this, "${sensor.displayName} ${attribute}", 1, "directions"){
+                 parent.hubiForm_section(this, "${sensor.displayName} ${attribute}", 1, "directions", sensor.id){
                  		container = [];
                         container << parent.hubiForm_text_input(this,   "Override Device Name<small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                         "graph_name_override_${sensor.id}_${attribute}",
