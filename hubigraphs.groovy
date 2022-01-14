@@ -320,12 +320,11 @@ def hubiForm_page_button(child, title, page, width, icon=""){
 
 
 
-def hubiForm_section(child, title, pos, icon="", Closure code) {
+def hubiForm_section(child, title, pos, icon="", suffix = "", Closure code) {
 	
         child.call(){
-                def id = title.replace(' ', '_').replace('(', '').replace(')','');
-                def title_ = title.replace("'", "").replace("`", "");
-
+                def id = title.replaceAll("\\W", "_") + suffix;
+				title_ = groovy.xml.XmlUtil.escapeXml(title);
                 def titleHTML = """
                         <div class="mdl-layout__header" style="display: block; background:#033673; margin: 0 -16px; width: calc(100% + 32px); position: relative; z-index: ${pos}; overflow: visible;">          
                         <div class="mdl-layout__header-row">
