@@ -451,7 +451,7 @@ def graphSetupPage(){
         sensors.each { sensor ->        
                 settings["attributes_${sensor.id}"].each { attribute ->
                     
-                    parent.hubiForm_section(this,"${sensor.displayName} - ${attribute}", 1){
+                    parent.hubiForm_section(this,"${sensor.displayName} - ${attribute}", 1, "", sensor.id){
 
                         container = [];      
 

@@ -114,7 +114,7 @@ def deviceSelectionPage() {
             if (sensors) {
                 sensors.each{sensor ->
                     id = sensor.id;
-                    sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() };      
+                    sensor_attributes = sensor.getSupportedAttributes().collect { it.getName() }.unique().sort();      
                     def container = [];
                     container <<  parent.hubiForm_sub_section(this,  "${sensor.displayName}");
                     parent.hubiForm_container(this, container, 1);     
@@ -199,7 +199,7 @@ def attributeConfigurationPage() {
              def attributes = settings["attributes_${sensor.id}"];
              attributes.each { attribute ->
                  state.count_++;
-                 parent.hubiForm_section(this, "${sensor.displayName} ${attribute}", 1, "directions"){
+                 parent.hubiForm_section(this, "${sensor.displayName} ${attribute}", 1, "directions", sensor.id){
                  		container = [];
                         container << parent.hubiForm_text_input(this,   "Override Device Name<small></i><br>Use %deviceName% for DEVICE and %attributeName% for ATTRIBUTE</i></small>",
                                                                         "graph_name_override_${sensor.id}_${attribute}",
@@ -299,7 +299,8 @@ def mainPage() {
                 }
                 parent.hubiForm_section(this, "Local Graph URL", 1, "link"){
                     container = [];
-                    container << parent.hubiForm_text(this, "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
+                    container << parent.hubiForm_text(this, "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}",
+													 "${state.localEndpointURL}graph/?access_token=${state.endpointSecret}");
                     
                     parent.hubiForm_container(this, container, 1); 
                 }
